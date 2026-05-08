@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/freight", "destination": "/freight/index.html" },
+    { "source": "/freight/(.*)", "destination": "/freight/index.html" }
+  ]
+}

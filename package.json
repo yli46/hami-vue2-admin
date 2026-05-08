@@ -1,0 +1,20 @@
+{
+  "name": "hami-vue2-admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "哈密煤运廊道一体管控平台 · 汽运详设新页面（Vue2 + Element-UI）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "element-ui": "^2.15.14",
+    "vue": "^2.7.16",
+    "vue-router": "^3.6.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.3.3",
+    "vite": "^5.4.10"
+  }
+}
