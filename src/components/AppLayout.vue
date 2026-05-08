@@ -3,10 +3,11 @@
     <el-aside class="sidebar" width="220px">
       <div class="brand">
         <div class="brand-title">哈密煤运廊道一体管控平台</div>
-        <div class="brand-subtitle">汽运详设 · 5/16 交付</div>
+        <div class="brand-subtitle">汽运详设</div>
       </div>
       <el-menu
         :default-active="activeMenu"
+        :default-openeds="['budget', 'stats']"
         class="menu"
         :router="true"
         background-color="#1F3A5F"
@@ -113,15 +114,6 @@ export default {
 .menu {
   flex: 1;
   border-right: 0;
-}
-
-.menu >>> .el-submenu__title:hover,
-.menu >>> .el-menu-item:hover {
-  background-color: #2C4A75 !important;
-}
-
-.menu >>> .el-menu-item.is-active {
-  background-color: #409EFF !important;
 }
 
 .page-header {

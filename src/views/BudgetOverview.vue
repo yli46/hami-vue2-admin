@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <!-- 查询卡 -->
-    <el-card class="search-card">
+    <el-card class="search-card" shadow="never">
       <el-form :inline="true" size="small">
         <el-form-item label="业务单元">
           <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
@@ -25,12 +25,12 @@
     </el-card>
 
     <!-- 操作 + 表格 -->
-    <el-card class="table-card">
-      <div class="card-toolbar">
-        <h3>业务单元年度资源池</h3>
+    <el-card class="table-card" shadow="never">
+      <div slot="header" class="card-toolbar">
+        <span>业务单元年度资源池</span>
         <div>
-          <el-button type="primary" icon="el-icon-plus" @click="openCreate">新增</el-button>
-          <el-button icon="el-icon-download">导出</el-button>
+          <el-button type="primary" icon="el-icon-plus" size="small" @click="openCreate">新增</el-button>
+          <el-button icon="el-icon-download" size="small" plain>导出</el-button>
         </div>
       </div>
       <el-table :data="tableData" border stripe size="small">
@@ -53,10 +53,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="updatedAt" label="最近更新" width="150" />
-        <el-table-column label="操作" width="150" align="center">
+        <el-table-column label="操作" width="180" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="mini" @click="openDetail(scope.row)">详情</el-button>
             <el-button type="text" size="mini" @click="openEdit(scope.row)">编辑</el-button>
+            <el-button type="text" size="mini" class="danger-text" @click="confirmDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -70,7 +71,7 @@
       </div>
     </el-card>
 
-    <!-- 新增弹窗（占位） -->
+    <!-- 新增弹窗 -->
     <el-dialog title="新增业务单元资源池" :visible.sync="showCreate" width="520px">
       <el-form :model="form" label-width="120px" size="small">
         <el-form-item label="业务单元">
@@ -131,6 +132,19 @@ export default {
     openEdit(row) {
       this.$message.info(`编辑 ${row.unitName}`)
     },
+    confirmDelete(row) {
+      this.$confirm(
+        `确认删除 ${row.unitName} 的 ${row.year} 年度资源池？删除后已分配数据将一并清理，操作不可恢复。`,
+        '删除确认',
+        {
+          confirmButtonText: '确认删除',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).then(() => {
+        this.$message.success(`已删除 ${row.unitName}（演示，未实际写入）`)
+      }).catch(() => {})
+    },
     formatMoney(v) {
       return v.toLocaleString('zh-CN', { minimumFractionDigits: 0 })
     },
@@ -155,18 +169,15 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-}
-
-.card-toolbar h3 {
-  margin: 0;
-  font-size: 14px;
-  color: #303133;
 }
 
 .warning {
   color: #F56C6C;
   font-weight: 600;
+}
+
+.danger-text {
+  color: #F56C6C;
 }
 
 .pagination {

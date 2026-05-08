@@ -1,31 +1,42 @@
 <template>
-  <div class="home-view">
-    <el-card class="welcome-card">
-      <div class="welcome">
-        <h2>哈密煤运廊道一体管控平台 · 汽运详设</h2>
-        <p class="meta">交付窗口：2026-05-16 / 主负责：李扬 / 基线：互联网事业部 v2 + 增强版</p>
+  <div class="page">
+    <!-- 项目信息卡 -->
+    <el-card class="info-card" shadow="never">
+      <div slot="header" class="card-header">
+        <span>项目信息</span>
       </div>
+      <el-descriptions :column="2" size="small" border>
+        <el-descriptions-item label="平台名称">哈密煤运廊道一体管控平台</el-descriptions-item>
+        <el-descriptions-item label="本期范围">汽运业务详细设计</el-descriptions-item>
+        <el-descriptions-item label="交付窗口">2026-05-16</el-descriptions-item>
+        <el-descriptions-item label="主负责">李扬</el-descriptions-item>
+        <el-descriptions-item label="基线">互联网事业部 v2 + 增强版</el-descriptions-item>
+        <el-descriptions-item label="集成口数">5 路（陇能 / 民太安 / 柳汽 / ETC / 中石化加气站）</el-descriptions-item>
+      </el-descriptions>
     </el-card>
 
-    <div class="grid">
-      <el-card v-for="item in modules" :key="item.path" class="module-card" shadow="hover" @click.native="$router.push(item.path)">
-        <div class="module-header">
-          <span class="module-code">{{ item.code }}</span>
-          <span class="module-status" :class="`status-${item.status}`">{{ item.statusLabel }}</span>
-        </div>
-        <div class="module-name">{{ item.name }}</div>
-        <div class="module-desc">{{ item.desc }}</div>
-      </el-card>
-    </div>
-
-    <el-card class="info-card">
-      <div slot="header"><b>说明</b></div>
-      <ul class="notes">
-        <li>本仓库挂在主域名 <code>/freight/</code> 子路径下，老仓库 hami-vue-admin 保留所有历史汽运资料和密码门页面</li>
-        <li>本期不含廊道、加氢站；7 路集成口已收敛为 5 路（陇能 / 民太安 / 柳汽 / 山东高速 / 中石化加气站）</li>
-        <li>134/135/136 财务规则待《核算处理-财务信息收集表》业主回填后补全</li>
-        <li>页面占位会按 PRD 草稿陆续填充</li>
-      </ul>
+    <!-- 模块清单 -->
+    <el-card class="module-card" shadow="never">
+      <div slot="header" class="card-header">
+        <span>模块清单</span>
+        <span class="muted">共 {{ modules.length }} 项 / 本期排除廊道 / 加氢站</span>
+      </div>
+      <el-table :data="modules" size="small" border :row-class-name="rowClass">
+        <el-table-column prop="code" label="编号" width="80" align="center" />
+        <el-table-column prop="domain" label="所属域" width="120" />
+        <el-table-column prop="name" label="模块名称" width="160" />
+        <el-table-column prop="desc" label="说明" min-width="280" />
+        <el-table-column prop="status" label="状态" width="120" align="center">
+          <template slot-scope="scope">
+            <el-tag :type="statusTagType(scope.row.status)" size="mini">{{ scope.row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" align="center">
+          <template slot-scope="scope">
+            <el-button type="text" size="mini" @click="$router.push(scope.row.path)">进入</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </el-card>
   </div>
 </template>
@@ -36,117 +47,54 @@ export default {
   data() {
     return {
       modules: [
-        { code: '132', name: '概算管理', desc: '业务单元年度资源池切分', path: '/budget/overview', status: 'in-progress', statusLabel: '设计中' },
-        { code: '133', name: '预算编制', desc: '年度/季度收支预算 + 多级审批', path: '/budget/edit', status: 'in-progress', statusLabel: '设计中' },
-        { code: '134', name: '核算处理', desc: '成本归集 / 预算前控 / 预警', path: '/cost-accounting', status: 'pending', statusLabel: '待业主回填' },
-        { code: '135', name: '决算分析', desc: '期末汇总 / 利润核算 / 报告', path: '/decision-analysis', status: 'pending', statusLabel: '待业主回填' },
-        { code: '136', name: '预算目标协同', desc: '预算分解 + 实际归集 + 联动', path: '/budget/coordination', status: 'pending', statusLabel: '待业主回填' },
-        { code: '140', name: '车辆运营统计', desc: '出勤 / 空驶 / 周转 / 单车利润', path: '/stats/fleet', status: 'in-progress', statusLabel: '设计中' },
-        { code: '141', name: '运营统计', desc: '线路利润 / 货运总量 / 货损率', path: '/stats/ops', status: 'in-progress', statusLabel: '设计中' },
-        { code: '142', name: '司机绩效统计', desc: '出勤 / 气耗 / 运损 / 绩效', path: '/stats/driver', status: 'in-progress', statusLabel: '设计中' }
+        { code: '132', domain: '全面预算', name: '概算管理', desc: '业务单元年度资源池切分（车队 / 廊道 / 加氢站；本期仅车队）', path: '/budget/overview', status: '设计中' },
+        { code: '133', domain: '全面预算', name: '预算编制', desc: '年度 / 季度收支预算编制 + 多级审批留痕', path: '/budget/edit', status: '设计中' },
+        { code: '134', domain: '全面预算', name: '核算处理', desc: '成本费用归集 / 预算前控 / 实际比对预警（按 0424 喻总要求）', path: '/cost-accounting', status: '待业主回填' },
+        { code: '135', domain: '全面预算', name: '决算分析', desc: '期末汇总 / 利润核算 / 决算报告', path: '/decision-analysis', status: '待业主回填' },
+        { code: '136', domain: '全面预算', name: '预算目标协同', desc: '预算分解到业务单元 + 实际归集 + 联动', path: '/budget/coordination', status: '待业主回填' },
+        { code: '140', domain: '统计分析', name: '车辆运营统计', desc: '出勤 / 空驶 / 周转 / 单车利润', path: '/stats/fleet', status: '设计中' },
+        { code: '141', domain: '统计分析', name: '运营统计', desc: '线路利润 / 货运总量 / 货损率 / 业财穿透', path: '/stats/ops', status: '设计中' },
+        { code: '142', domain: '统计分析', name: '司机绩效统计', desc: '出勤 / 气耗 / 运损 / 绩效考核', path: '/stats/driver', status: '设计中' }
       ]
+    }
+  },
+  methods: {
+    statusTagType(s) {
+      if (s === '设计中') return ''
+      if (s === '待业主回填') return 'warning'
+      if (s === '已完成') return 'success'
+      return 'info'
+    },
+    rowClass({ row }) {
+      return ''
     }
   }
 }
 </script>
 
 <style scoped>
-.home-view {
+.page {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.welcome-card {
+.info-card,
+.module-card {
   border: 1px solid #DCDFE6;
 }
 
-.welcome h2 {
-  margin: 0 0 8px 0;
-  color: #24558A;
-  font-size: 18px;
-}
-
-.welcome .meta {
-  color: #606266;
-  font-size: 13px;
-  margin: 0;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-}
-
-.module-card {
-  cursor: pointer;
-  transition: transform 0.15s;
-}
-
-.module-card:hover {
-  transform: translateY(-2px);
-}
-
-.module-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-}
-
-.module-code {
-  font-weight: 600;
-  color: #409EFF;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-}
-
-.module-status {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 2px;
-}
-
-.status-in-progress {
-  background: #E1F3D8;
-  color: #67C23A;
-}
-
-.status-pending {
-  background: #FAECD8;
-  color: #E6A23C;
-}
-
-.module-name {
-  font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: #303133;
-  margin-bottom: 6px;
 }
 
-.module-desc {
+.muted {
   font-size: 12px;
   color: #909399;
-  line-height: 1.5;
-}
-
-.info-card {
-  border: 1px solid #DCDFE6;
-}
-
-.notes {
-  margin: 0;
-  padding-left: 20px;
-  line-height: 2;
-  color: #606266;
-  font-size: 13px;
-}
-
-.notes code {
-  background: #F0F2F5;
-  padding: 1px 6px;
-  border-radius: 2px;
-  font-family: monospace;
+  font-weight: normal;
 }
 </style>
