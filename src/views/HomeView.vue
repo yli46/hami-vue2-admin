@@ -47,11 +47,11 @@ export default {
   data() {
     return {
       modules: [
-        { code: '132', domain: '全面预算', name: '概算管理', desc: '业务单元年度资源池切分（车队 / 廊道 / 加氢站；本期仅车队）', path: '/budget/overview', status: '设计中' },
-        { code: '133', domain: '全面预算', name: '预算编制', desc: '年度 / 季度收支预算编制 + 多级审批留痕', path: '/budget/edit', status: '设计中' },
-        { code: '134', domain: '全面预算', name: '核算处理', desc: '成本费用归集 / 预算前控 / 实际比对预警（按 0424 喻总要求）', path: '/cost-accounting', status: '待业主回填' },
-        { code: '135', domain: '全面预算', name: '决算分析', desc: '期末汇总 / 利润核算 / 决算报告', path: '/decision-analysis', status: '待业主回填' },
-        { code: '136', domain: '全面预算', name: '预算目标协同', desc: '预算分解到业务单元 + 实际归集 + 联动', path: '/budget/coordination', status: '待业主回填' },
+        { code: '132', domain: '全面预算', name: '概算管理', desc: '业务单元年度资源池切分（本期仅车队；廊道 / 加氢站排除）', path: '/budget/overview', status: '原型就绪' },
+        { code: '133', domain: '全面预算', name: '预算编制', desc: '年度 / 季度收支预算编制 + 多级审批 + Excel 导入', path: '/budget/edit', status: '原型就绪' },
+        { code: '134', domain: '全面预算', name: '核算处理', desc: '主营业务直接成本归集 + 预算前控 + 预警（含趟结归口 / 备用金 / 手动录入）', path: '/cost-accounting', status: '原型就绪' },
+        { code: '135', domain: '全面预算', name: '决算分析', desc: '期末汇总 / 利润核算 / 决算报告 + 关账', path: '/decision-analysis', status: '原型就绪' },
+        { code: '136', domain: '全面预算', name: '预算目标协同', desc: '预算分解到业务单元 + 实际归集 + 双维度切分', path: '/budget/coordination', status: '原型就绪' },
         { code: '140', domain: '统计分析', name: '车辆运营统计', desc: '出勤 / 空驶 / 周转 / 单车利润', path: '/stats/fleet', status: '设计中' },
         { code: '141', domain: '统计分析', name: '运营统计', desc: '线路利润 / 货运总量 / 货损率 / 业财穿透', path: '/stats/ops', status: '设计中' },
         { code: '142', domain: '统计分析', name: '司机绩效统计', desc: '出勤 / 气耗 / 运损 / 绩效考核', path: '/stats/driver', status: '设计中' }
@@ -61,6 +61,7 @@ export default {
   methods: {
     statusTagType(s) {
       if (s === '设计中') return ''
+      if (s === '原型就绪') return 'success'
       if (s === '待业主回填') return 'warning'
       if (s === '已完成') return 'success'
       return 'info'

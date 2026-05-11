@@ -1,69 +1,70 @@
 <template>
-  <div class="placeholder">
-    <el-card>
-      <div class="empty">
-        <i class="el-icon-document"></i>
-        <h3>{{ pageTitle }}</h3>
-        <p class="meta">模块编号：{{ moduleCode }}</p>
-        <p class="status">{{ status }}</p>
-        <ul class="todo">
-          <li v-for="item in todos" :key="item">{{ item }}</li>
-        </ul>
+  <div class="page">
+    <el-card class="scope-note" shadow="never">
+      <div class="scope-content">
+        <strong>本期范围（经 5/10 与卢总确认）</strong>：聚焦汽运主营业务直接成本（燃料 / 路桥 / 趟结 / 维保 / 折旧 / 保险 / 加气结算）。不含综合费用、办公分摊、跨部门行政分摊。边缘场景由手动录入兜底。
       </div>
     </el-card>
+
+    <el-tabs v-model="activeTab" type="card" class="cost-tabs">
+      <el-tab-pane label="吨公里成本看板" name="dashboard">
+        <cost-dashboard v-if="activeTab === 'dashboard'" />
+      </el-tab-pane>
+      <el-tab-pane label="预算执行预警" name="alerts">
+        <cost-alerts v-if="activeTab === 'alerts'" />
+      </el-tab-pane>
+      <el-tab-pane label="趟结工资台账" name="tang-jie">
+        <cost-tang-jie v-if="activeTab === 'tang-jie'" />
+      </el-tab-pane>
+      <el-tab-pane label="安技部备用金" name="reserve">
+        <cost-reserve v-if="activeTab === 'reserve'" />
+      </el-tab-pane>
+      <el-tab-pane name="manual">
+        <span slot="label"><i class="el-icon-edit-outline"></i> 手动录入</span>
+        <cost-manual v-if="activeTab === 'manual'" />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
 <script>
+import CostDashboard from './CostAccounting/Dashboard.vue'
+import CostAlerts from './CostAccounting/Alerts.vue'
+import CostTangJie from './CostAccounting/TangJie.vue'
+import CostReserve from './CostAccounting/Reserve.vue'
+import CostManual from './CostAccounting/Manual.vue'
+
 export default {
   name: 'CostAccounting',
-  computed: {
-    pageTitle() { return this.$route.meta?.title },
-    moduleCode() { return this.$route.meta?.module }
-  },
+  components: { CostDashboard, CostAlerts, CostTangJie, CostReserve, CostManual },
   data() {
     return {
-      status: '待业主回填《核算处理-财务信息收集表》',
-      todos: ["已发收集表给马伶俐 + 车队财务，期望 5/13 回填", "基础页面框架 5/14 起着手", "财务规则（分摊算法 / 预警 / 关账）等回填后跑《财务规则建模》SKILL"]
+      activeTab: 'dashboard'
     }
   }
 }
 </script>
 
 <style scoped>
-.placeholder {
-  max-width: 720px;
-  margin: 0 auto;
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.empty {
-  text-align: center;
-  padding: 40px 20px;
+
+.scope-note {
+  border: 1px solid #DCDFE6;
+  background: #FAFBFC;
+}
+
+.scope-content {
+  font-size: 12px;
   color: #606266;
+  line-height: 1.7;
 }
-.empty i {
-  font-size: 48px;
-  color: #C0C4CC;
-}
-.empty h3 {
-  margin: 16px 0 8px;
+
+.scope-content strong {
   color: #303133;
-}
-.meta {
-  color: #909399;
-  font-size: 13px;
-  margin: 0;
-}
-.status {
-  color: #E6A23C;
-  font-size: 13px;
-  margin-top: 12px;
-}
-.todo {
-  text-align: left;
-  max-width: 480px;
-  margin: 16px auto 0;
-  color: #606266;
-  font-size: 13px;
-  line-height: 2;
+  margin-right: 6px;
 }
 </style>
