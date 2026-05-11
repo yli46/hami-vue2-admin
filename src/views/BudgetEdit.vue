@@ -72,7 +72,7 @@
       </div>
     </el-card>
 
-    <el-dialog title="新增预算" :visible.sync="showCreate" width="980px">
+    <el-dialog :title="isEdit ? '编辑预算' : '新增预算'" :visible.sync="showCreate" width="980px">
       <el-form :model="form" label-width="100px" size="small">
         <el-row :gutter="16">
           <el-col :span="8">
@@ -126,6 +126,29 @@
       </span>
     </el-dialog>
 
+    <el-dialog :title="`${currentRow.unit} ${currentRow.period} - 版本历史`" :visible.sync="showVersion" width="720px">
+      <el-table :data="versionHistory" border size="small">
+        <el-table-column prop="version" label="版本号" width="110" align="center" />
+        <el-table-column prop="totalBudget" label="预算总额" width="130" align="right">
+          <template slot-scope="scope">¥ {{ formatMoney(scope.row.totalBudget) }}</template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100" align="center">
+          <template slot-scope="scope">
+            <el-tag :type="statusTag(scope.row.status)" size="mini">{{ statusLabel(scope.row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="editor" label="编制人" width="100" align="center" />
+        <el-table-column prop="reviewedBy" label="审批人" width="120" align="center" />
+        <el-table-column prop="changeLog" label="变更说明" min-width="200" />
+        <el-table-column prop="updatedAt" label="时间" width="150" />
+        <el-table-column label="操作" width="120" align="center">
+          <template slot-scope="scope">
+            <el-button type="text" size="mini" @click="diffVersion(scope.row)">对比</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
     <el-dialog title="Excel 导入" :visible.sync="showImport" width="520px">
       <div class="import-area">
         <el-upload
@@ -169,6 +192,15 @@ export default {
       months: MONTHS,
       showCreate: false,
       showImport: false,
+      showVersion: false,
+      isEdit: false,
+      currentRow: { unit: '', period: '' },
+      versionHistory: [
+        { version: 'v2.0 终版', totalBudget: 8500000, status: 'effective', editor: '马伶俐', reviewedBy: '财务总监', changeLog: '一级审批反馈：燃料预算上调 3%', updatedAt: '2026-04-28 16:00' },
+        { version: 'v1.2', totalBudget: 8245000, status: 'rejected', editor: '马伶俐', reviewedBy: '车队长', changeLog: '财务总监驳回，要求燃料预算上调', updatedAt: '2026-04-22 11:30' },
+        { version: 'v1.1', totalBudget: 8120000, status: 'rejected', editor: '马伶俐', reviewedBy: '车队长', changeLog: '车队长驳回，要求重新评估趟结工资基准', updatedAt: '2026-04-18 09:45' },
+        { version: 'v1.0 草案', totalBudget: 8050000, status: 'rejected', editor: '马伶俐', reviewedBy: '—', changeLog: '初稿', updatedAt: '2026-04-15 17:20' }
+      ],
       form: {
         unit: '',
         period: '2026',
@@ -194,7 +226,24 @@ export default {
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
     reset() { this.query = { unit: '', year: '2026', status: '' } },
-    openCreate() { this.showCreate = true },
+    openCreate() {
+      this.isEdit = false
+      this.form = {
+        unit: '',
+        period: '2026',
+        version: 'v1.0 草案',
+        details: [
+          { account: 'LNG 燃料费', ...zeros() },
+          { account: '路桥费', ...zeros() },
+          { account: '司机趟结工资', ...zeros() },
+          { account: '司机基本工资', ...zeros() },
+          { account: '车辆维保费', ...zeros() },
+          { account: '车辆折旧', ...zeros() },
+          { account: '车辆保险', ...zeros() }
+        ]
+      }
+      this.showCreate = true
+    },
     openImport() { this.showImport = true },
     onImportFile() { this.$message.info('文件已选择') },
     doImport() {
@@ -209,8 +258,39 @@ export default {
       this.$message.success('已提交审批，进入一级（车队长）审批环节（演示）')
       this.showCreate = false
     },
-    edit(row) { this.$message.info(`编辑 ${row.unit} ${row.period}`) },
-    viewVersion(row) { this.$message.info(`查看 ${row.unit} 版本历史`) },
+    edit(row) {
+      this.isEdit = true
+      this.currentRow = row
+      const detailRows = [
+        { account: 'LNG 燃料费', ...this.distributeMonthly(row.totalBudget * 0.32) },
+        { account: '路桥费', ...this.distributeMonthly(row.totalBudget * 0.18) },
+        { account: '司机趟结工资', ...this.distributeMonthly(row.totalBudget * 0.22) },
+        { account: '司机基本工资', ...this.distributeMonthly(row.totalBudget * 0.06) },
+        { account: '车辆维保费', ...this.distributeMonthly(row.totalBudget * 0.08) },
+        { account: '车辆折旧', ...this.distributeMonthly(row.totalBudget * 0.12) },
+        { account: '车辆保险', ...this.distributeMonthly(row.totalBudget * 0.02) }
+      ]
+      this.form = {
+        unit: row.unit === '车队 1' ? 'fleet1' : 'fleet2',
+        period: row.period.includes('全年') ? '2026' : row.period,
+        version: row.version,
+        details: detailRows
+      }
+      this.showCreate = true
+    },
+    distributeMonthly(total) {
+      const obj = {}
+      const perMonth = Math.round(total / 12)
+      MONTHS.forEach(m => obj[m] = perMonth)
+      return obj
+    },
+    viewVersion(row) {
+      this.currentRow = row
+      this.showVersion = true
+    },
+    diffVersion(row) {
+      this.$message.info(`对比版本 ${row.version} 与当前版本（演示，由后端实现差异对比）`)
+    },
     submitReview(row) {
       this.$confirm(`确认将 ${row.unit} ${row.period} ${row.version} 提交审批？`, '提交确认', {
         confirmButtonText: '提交',

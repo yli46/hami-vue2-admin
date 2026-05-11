@@ -133,6 +133,28 @@
         <el-button type="primary" @click="submitApply">提交</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog :title="`备用金详情 - ${currentRow.scenario}`" :visible.sync="showDetail" width="640px">
+      <el-descriptions :column="2" size="small" border>
+        <el-descriptions-item label="场景">{{ currentRow.scenario }}</el-descriptions-item>
+        <el-descriptions-item label="申领时间">{{ currentRow.applyTime }}</el-descriptions-item>
+        <el-descriptions-item label="对象">{{ currentRow.driverOrFleet }}</el-descriptions-item>
+        <el-descriptions-item label="金额">¥ {{ formatMoney(currentRow.amount) }}</el-descriptions-item>
+        <el-descriptions-item label="审批人">{{ currentRow.approver }}</el-descriptions-item>
+        <el-descriptions-item label="核销截止">{{ currentRow.dueDate }}</el-descriptions-item>
+        <el-descriptions-item label="状态" :span="2">
+          <el-tag :type="statusTag(currentRow.status)" size="mini">{{ statusLabel(currentRow.status) }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="申领事由" :span="2">{{ currentRow.reason }}</el-descriptions-item>
+      </el-descriptions>
+      <el-divider content-position="left">处理流程</el-divider>
+      <el-table :data="processFlow" border size="small">
+        <el-table-column prop="time" label="时间" width="150" />
+        <el-table-column prop="actor" label="操作人" width="120" align="center" />
+        <el-table-column prop="action" label="动作" width="120" align="center" />
+        <el-table-column prop="note" label="说明" min-width="180" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -143,7 +165,15 @@ export default {
     return {
       query: { month: '2026-04', scenario: '', status: '' },
       showApply: false,
+      showDetail: false,
+      currentRow: {},
       applyForm: { scenario: '', target: '', amount: 1000, reason: '', level: 'single' },
+      processFlow: [
+        { time: '2026-04-08 22:30', actor: '张永刚', action: '提交申领', note: '车辆抛锚现场拍照上传' },
+        { time: '2026-04-08 22:42', actor: '车队 1 车队长', action: '一级签字', note: '同意，紧急情况' },
+        { time: '2026-04-08 23:05', actor: '安技部主任', action: '二级签字', note: '同意拨款 5000 元' },
+        { time: '2026-04-15 16:30', actor: '车队 1 财务', action: '核销', note: '维修发票 + 拖车票据齐全，金额一致' }
+      ],
       tableData: [
         { applyTime: '2026-04-08 22:30', scenario: '车辆抛锚救援', driverOrFleet: '张永刚 / 车队 1', amount: 5000, reason: '京新高速 K3580 处车辆故障，现场维修+拖车', approver: '车队长 + 安技部', status: 'cleared', dueDate: '2026-04-15' },
         { applyTime: '2026-04-15 14:20', scenario: '医疗应急', driverOrFleet: '李建华 / 车队 1', amount: 2000, reason: '司机感冒就医', approver: '安技部主任', status: 'cleared', dueDate: '2026-04-18' },
@@ -161,7 +191,10 @@ export default {
       this.$message.success('已提交申领（演示）')
       this.showApply = false
     },
-    viewDetail(row) { this.$message.info(`查看 ${row.scenario} 详情`) },
+    viewDetail(row) {
+      this.currentRow = row
+      this.showDetail = true
+    },
     clearOff(row) {
       this.$prompt('核销说明（凭据上传由后端实现）', '核销备用金', {
         confirmButtonText: '核销',

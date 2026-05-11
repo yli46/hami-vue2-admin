@@ -100,6 +100,38 @@
       </div>
     </el-card>
 
+    <el-dialog :title="`调整 ${current.driverName} 趟结`" :visible.sync="showAdjust" width="540px">
+      <el-form :model="adjustForm" label-width="100px" size="small">
+        <el-form-item label="司机">
+          <span>{{ current.driverName }}（{{ current.driverNo }}）</span>
+        </el-form-item>
+        <el-form-item label="原应发金额">
+          <span>¥ {{ formatMoney(currentTotal) }}</span>
+        </el-form-item>
+        <el-form-item label="调整类型">
+          <el-radio-group v-model="adjustForm.type">
+            <el-radio label="bonus">奖励</el-radio>
+            <el-radio label="penalty">扣减</el-radio>
+            <el-radio label="correction">数据更正</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="调整金额">
+          <el-input-number v-model="adjustForm.amount" :step="100" />
+          <span style="margin-left: 8px; color: #606266;">元（正数=增 / 负数=减）</span>
+        </el-form-item>
+        <el-form-item label="调整原因">
+          <el-input v-model="adjustForm.reason" type="textarea" :rows="3" placeholder="必填" />
+        </el-form-item>
+      </el-form>
+      <div class="dialog-note">
+        调整后需车队长 + 财务双签生效。调整金额超 ¥500 自动触发审批工作流。
+      </div>
+      <span slot="footer">
+        <el-button @click="showAdjust = false">取消</el-button>
+        <el-button type="primary" @click="submitAdjust">提交</el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog :title="`${current.driverName} - 杂费归口明细`" :visible.sync="showDetail" width="640px">
       <el-table :data="miscDetailData" border size="small">
         <el-table-column prop="date" label="日期" width="110" />
@@ -130,7 +162,9 @@ export default {
     return {
       query: { month: '2026-04', unit: '', driver: '' },
       showDetail: false,
-      current: { driverName: '' },
+      showAdjust: false,
+      current: { driverName: '', driverNo: '', baseTrip: 0, miscNormalized: 0, bonusOrPenalty: 0 },
+      adjustForm: { type: 'bonus', amount: 0, reason: '' },
       miscDetailData: [
         { date: '2026-04-03', type: '停车费', amount: 30, note: '哈密-淖毛湖线途中停车', normalized: true },
         { date: '2026-04-08', type: '临时加水', amount: 20, note: '夏季高温补水', normalized: true },
@@ -156,8 +190,21 @@ export default {
       this.current = row
       this.showDetail = true
     },
-    adjust(row) { this.$message.info(`调整 ${row.driverName} 趟结`) },
+    adjust(row) {
+      this.current = row
+      this.adjustForm = { type: 'bonus', amount: 0, reason: '' }
+      this.showAdjust = true
+    },
+    submitAdjust() {
+      if (!this.adjustForm.reason) {
+        this.$message.warning('请填写调整原因')
+        return
+      }
+      this.$message.success(`已提交调整（演示）—— ${this.adjustForm.amount > 500 ? '触发审批工作流' : '车队长 + 财务双签'}`)
+      this.showAdjust = false
+    },
     formatMoney(v) { return Number(v).toLocaleString('zh-CN') },
+    currentTotal() { return (this.current.baseTrip || 0) + (this.current.miscNormalized || 0) + (this.current.bonusOrPenalty || 0) },
     statusLabel(s) { return s === 'pending' ? '待审核' : s === 'reviewing' ? '审核中' : '已发放' },
     statusTag(s) { return s === 'pending' ? '' : s === 'reviewing' ? 'warning' : 'success' }
   }

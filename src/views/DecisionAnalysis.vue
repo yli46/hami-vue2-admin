@@ -149,6 +149,78 @@
       </div>
     </el-card>
 
+    <el-dialog :title="`${currentRow.period} 决算报告 — 完整版`" :visible.sync="showReport" width="900px" top="5vh">
+      <div class="report-doc">
+        <div class="report-header">
+          <h2>{{ currentRow.period }} {{ typeLabel(currentRow.type) }}决算报告</h2>
+          <div class="report-meta">
+            <span>编制单位：哈密普发新能源</span>
+            <span>编制日期：{{ currentRow.closedAt || '编制中' }}</span>
+            <span>编制人：马伶俐</span>
+          </div>
+        </div>
+
+        <h3>① 收支总览</h3>
+        <el-descriptions :column="3" size="small" border>
+          <el-descriptions-item label="本期收入">{{ currentRow.revenue }} 万元</el-descriptions-item>
+          <el-descriptions-item label="本期成本">{{ currentRow.cost }} 万元</el-descriptions-item>
+          <el-descriptions-item label="本期毛利"><strong>{{ currentRow.profit }} 万元</strong></el-descriptions-item>
+          <el-descriptions-item label="毛利率">{{ currentRow.profitRate }}</el-descriptions-item>
+          <el-descriptions-item label="预算执行率">{{ currentRow.budgetExec }}</el-descriptions-item>
+          <el-descriptions-item label="同比">+12.4%</el-descriptions-item>
+        </el-descriptions>
+
+        <h3>② 业务单元利润分析</h3>
+        <el-table :data="reportUnitData" border size="small">
+          <el-table-column prop="unit" label="业务单元" min-width="100" />
+          <el-table-column prop="revenue" label="收入（万元）" width="110" align="right" />
+          <el-table-column prop="cost" label="成本（万元）" width="110" align="right" />
+          <el-table-column prop="profit" label="毛利（万元）" width="110" align="right" />
+          <el-table-column prop="profitRate" label="毛利率" width="90" align="right" />
+          <el-table-column prop="contribution" label="毛利贡献占比" width="120" align="right" />
+        </el-table>
+
+        <h3>③ 异常项排查</h3>
+        <el-table :data="reportAnomalies" border size="small">
+          <el-table-column prop="item" label="异常项" min-width="180" />
+          <el-table-column prop="impact" label="财务影响（万元）" width="150" align="right" />
+          <el-table-column prop="closed" label="处置闭环" width="100" align="center">
+            <template slot-scope="scope">
+              <el-tag size="mini" :type="scope.row.closed ? 'success' : 'warning'">
+                {{ scope.row.closed ? '已闭环' : '处置中' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="owner" label="责任人" width="100" align="center" />
+        </el-table>
+
+        <h3>④ 预算执行偏差分析</h3>
+        <el-table :data="reportBudgetVariance" border size="small">
+          <el-table-column prop="account" label="科目" min-width="120" />
+          <el-table-column prop="budget" label="预算（万元）" width="110" align="right" />
+          <el-table-column prop="actual" label="实际（万元）" width="110" align="right" />
+          <el-table-column prop="variance" label="偏差（万元）" width="110" align="right" />
+          <el-table-column prop="variancePct" label="偏差率" width="90" align="right" />
+          <el-table-column prop="cause" label="原因" min-width="160" />
+        </el-table>
+
+        <h3>⑤ 下期建议</h3>
+        <ul class="report-suggestions">
+          <li>LNG 燃料费偏高，建议下期与中石化重新议价或调整路线优先级</li>
+          <li>车辆维保费突增车辆需重点核查（车队 2 部分车）</li>
+          <li>司机趟结归口规则待细化（待马总回填表 3 后）</li>
+        </ul>
+
+        <div class="report-footnote">
+          说明：本报告为决算系统自动生成模板。具体章节结构、字段定义、排版风格 → 待业主回填《核算处理-财务信息收集表》表 6 后定稿。
+        </div>
+      </div>
+      <span slot="footer">
+        <el-button @click="showReport = false">关闭</el-button>
+        <el-button type="primary" icon="el-icon-download" @click="downloadReport">下载 Word</el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog title="新建决算" :visible.sync="showCreate" width="520px">
       <el-form :model="form" label-width="100px" size="small">
         <el-form-item label="周期类型">
@@ -206,8 +278,26 @@ export default {
       query: { type: '', dateRange: [], unit: '' },
       showCreate: false,
       showLock: false,
+      showReport: false,
+      currentRow: {},
       form: { type: 'monthly', period: '', unit: 'all' },
       lockForm: { period: '', lockTime: '', note: '' },
+      reportUnitData: [
+        { unit: '车队 1', revenue: '932', cost: '802', profit: '130', profitRate: '13.9%', contribution: '53.3%' },
+        { unit: '车队 2', revenue: '824', cost: '710', profit: '114', profitRate: '13.8%', contribution: '46.7%' }
+      ],
+      reportAnomalies: [
+        { item: 'LNG 燃料费占比超阈值（+2.0 pp）', impact: '-32.6', closed: false, owner: '马伶俐' },
+        { item: '车队 2 维保费突增', impact: '-12.4', closed: true, owner: '车队 2 财务' },
+        { item: '司机趟结环比异常（+18%）', impact: '-8.2', closed: true, owner: '马伶俐' }
+      ],
+      reportBudgetVariance: [
+        { account: 'LNG 燃料费', budget: '530', actual: '562', variance: '+32', variancePct: '+6.0%', cause: '4 月气价上涨 8%' },
+        { account: '路桥费', budget: '316', actual: '273', variance: '-43', variancePct: '-13.6%', cause: '部分线路优化' },
+        { account: '司机趟结', budget: '388', actual: '326', variance: '-62', variancePct: '-16.0%', cause: '春节后部分司机调休' },
+        { account: '车辆维保', budget: '141', actual: '142', variance: '+1', variancePct: '+0.7%', cause: '正常' },
+        { account: '车辆折旧', budget: '212', actual: '157', variance: '-55', variancePct: '-25.9%', cause: '部分车辆未提折旧' }
+      ],
       tableData: [
         { period: '2026-04', type: 'monthly', revenue: '1,756', cost: '1,512', profit: '244', profitRate: '13.9%', budgetExec: '102.3%', lockStatus: 'open', closedAt: '—' },
         { period: '2026-03', type: 'monthly', revenue: '1,684', cost: '1,453', profit: '231', profitRate: '13.7%', budgetExec: '98.4%', lockStatus: 'locked', closedAt: '2026-04-05 24:00' },
@@ -232,8 +322,16 @@ export default {
         this.showLock = false
       }).catch(() => {})
     },
-    viewReport(row) { this.$message.info(`查看 ${row.period} 决算报告`) },
-    exportReport(row) { this.$message.info(`导出 ${row.period} 决算报告`) },
+    viewReport(row) {
+      this.currentRow = row
+      this.showReport = true
+    },
+    exportReport(row) {
+      this.$message.success(`已导出 ${row.period} 决算报告（演示，由后端生成 Word/PDF）`)
+    },
+    downloadReport() {
+      this.$message.success(`已下载 ${this.currentRow.period} 决算报告 Word 版（演示）`)
+    },
     requestUnlock(row) {
       this.$prompt('解锁原因（必填）', '申请解锁', {
         confirmButtonText: '提交申请',
@@ -341,6 +439,61 @@ export default {
 
 .dialog-note {
   margin: 8px 0;
+  font-size: 12px;
+  color: #909399;
+  background: #FAFBFC;
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid #E4E7ED;
+}
+
+.report-doc {
+  font-size: 13px;
+  color: #303133;
+  line-height: 1.7;
+}
+
+.report-doc h2 {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #24558A;
+  margin: 0 0 8px 0;
+}
+
+.report-doc h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin: 16px 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #E4E7ED;
+}
+
+.report-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #DCDFE6;
+}
+
+.report-meta {
+  display: flex;
+  justify-content: space-around;
+  font-size: 12px;
+  color: #606266;
+  margin-top: 8px;
+}
+
+.report-suggestions {
+  margin: 0;
+  padding-left: 20px;
+  color: #606266;
+  line-height: 2;
+}
+
+.report-footnote {
+  margin-top: 16px;
   font-size: 12px;
   color: #909399;
   background: #FAFBFC;

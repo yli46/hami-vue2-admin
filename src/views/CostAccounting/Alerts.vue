@@ -87,6 +87,58 @@
       </div>
     </el-card>
 
+    <el-dialog :title="`预警详情 - ${currentRow.item}`" :visible.sync="showDetail" width="680px">
+      <el-descriptions :column="2" size="small" border>
+        <el-descriptions-item label="预警项">{{ currentRow.item }}</el-descriptions-item>
+        <el-descriptions-item label="业务单元">{{ currentRow.unit }}</el-descriptions-item>
+        <el-descriptions-item label="预警时间">{{ currentRow.triggerTime }}</el-descriptions-item>
+        <el-descriptions-item label="级别">
+          <el-tag size="mini" :type="currentRow.level === 'red' ? 'danger' : 'warning'">
+            {{ currentRow.level === 'red' ? '红色' : '黄色' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="实际值">{{ currentRow.actualValue }}</el-descriptions-item>
+        <el-descriptions-item label="预算值">{{ currentRow.budgetValue }}</el-descriptions-item>
+        <el-descriptions-item label="偏差">
+          <span class="warning-text">{{ currentRow.variance }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="处置状态">
+          <el-tag :type="statusTag(currentRow.status)" size="mini">{{ statusLabel(currentRow.status) }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="处置人">{{ currentRow.owner || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="阈值">{{ currentRow.threshold || '±5%' }}</el-descriptions-item>
+      </el-descriptions>
+      <el-divider content-position="left">处置历史</el-divider>
+      <el-table :data="actionHistory" border size="small">
+        <el-table-column prop="time" label="时间" width="150" />
+        <el-table-column prop="actor" label="操作人" width="100" align="center" />
+        <el-table-column prop="action" label="动作" width="120" align="center" />
+        <el-table-column prop="note" label="说明" min-width="200" />
+      </el-table>
+    </el-dialog>
+
+    <el-dialog title="添加预警说明" :visible.sync="showNote" width="520px">
+      <el-form :model="noteForm" label-width="80px" size="small">
+        <el-form-item label="预警项">
+          <span>{{ noteForm.item }}</span>
+        </el-form-item>
+        <el-form-item label="说明类型">
+          <el-radio-group v-model="noteForm.type">
+            <el-radio label="cause">偏差原因</el-radio>
+            <el-radio label="ack">已知悉</el-radio>
+            <el-radio label="external">外部因素</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="详细说明">
+          <el-input v-model="noteForm.content" type="textarea" :rows="4" placeholder="如：4 月气价上涨 8%，已超过预算时未考虑" />
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="showNote = false">取消</el-button>
+        <el-button type="primary" @click="submitNote">提交说明</el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog title="预警处置" :visible.sync="showHandle" width="560px">
       <el-form :model="handleForm" label-width="90px" size="small">
         <el-form-item label="预警项">
@@ -124,7 +176,16 @@ export default {
       query: { level: '', unit: '', status: '', dateRange: [] },
       selected: [],
       showHandle: false,
+      showDetail: false,
+      showNote: false,
+      currentRow: {},
       handleForm: { item: '', reason: '', action: 'continue' },
+      noteForm: { item: '', type: 'cause', content: '' },
+      actionHistory: [
+        { time: '2026-04-30 24:00', actor: '系统', action: '触发预警', note: '吨公里成本月度对账触发' },
+        { time: '2026-04-30 24:05', actor: '系统', action: '推送通知', note: '通知车队长 + 业务单元负责人 + 财务' },
+        { time: '2026-04-15 10:30', actor: '马伶俐', action: '接手处置', note: '已申请调整预算' }
+      ],
       tableData: [
         { triggerTime: '2026-04-30 24:00', item: 'LNG 燃料费占比超阈值', unit: '车队 1', actualValue: '32.0%', budgetValue: '30.0%', variance: '+2.0 pp', level: 'yellow', status: 'pending', owner: '—' },
         { triggerTime: '2026-04-30 24:00', item: '车辆维保费占比超阈值', unit: '车队 1', actualValue: '9.0%', budgetValue: '8.0%', variance: '+1.0 pp', level: 'yellow', status: 'pending', owner: '—' },
@@ -145,15 +206,29 @@ export default {
       }
       this.$message.success(`已标记 ${this.selected.length} 条为已读`)
     },
-    viewDetail(row) { this.$message.info(`查看 ${row.item} 详情`) },
+    viewDetail(row) {
+      this.currentRow = row
+      this.showDetail = true
+    },
     handle(row) {
       this.handleForm = { item: row.item, reason: '', action: 'continue' }
       this.showHandle = true
     },
-    addNote(row) { this.$message.info(`为 ${row.item} 添加说明`) },
+    addNote(row) {
+      this.noteForm = { item: row.item, type: 'cause', content: '' }
+      this.showNote = true
+    },
     submitHandle() {
       this.$message.success('处置已提交（演示）')
       this.showHandle = false
+    },
+    submitNote() {
+      if (!this.noteForm.content) {
+        this.$message.warning('请填写说明内容')
+        return
+      }
+      this.$message.success('说明已添加（演示）')
+      this.showNote = false
     },
     statusLabel(s) {
       return s === 'pending' ? '待处置' : s === 'handling' ? '处置中' : '已闭环'

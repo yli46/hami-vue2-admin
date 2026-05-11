@@ -22,10 +22,9 @@
         <span class="muted">共 {{ modules.length }} 项 / 本期排除廊道 / 加氢站</span>
       </div>
       <el-table :data="modules" size="small" border :row-class-name="rowClass">
-        <el-table-column prop="code" label="编号" width="80" align="center" />
         <el-table-column prop="domain" label="所属域" width="120" />
-        <el-table-column prop="name" label="模块名称" width="160" />
-        <el-table-column prop="desc" label="说明" min-width="280" />
+        <el-table-column prop="name" label="模块名称" width="180" />
+        <el-table-column prop="desc" label="说明" min-width="320" />
         <el-table-column prop="status" label="状态" width="120" align="center">
           <template slot-scope="scope">
             <el-tag :type="statusTagType(scope.row.status)" size="mini">{{ scope.row.status }}</el-tag>
@@ -47,14 +46,14 @@ export default {
   data() {
     return {
       modules: [
-        { code: '132', domain: '全面预算', name: '概算管理', desc: '业务单元年度资源池切分（本期仅车队；廊道 / 加氢站排除）', path: '/budget/overview', status: '原型就绪' },
-        { code: '133', domain: '全面预算', name: '预算编制', desc: '年度 / 季度收支预算编制 + 多级审批 + Excel 导入', path: '/budget/edit', status: '原型就绪' },
-        { code: '134', domain: '全面预算', name: '核算处理', desc: '主营业务直接成本归集 + 预算前控 + 预警（含趟结归口 / 备用金 / 手动录入）', path: '/cost-accounting', status: '原型就绪' },
-        { code: '135', domain: '全面预算', name: '决算分析', desc: '期末汇总 / 利润核算 / 决算报告 + 关账', path: '/decision-analysis', status: '原型就绪' },
-        { code: '136', domain: '全面预算', name: '预算目标协同', desc: '预算分解到业务单元 + 实际归集 + 双维度切分', path: '/budget/coordination', status: '原型就绪' },
-        { code: '140', domain: '统计分析', name: '车辆运营统计', desc: '出勤 / 空驶 / 周转 / 单车利润', path: '/stats/fleet', status: '设计中' },
-        { code: '141', domain: '统计分析', name: '运营统计', desc: '线路利润 / 货运总量 / 货损率 / 业财穿透', path: '/stats/ops', status: '设计中' },
-        { code: '142', domain: '统计分析', name: '司机绩效统计', desc: '出勤 / 气耗 / 运损 / 绩效考核', path: '/stats/driver', status: '设计中' }
+        { domain: '全面预算', name: '概算管理', desc: '业务单元年度资源池切分（本期仅车队；廊道 / 加氢站排除）', path: '/budget/overview', status: '原型就绪' },
+        { domain: '全面预算', name: '预算编制', desc: '年度 / 季度收支预算编制 + 多级审批 + Excel 导入', path: '/budget/edit', status: '原型就绪' },
+        { domain: '全面预算', name: '核算处理', desc: '主营业务直接成本归集 + 预算前控 + 预警（含趟结归口 / 备用金 / 手动录入）', path: '/cost-accounting', status: '原型就绪' },
+        { domain: '全面预算', name: '决算分析', desc: '期末汇总 / 利润核算 / 决算报告 + 关账', path: '/decision-analysis', status: '原型就绪' },
+        { domain: '全面预算', name: '预算目标协同', desc: '预算分解到业务单元 + 实际归集 + 双维度切分', path: '/budget/coordination', status: '原型就绪' },
+        { domain: '统计分析', name: '车辆运营统计', desc: '单车指标 + 在营率 / 月度毛利 / 气耗 / 杂费监控 / OCR 识别率', path: '/stats/fleet', status: '原型就绪' },
+        { domain: '统计分析', name: '运营统计', desc: '路线运营 + 业财穿透六分量 + 业财健康度指数', path: '/stats/ops', status: '原型就绪' },
+        { domain: '统计分析', name: '司机绩效统计', desc: '司机评分 / 气耗 / 时效 / 违规 / 视频录入合规率', path: '/stats/driver', status: '原型就绪' }
       ]
     }
   },

@@ -112,6 +112,47 @@
       </el-table>
     </el-card>
 
+    <el-dialog :title="`${currentRow.name} - 下钻明细`" :visible.sync="showDrill" width="900px" top="6vh">
+      <el-descriptions :column="3" size="small" border>
+        <el-descriptions-item :label="query.dim === 'unit' ? '业务单元' : '费用科目'">{{ currentRow.name }}</el-descriptions-item>
+        <el-descriptions-item label="预算">¥ {{ currentRow.budget }} 万</el-descriptions-item>
+        <el-descriptions-item label="累计实际">¥ {{ currentRow.actualYTD }} 万</el-descriptions-item>
+        <el-descriptions-item label="执行率">{{ currentRow.execPct }}%</el-descriptions-item>
+        <el-descriptions-item label="同期目标">{{ currentRow.targetPct }}%</el-descriptions-item>
+        <el-descriptions-item label="偏差">{{ (currentRow.execPct - currentRow.targetPct).toFixed(1) }} pp</el-descriptions-item>
+      </el-descriptions>
+
+      <el-divider content-position="left">按月度细化（2026 年）</el-divider>
+      <el-table :data="drillMonthly" border size="small">
+        <el-table-column prop="month" label="月份" width="80" align="center" />
+        <el-table-column prop="budget" label="月度预算" width="120" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.budget }} 万</template>
+        </el-table-column>
+        <el-table-column prop="actual" label="月度实际" width="120" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.actual }} 万</template>
+        </el-table-column>
+        <el-table-column prop="execPct" label="执行率" width="100" align="right">
+          <template slot-scope="scope">{{ scope.row.execPct }}%</template>
+        </el-table-column>
+        <el-table-column prop="variance" label="偏差（万元）" width="120" align="right">
+          <template slot-scope="scope">
+            <span :class="{ 'warning-text': Math.abs(scope.row.variance) > 30 }">{{ scope.row.variance > 0 ? '+' : '' }}{{ scope.row.variance }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="note" label="备注" min-width="200" />
+      </el-table>
+
+      <el-divider content-position="left">数据来源拆解</el-divider>
+      <el-table :data="drillSources" border size="small">
+        <el-table-column prop="source" label="数据源" min-width="160" />
+        <el-table-column prop="module" label="所属模块" width="120" align="center" />
+        <el-table-column prop="amount" label="本期金额（万元）" width="150" align="right" />
+        <el-table-column prop="share" label="占比" width="80" align="right">
+          <template slot-scope="scope">{{ scope.row.share }}%</template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
     <el-card class="data-flow" shadow="never">
       <div slot="header">
         <span>数据来源说明</span>
@@ -132,6 +173,21 @@ export default {
   data() {
     return {
       query: { month: '2026-04', dim: 'unit', unit: '' },
+      showDrill: false,
+      currentRow: {},
+      drillMonthly: [
+        { month: '1月', budget: '708', actual: '685', execPct: 96.8, variance: -23, note: '正常' },
+        { month: '2月', budget: '708', actual: '632', execPct: 89.3, variance: -76, note: '春节运量略降' },
+        { month: '3月', budget: '708', actual: '720', execPct: 101.7, variance: 12, note: '业务恢复' },
+        { month: '4月', budget: '708', actual: '745', execPct: 105.2, variance: 37, note: 'LNG 燃料超支' }
+      ],
+      drillSources: [
+        { source: '陇能磅单收入', module: '134 核算', amount: '1,856', share: 55.3 },
+        { source: '中石化加气结算', module: '134 核算', amount: '648', share: 19.3 },
+        { source: 'ETC 路桥费', module: '134 核算', amount: '342', share: 10.2 },
+        { source: '司机趟结工资台账', module: '134 核算', amount: '410', share: 12.2 },
+        { source: '手动录入（已复核）', module: '134 核算', amount: '104', share: 3.1 }
+      ],
       unitData: [
         { name: '车队 1', budget: 8500, actualMonth: 850, actualYTD: 3360, execPct: 39.5, targetPct: 33.3 },
         { name: '车队 2', budget: 7200, actualMonth: 706, actualYTD: 2655, execPct: 36.9, targetPct: 33.3 }
@@ -156,7 +212,10 @@ export default {
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
     reset() { this.query = { month: '2026-04', dim: 'unit', unit: '' } },
-    drillDown(row) { this.$message.info(`下钻 ${row.name} 明细数据`) },
+    drillDown(row) {
+      this.currentRow = row
+      this.showDrill = true
+    },
     execStatus(pct) {
       if (pct > 40) return 'warning'
       if (pct < 25) return 'exception'

@@ -102,6 +102,30 @@
         <el-button type="primary" @click="submitCreate">提交复核</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog :title="`手动录入详情 - ${currentRow.account}`" :visible.sync="showDetail" width="640px">
+      <el-descriptions :column="2" size="small" border>
+        <el-descriptions-item label="录入时间">{{ currentRow.entryTime }}</el-descriptions-item>
+        <el-descriptions-item label="业务单元">{{ currentRow.unit }}</el-descriptions-item>
+        <el-descriptions-item label="科目" :span="2">{{ currentRow.account }}</el-descriptions-item>
+        <el-descriptions-item label="金额">
+          <strong :class="{ 'warning-text': currentRow.amount < 0 }">¥ {{ formatMoney(currentRow.amount) }}</strong>
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="statusTag(currentRow.status)" size="mini">{{ statusLabel(currentRow.status) }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="录入人">{{ currentRow.entrant }}</el-descriptions-item>
+        <el-descriptions-item label="复核人">{{ currentRow.reviewer }}</el-descriptions-item>
+        <el-descriptions-item label="录入事由" :span="2">{{ currentRow.reason }}</el-descriptions-item>
+      </el-descriptions>
+      <el-divider content-position="left">复核记录</el-divider>
+      <el-table :data="reviewHistory" border size="small">
+        <el-table-column prop="time" label="时间" width="150" />
+        <el-table-column prop="actor" label="操作人" width="110" align="center" />
+        <el-table-column prop="action" label="动作" width="100" align="center" />
+        <el-table-column prop="note" label="意见" min-width="200" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -112,7 +136,13 @@ export default {
     return {
       query: { month: '2026-04', unit: '' },
       showCreate: false,
+      showDetail: false,
+      currentRow: {},
       form: { unit: '', account: '', amount: 0, reason: '', reviewer: '' },
+      reviewHistory: [
+        { time: '2026-04-22 14:15', actor: '车队 1 财务', action: '提交', note: '2026-03 维保单据延迟到账' },
+        { time: '2026-04-22 16:30', actor: '马伶俐', action: '复核通过', note: '凭据齐全，金额一致' }
+      ],
       tableData: [
         { entryTime: '2026-04-22 14:15', unit: '车队 1', account: '主营业务成本 / 维保费', amount: -3500, reason: '2026-03 维保单据延迟到账', entrant: '车队 1 财务', reviewer: '马伶俐', status: 'reviewed' },
         { entryTime: '2026-04-28 10:30', unit: '车队 2', account: '主营业务收入 / 磅单收入调整', amount: 12000, reason: '陇能补传 2026-03 末几笔磅单', entrant: '马伶俐', reviewer: '车队 2 财务', status: 'pending' }
@@ -131,7 +161,10 @@ export default {
       this.$message.success('已提交复核（演示）')
       this.showCreate = false
     },
-    viewDetail(row) { this.$message.info(`查看 ${row.account} 详情`) },
+    viewDetail(row) {
+      this.currentRow = row
+      this.showDetail = true
+    },
     rollback(row) {
       this.$confirm(
         `确认冲销该笔手动录入（${row.account}，¥${this.formatMoney(row.amount)}）？冲销后预算执行数据将回退，操作不可恢复。`,
@@ -188,6 +221,11 @@ export default {
 
 .danger-text {
   color: #F56C6C;
+}
+
+.warning-text {
+  color: #F56C6C;
+  font-weight: 500;
 }
 
 .dialog-note {

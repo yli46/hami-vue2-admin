@@ -24,11 +24,11 @@
             <i class="el-icon-money"></i>
             <span>全面预算</span>
           </template>
-          <el-menu-item index="/budget/overview">132 概算管理</el-menu-item>
-          <el-menu-item index="/budget/edit">133 预算编制</el-menu-item>
-          <el-menu-item index="/cost-accounting">134 核算处理</el-menu-item>
-          <el-menu-item index="/decision-analysis">135 决算分析</el-menu-item>
-          <el-menu-item index="/budget/coordination">136 预算目标协同</el-menu-item>
+          <el-menu-item index="/budget/overview">概算管理</el-menu-item>
+          <el-menu-item index="/budget/edit">预算编制</el-menu-item>
+          <el-menu-item index="/cost-accounting">核算处理</el-menu-item>
+          <el-menu-item index="/decision-analysis">决算分析</el-menu-item>
+          <el-menu-item index="/budget/coordination">预算目标协同</el-menu-item>
         </el-submenu>
 
         <el-submenu index="stats">
@@ -36,9 +36,9 @@
             <i class="el-icon-data-line"></i>
             <span>统计分析</span>
           </template>
-          <el-menu-item index="/stats/fleet">140 车辆运营统计</el-menu-item>
-          <el-menu-item index="/stats/ops">141 运营统计</el-menu-item>
-          <el-menu-item index="/stats/driver">142 司机绩效统计</el-menu-item>
+          <el-menu-item index="/stats/fleet">车辆运营统计</el-menu-item>
+          <el-menu-item index="/stats/ops">运营统计</el-menu-item>
+          <el-menu-item index="/stats/driver">司机绩效统计</el-menu-item>
         </el-submenu>
       </el-menu>
     </el-aside>
