@@ -190,7 +190,8 @@ export default {
       }).catch(() => {})
     },
     formatMoney(v) {
-      return v.toLocaleString('zh-CN', { minimumFractionDigits: 0 })
+      if (v == null || isNaN(Number(v))) return '0'
+      return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 0 })
     },
     statusTag(s) {
       if (s === '执行中') return 'success'
