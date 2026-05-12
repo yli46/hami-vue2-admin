@@ -226,7 +226,7 @@ export default {
       tableData: [
         { unit: '车队 / 红树林', period: '2026 全年', totalBudget: 135000000, version: 'v2.0 终版', status: 'effective', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 16:00' },
         { unit: '车队 / 新鹏运', period: '2026 全年', totalBudget: 112000000, version: 'v1.2', status: 'reviewing', reviewLevel: '2/3 财务总监', editor: '车队财务', updatedAt: '2026-05-12 09:30' },
-        { unit: '加气站（天山乡站）', period: '2026 9-12 月', totalBudget: 7400000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 14:20' },
+        { unit: '加氢站（天山乡站）', period: '2026 9-12 月', totalBudget: 7400000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 14:20' },
         { unit: '车队 / 红树林', period: '2026 Q3', totalBudget: 33750000, version: 'v1.1', status: 'rejected', reviewLevel: '', editor: '车队财务', updatedAt: '2026-05-09 11:15' }
       ]
     }
