@@ -21,10 +21,17 @@
           />
         </el-form-item>
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
-            <el-option label="全公司" value="all" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 130px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -119,14 +126,14 @@
           <h4>① 收支总览</h4>
           <ul>
             <li>总收入 / 总成本 / 毛利 / 同比</li>
-            <li>按业务单元（车队 1 / 车队 2）拆分</li>
+            <li>按业务单元（4 板块）+ 主体（红树林 / 新鹏运，仅车队适用）拆分</li>
           </ul>
         </div>
         <div class="section">
           <h4>② 业务单元利润分析</h4>
           <ul>
-            <li>各车队收入构成（陇能磅单 / 客户分布）</li>
-            <li>各车队成本构成（吨公里成本细项）</li>
+            <li>各业务单元收入构成（车队按主体拆分；廊道暂只跟踪投资；加气站 / 制氢工厂按试产期处理）</li>
+            <li>各业务单元成本构成（吨公里成本细项，仅车队全考核）</li>
           </ul>
         </div>
         <div class="section">
@@ -173,6 +180,9 @@
         <h3>② 业务单元利润分析</h3>
         <el-table :data="reportUnitData" border size="small">
           <el-table-column prop="unit" label="业务单元" min-width="100" />
+          <el-table-column prop="subject" label="主体" width="90" align="center">
+            <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
+          </el-table-column>
           <el-table-column prop="revenue" label="收入（万元）" width="110" align="right" />
           <el-table-column prop="cost" label="成本（万元）" width="110" align="right" />
           <el-table-column prop="profit" label="毛利（万元）" width="110" align="right" />
@@ -207,7 +217,7 @@
         <h3>⑤ 下期建议</h3>
         <ul class="report-suggestions">
           <li>LNG 燃料费偏高，建议下期与中石化重新议价或调整路线优先级</li>
-          <li>车辆维保费突增车辆需重点核查（车队 2 部分车）</li>
+          <li>车辆维保费突增车辆需重点核查（车队 · 新鹏运主体部分车辆）</li>
           <li>司机趟结归口规则待细化（待马总回填表 3 后）</li>
         </ul>
 
@@ -235,9 +245,17 @@
         </el-form-item>
         <el-form-item label="业务单元">
           <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;">
-            <el-option label="全公司" value="all" />
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+            <el-option label="全公司（合并 4 板块）" value="all" />
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体" v-if="form.unit === 'fleet'">
+          <el-select v-model="form.subject" placeholder="车队需选主体（合并决算可留空）" clearable style="width: 100%;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -275,20 +293,23 @@ export default {
   name: 'DecisionAnalysis',
   data() {
     return {
-      query: { type: '', dateRange: [], unit: '' },
+      query: { type: '', dateRange: [], unit: '', subject: '' },
       showCreate: false,
       showLock: false,
       showReport: false,
       currentRow: {},
-      form: { type: 'monthly', period: '', unit: 'all' },
+      form: { type: 'monthly', period: '', unit: 'all', subject: '' },
       lockForm: { period: '', lockTime: '', note: '' },
       reportUnitData: [
-        { unit: '车队 1', revenue: '932', cost: '802', profit: '130', profitRate: '13.9%', contribution: '53.3%' },
-        { unit: '车队 2', revenue: '824', cost: '710', profit: '114', profitRate: '13.8%', contribution: '46.7%' }
+        { unit: '车队', subject: '红树林', revenue: '932', cost: '802', profit: '130', profitRate: '13.9%', contribution: '53.3%' },
+        { unit: '车队', subject: '新鹏运', revenue: '824', cost: '710', profit: '114', profitRate: '13.8%', contribution: '46.7%' },
+        { unit: '廊道（建设期）', subject: '', revenue: '—', cost: '—', profit: '—', profitRate: '建设期不考核', contribution: '—' },
+        { unit: '加气站（天山乡站等）', subject: '', revenue: '—', cost: '—', profit: '—', profitRate: '试产期不考核', contribution: '—' },
+        { unit: '制氢工厂', subject: '', revenue: '—', cost: '—', profit: '—', profitRate: '建设期不考核', contribution: '—' }
       ],
       reportAnomalies: [
         { item: 'LNG 燃料费占比超阈值（+2.0 pp）', impact: '-32.6', closed: false, owner: '马伶俐' },
-        { item: '车队 2 维保费突增', impact: '-12.4', closed: true, owner: '车队 2 财务' },
+        { item: '车队 · 新鹏运维保费突增', impact: '-12.4', closed: true, owner: '新鹏运财务' },
         { item: '司机趟结环比异常（+18%）', impact: '-8.2', closed: true, owner: '马伶俐' }
       ],
       reportBudgetVariance: [
@@ -308,7 +329,7 @@ export default {
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { type: '', dateRange: [], unit: '' } },
+    reset() { this.query = { type: '', dateRange: [], unit: '', subject: '' } },
     openCreate() { this.showCreate = true },
     openLock() { this.showLock = true },
     submitCreate() { this.$message.success('决算已创建（演示）'); this.showCreate = false },

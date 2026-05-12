@@ -10,8 +10,16 @@
         </el-form-item>
         <el-form-item label="业务单元">
           <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="处置状态">
@@ -51,7 +59,10 @@
         <el-table-column type="selection" width="44" />
         <el-table-column prop="triggerTime" label="预警时间" width="150" />
         <el-table-column prop="item" label="预警项" min-width="180" />
-        <el-table-column prop="unit" label="业务单元" width="110" align="center" />
+        <el-table-column prop="unit" label="业务单元" width="100" align="center" />
+        <el-table-column prop="subject" label="主体" width="80" align="center">
+          <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="actualValue" label="实际值" width="100" align="right" />
         <el-table-column prop="budgetValue" label="预算值" width="100" align="right" />
         <el-table-column label="偏差" width="100" align="right">
@@ -90,7 +101,7 @@
     <el-dialog :title="`预警详情 - ${currentRow.item}`" :visible.sync="showDetail" width="680px">
       <el-descriptions :column="2" size="small" border>
         <el-descriptions-item label="预警项">{{ currentRow.item }}</el-descriptions-item>
-        <el-descriptions-item label="业务单元">{{ currentRow.unit }}</el-descriptions-item>
+        <el-descriptions-item label="业务单元">{{ currentRow.unit }}{{ currentRow.subject ? ' · ' + currentRow.subject : '' }}</el-descriptions-item>
         <el-descriptions-item label="预警时间">{{ currentRow.triggerTime }}</el-descriptions-item>
         <el-descriptions-item label="级别">
           <el-tag size="mini" :type="currentRow.level === 'red' ? 'danger' : 'warning'">
@@ -173,7 +184,7 @@ export default {
   name: 'CostAlerts',
   data() {
     return {
-      query: { level: '', unit: '', status: '', dateRange: [] },
+      query: { level: '', unit: '', subject: '', status: '', dateRange: [] },
       selected: [],
       showHandle: false,
       showDetail: false,
@@ -187,17 +198,17 @@ export default {
         { time: '2026-04-15 10:30', actor: '马伶俐', action: '接手处置', note: '已申请调整预算' }
       ],
       tableData: [
-        { triggerTime: '2026-04-30 24:00', item: 'LNG 燃料费占比超阈值', unit: '车队 1', actualValue: '32.0%', budgetValue: '30.0%', variance: '+2.0 pp', level: 'yellow', status: 'pending', owner: '—' },
-        { triggerTime: '2026-04-30 24:00', item: '车辆维保费占比超阈值', unit: '车队 1', actualValue: '9.0%', budgetValue: '8.0%', variance: '+1.0 pp', level: 'yellow', status: 'pending', owner: '—' },
-        { triggerTime: '2026-04-15 24:00', item: '吨公里成本超阈值', unit: '车队 2', actualValue: '¥1.45', budgetValue: '¥1.31', variance: '+10.7%', level: 'red', status: 'handling', owner: '马伶俐' },
-        { triggerTime: '2026-04-10 24:00', item: '司机趟结工资环比异常', unit: '车队 1', actualValue: '+18%', budgetValue: '基准', variance: '+18%', level: 'yellow', status: 'closed', owner: '马伶俐' },
-        { triggerTime: '2026-04-03 24:00', item: 'LNG 燃料费占比偏低', unit: '车队 2', actualValue: '26.0%', budgetValue: '30.0%', variance: '-4.0 pp', level: 'yellow', status: 'closed', owner: '王江江' }
+        { triggerTime: '2026-04-30 24:00', item: 'LNG 燃料费占比超阈值', unit: '车队', subject: '红树林', actualValue: '32.0%', budgetValue: '30.0%', variance: '+2.0 pp', level: 'yellow', status: 'pending', owner: '—' },
+        { triggerTime: '2026-04-30 24:00', item: '车辆维保费占比超阈值', unit: '车队', subject: '红树林', actualValue: '9.0%', budgetValue: '8.0%', variance: '+1.0 pp', level: 'yellow', status: 'pending', owner: '—' },
+        { triggerTime: '2026-04-15 24:00', item: '吨公里成本超阈值', unit: '车队', subject: '新鹏运', actualValue: '¥1.45', budgetValue: '¥1.31', variance: '+10.7%', level: 'red', status: 'handling', owner: '马伶俐' },
+        { triggerTime: '2026-04-10 24:00', item: '司机趟结工资环比异常', unit: '车队', subject: '红树林', actualValue: '+18%', budgetValue: '基准', variance: '+18%', level: 'yellow', status: 'closed', owner: '马伶俐' },
+        { triggerTime: '2026-04-03 24:00', item: 'LNG 燃料费占比偏低', unit: '车队', subject: '新鹏运', actualValue: '26.0%', budgetValue: '30.0%', variance: '-4.0 pp', level: 'yellow', status: 'closed', owner: '王江江' }
       ]
     }
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { level: '', unit: '', status: '', dateRange: [] } },
+    reset() { this.query = { level: '', unit: '', subject: '', status: '', dateRange: [] } },
     onSelect(v) { this.selected = v },
     batchAck() {
       if (!this.selected.length) {

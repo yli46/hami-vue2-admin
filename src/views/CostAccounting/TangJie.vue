@@ -12,9 +12,14 @@
           />
         </el-form-item>
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="车队" value="fleet" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="司机">
@@ -60,7 +65,8 @@
       <el-table :data="tableData" border size="small">
         <el-table-column prop="driverName" label="司机姓名" width="100" />
         <el-table-column prop="driverNo" label="工号" width="90" />
-        <el-table-column prop="unit" label="业务单元" width="100" align="center" />
+        <el-table-column prop="unit" label="业务单元" width="80" align="center" />
+        <el-table-column prop="subject" label="主体" width="80" align="center" />
         <el-table-column prop="tripCount" label="趟次" width="80" align="right" />
         <el-table-column prop="baseTrip" label="基础趟结" width="110" align="right">
           <template slot-scope="scope">¥ {{ formatMoney(scope.row.baseTrip) }}</template>
@@ -160,7 +166,7 @@ export default {
   name: 'CostTangJie',
   data() {
     return {
-      query: { month: '2026-04', unit: '', driver: '' },
+      query: { month: '2026-04', unit: '', subject: '', driver: '' },
       showDetail: false,
       showAdjust: false,
       current: { driverName: '', driverNo: '', baseTrip: 0, miscNormalized: 0, bonusOrPenalty: 0 },
@@ -172,17 +178,17 @@ export default {
         { date: '2026-04-18', type: '罚款先行', amount: 200, note: '未走 ETC 通道', normalized: false }
       ],
       tableData: [
-        { driverName: '张永刚', driverNo: 'D0023', unit: '车队 1', tripCount: 28, baseTrip: 5600, miscNormalized: 410, miscItemCount: 8, bonusOrPenalty: 200, status: 'pending' },
-        { driverName: '李建华', driverNo: 'D0041', unit: '车队 1', tripCount: 32, baseTrip: 6400, miscNormalized: 280, miscItemCount: 5, bonusOrPenalty: -150, status: 'pending' },
-        { driverName: '王志远', driverNo: 'D0058', unit: '车队 2', tripCount: 26, baseTrip: 5200, miscNormalized: 360, miscItemCount: 6, bonusOrPenalty: 100, status: 'reviewing' },
-        { driverName: '陈志国', driverNo: 'D0067', unit: '车队 1', tripCount: 30, baseTrip: 6000, miscNormalized: 320, miscItemCount: 7, bonusOrPenalty: 0, status: 'paid' },
-        { driverName: '刘海滨', driverNo: 'D0072', unit: '车队 2', tripCount: 29, baseTrip: 5800, miscNormalized: 290, miscItemCount: 4, bonusOrPenalty: -300, status: 'pending' }
+        { driverName: '张永刚', driverNo: 'D0023', unit: '车队', subject: '红树林', tripCount: 28, baseTrip: 5600, miscNormalized: 410, miscItemCount: 8, bonusOrPenalty: 200, status: 'pending' },
+        { driverName: '李建华', driverNo: 'D0041', unit: '车队', subject: '红树林', tripCount: 32, baseTrip: 6400, miscNormalized: 280, miscItemCount: 5, bonusOrPenalty: -150, status: 'pending' },
+        { driverName: '王志远', driverNo: 'D0058', unit: '车队', subject: '新鹏运', tripCount: 26, baseTrip: 5200, miscNormalized: 360, miscItemCount: 6, bonusOrPenalty: 100, status: 'reviewing' },
+        { driverName: '陈志国', driverNo: 'D0067', unit: '车队', subject: '红树林', tripCount: 30, baseTrip: 6000, miscNormalized: 320, miscItemCount: 7, bonusOrPenalty: 0, status: 'paid' },
+        { driverName: '刘海滨', driverNo: 'D0072', unit: '车队', subject: '新鹏运', tripCount: 29, baseTrip: 5800, miscNormalized: 290, miscItemCount: 4, bonusOrPenalty: -300, status: 'pending' }
       ]
     }
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { month: '2026-04', unit: '', driver: '' } },
+    reset() { this.query = { month: '2026-04', unit: '', subject: '', driver: '' } },
     total(row) {
       return row.baseTrip + row.miscNormalized + row.bonusOrPenalty
     },

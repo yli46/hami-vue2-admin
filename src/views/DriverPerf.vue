@@ -12,9 +12,14 @@
           />
         </el-form-item>
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="车队" value="fleet" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="司机">
@@ -67,7 +72,8 @@
       <el-table :data="tableData" border size="small" stripe>
         <el-table-column prop="name" label="司机姓名" width="90" fixed="left" />
         <el-table-column prop="driverNo" label="工号" width="80" align="center" fixed="left" />
-        <el-table-column prop="unit" label="业务单元" width="90" align="center" />
+        <el-table-column prop="unit" label="业务单元" width="80" align="center" />
+        <el-table-column prop="subject" label="主体" width="80" align="center" />
         <el-table-column label="基础工资 (30%)" width="110" align="right">
           <template slot-scope="scope">¥ {{ scope.row.k01 }}</template>
         </el-table-column>
@@ -197,7 +203,7 @@ export default {
   name: 'DriverPerf',
   data() {
     return {
-      query: { month: '2026-04', unit: '', driver: '', grade: '' },
+      query: { month: '2026-04', unit: '', subject: '', driver: '', grade: '' },
       showDriverDetail: false,
       showDriverHistory: false,
       currentDriver: { name: '' },
@@ -214,13 +220,13 @@ export default {
         { month: '2026-04', totalScore: 82, grade: 'B', violationPoints: -5, note: '气耗超标 + 运损超标' }
       ],
       tableData: [
-        { name: '张永刚', driverNo: 'D0023', unit: '车队 1', k01: 500, k02: 250, k03: 200, k04: 180, k05: 160, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' },
-        { name: '李建华', driverNo: 'D0041', unit: '车队 1', k01: 500, k02: 300, k03: 200, k04: 200, k05: 200, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
-        { name: '王志远', driverNo: 'D0058', unit: '车队 2', k01: 500, k02: 220, k03: 170, k04: 200, k05: 180, k06: 70, k07: 40, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' },
-        { name: '陈志国', driverNo: 'D0067', unit: '车队 1', k01: 500, k02: 290, k03: 195, k04: 200, k05: 195, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
-        { name: '刘海滨', driverNo: 'D0072', unit: '车队 2', k01: 500, k02: 180, k03: 140, k04: 150, k05: 130, k06: 60, k07: 30, k08: 45, k09: 50, k10: 45, k11: 15, grade: 'C' },
-        { name: '赵明远', driverNo: 'D0085', unit: '车队 1', k01: 500, k02: 280, k03: 190, k04: 200, k05: 200, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
-        { name: '孙国锋', driverNo: 'D0091', unit: '车队 2', k01: 500, k02: 270, k03: 175, k04: 195, k05: 190, k06: 80, k07: 45, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' }
+        { name: '张永刚', driverNo: 'D0023', unit: '车队', subject: '红树林', k01: 500, k02: 250, k03: 200, k04: 180, k05: 160, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' },
+        { name: '李建华', driverNo: 'D0041', unit: '车队', subject: '红树林', k01: 500, k02: 300, k03: 200, k04: 200, k05: 200, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
+        { name: '王志远', driverNo: 'D0058', unit: '车队', subject: '新鹏运', k01: 500, k02: 220, k03: 170, k04: 200, k05: 180, k06: 70, k07: 40, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' },
+        { name: '陈志国', driverNo: 'D0067', unit: '车队', subject: '红树林', k01: 500, k02: 290, k03: 195, k04: 200, k05: 195, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
+        { name: '刘海滨', driverNo: 'D0072', unit: '车队', subject: '新鹏运', k01: 500, k02: 180, k03: 140, k04: 150, k05: 130, k06: 60, k07: 30, k08: 45, k09: 50, k10: 45, k11: 15, grade: 'C' },
+        { name: '赵明远', driverNo: 'D0085', unit: '车队', subject: '红树林', k01: 500, k02: 280, k03: 190, k04: 200, k05: 200, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
+        { name: '孙国锋', driverNo: 'D0091', unit: '车队', subject: '新鹏运', k01: 500, k02: 270, k03: 175, k04: 195, k05: 190, k06: 80, k07: 45, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' }
       ],
       indicators: [
         { code: 'P3-L3-R06-K01', name: '基础工资 (30%)', level: 'L3', source: '业主官方', target: '500 元', note: '业主官方·5/12 调研' },
@@ -242,7 +248,7 @@ export default {
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { month: '2026-04', unit: '', driver: '', grade: '' } },
+    reset() { this.query = { month: '2026-04', unit: '', subject: '', driver: '', grade: '' } },
     rowTotal(row) {
       return ['k01','k02','k03','k04','k05','k06','k07','k08','k09','k10','k11']
         .reduce((sum, k) => sum + (row[k] || 0), 0)

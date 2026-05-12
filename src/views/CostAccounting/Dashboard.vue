@@ -13,8 +13,16 @@
         </el-form-item>
         <el-form-item label="业务单元">
           <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 130px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -113,7 +121,7 @@ export default {
   name: 'CostDashboard',
   data() {
     return {
-      query: { month: '2026-04', unit: '' },
+      query: { month: '2026-04', unit: '', subject: '' },
       stats: {
         actualUnit: '0.1832',
         budgetUnit: '0.1802',
@@ -150,7 +158,7 @@ export default {
       this.$message.info('查询逻辑由后端实现（演示）')
     },
     reset() {
-      this.query = { month: '2026-04', unit: '' }
+      this.query = { month: '2026-04', unit: '', subject: '' }
     },
     variance(row) {
       return row.actualPct - row.budgetPct

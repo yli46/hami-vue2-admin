@@ -24,9 +24,17 @@
           />
         </el-form-item>
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 130px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -47,6 +55,9 @@
       <el-table :data="tableData" border size="small">
         <el-table-column prop="entryTime" label="录入时间" width="150" />
         <el-table-column prop="unit" label="业务单元" width="100" align="center" />
+        <el-table-column prop="subject" label="主体" width="90" align="center">
+          <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="account" label="科目" min-width="180" />
         <el-table-column prop="amount" label="金额" width="110" align="right">
           <template slot-scope="scope">¥ {{ formatMoney(scope.row.amount) }}</template>
@@ -72,8 +83,16 @@
       <el-form :model="form" label-width="100px" size="small">
         <el-form-item label="业务单元">
           <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体" v-if="form.unit === 'fleet'">
+          <el-select v-model="form.subject" placeholder="车队需选主体" style="width: 100%;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="科目">
@@ -89,8 +108,8 @@
         <el-form-item label="复核人">
           <el-select v-model="form.reviewer" placeholder="请选择" style="width: 100%;">
             <el-option label="马伶俐（财务总监）" value="马伶俐" />
-            <el-option label="车队 1 财务" value="车队1财务" />
-            <el-option label="车队 2 财务" value="车队2财务" />
+            <el-option label="车队 · 红树林财务" value="红树林财务" />
+            <el-option label="车队 · 新鹏运财务" value="新鹏运财务" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -106,7 +125,7 @@
     <el-dialog :title="`手动录入详情 - ${currentRow.account}`" :visible.sync="showDetail" width="640px">
       <el-descriptions :column="2" size="small" border>
         <el-descriptions-item label="录入时间">{{ currentRow.entryTime }}</el-descriptions-item>
-        <el-descriptions-item label="业务单元">{{ currentRow.unit }}</el-descriptions-item>
+        <el-descriptions-item label="业务单元">{{ currentRow.unit }}{{ currentRow.subject ? ' · ' + currentRow.subject : '' }}</el-descriptions-item>
         <el-descriptions-item label="科目" :span="2">{{ currentRow.account }}</el-descriptions-item>
         <el-descriptions-item label="金额">
           <strong :class="{ 'warning-text': currentRow.amount < 0 }">¥ {{ formatMoney(currentRow.amount) }}</strong>
@@ -134,24 +153,24 @@ export default {
   name: 'CostManual',
   data() {
     return {
-      query: { month: '2026-04', unit: '' },
+      query: { month: '2026-04', unit: '', subject: '' },
       showCreate: false,
       showDetail: false,
       currentRow: {},
-      form: { unit: '', account: '', amount: 0, reason: '', reviewer: '' },
+      form: { unit: '', subject: '', account: '', amount: 0, reason: '', reviewer: '' },
       reviewHistory: [
-        { time: '2026-04-22 14:15', actor: '车队 1 财务', action: '提交', note: '2026-03 维保单据延迟到账' },
+        { time: '2026-04-22 14:15', actor: '红树林财务', action: '提交', note: '2026-03 维保单据延迟到账' },
         { time: '2026-04-22 16:30', actor: '马伶俐', action: '复核通过', note: '凭据齐全，金额一致' }
       ],
       tableData: [
-        { entryTime: '2026-04-22 14:15', unit: '车队 1', account: '主营业务成本 / 维保费', amount: -3500, reason: '2026-03 维保单据延迟到账', entrant: '车队 1 财务', reviewer: '马伶俐', status: 'reviewed' },
-        { entryTime: '2026-04-28 10:30', unit: '车队 2', account: '主营业务收入 / 磅单收入调整', amount: 12000, reason: '陇能补传 2026-03 末几笔磅单', entrant: '马伶俐', reviewer: '车队 2 财务', status: 'pending' }
+        { entryTime: '2026-04-22 14:15', unit: '车队', subject: '红树林', account: '主营业务成本 / 维保费', amount: -3500, reason: '2026-03 维保单据延迟到账', entrant: '红树林财务', reviewer: '马伶俐', status: 'reviewed' },
+        { entryTime: '2026-04-28 10:30', unit: '车队', subject: '新鹏运', account: '主营业务收入 / 磅单收入调整', amount: 12000, reason: '陇能补传 2026-03 末几笔磅单', entrant: '马伶俐', reviewer: '新鹏运财务', status: 'pending' }
       ]
     }
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { month: '2026-04', unit: '' } },
+    reset() { this.query = { month: '2026-04', unit: '', subject: '' } },
     openCreate() { this.showCreate = true },
     submitCreate() {
       if (!this.form.reason) {

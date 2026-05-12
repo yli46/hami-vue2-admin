@@ -109,7 +109,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="司机/车队">
-          <el-input v-model="applyForm.target" placeholder="如：张永刚 D0023 / 车队 1" />
+          <el-input v-model="applyForm.target" placeholder="如：张永刚 D0023 / 车队 · 红树林" />
         </el-form-item>
         <el-form-item label="申领金额">
           <el-input-number v-model="applyForm.amount" :min="100" :step="100" />
@@ -170,16 +170,16 @@ export default {
       applyForm: { scenario: '', target: '', amount: 1000, reason: '', level: 'single' },
       processFlow: [
         { time: '2026-04-08 22:30', actor: '张永刚', action: '提交申领', note: '车辆抛锚现场拍照上传' },
-        { time: '2026-04-08 22:42', actor: '车队 1 车队长', action: '一级签字', note: '同意，紧急情况' },
+        { time: '2026-04-08 22:42', actor: '车队长（红树林）', action: '一级签字', note: '同意，紧急情况' },
         { time: '2026-04-08 23:05', actor: '安技部主任', action: '二级签字', note: '同意拨款 5000 元' },
-        { time: '2026-04-15 16:30', actor: '车队 1 财务', action: '核销', note: '维修发票 + 拖车票据齐全，金额一致' }
+        { time: '2026-04-15 16:30', actor: '红树林财务', action: '核销', note: '维修发票 + 拖车票据齐全，金额一致' }
       ],
       tableData: [
-        { applyTime: '2026-04-08 22:30', scenario: '车辆抛锚救援', driverOrFleet: '张永刚 / 车队 1', amount: 5000, reason: '京新高速 K3580 处车辆故障，现场维修+拖车', approver: '车队长 + 安技部', status: 'cleared', dueDate: '2026-04-15' },
-        { applyTime: '2026-04-15 14:20', scenario: '医疗应急', driverOrFleet: '李建华 / 车队 1', amount: 2000, reason: '司机感冒就医', approver: '安技部主任', status: 'cleared', dueDate: '2026-04-18' },
-        { applyTime: '2026-04-20 09:15', scenario: '罚款先行', driverOrFleet: '陈志国 / 车队 1', amount: 1500, reason: '未走 ETC 通道罚款（司机责任，需追回）', approver: '安技部主任', status: 'pending', dueDate: '2026-04-30' },
-        { applyTime: '2026-04-25 16:40', scenario: '其他', driverOrFleet: '车队 2 调度', amount: 3000, reason: '加气站现场设备故障，临时充值', approver: '安技部主任', status: 'pending', dueDate: '2026-05-02' },
-        { applyTime: '2026-03-28 10:00', scenario: '罚款先行', driverOrFleet: '刘海滨 / 车队 2', amount: 800, reason: '超速罚款（司机责任）', approver: '安技部主任', status: 'overdue', dueDate: '2026-04-04' }
+        { applyTime: '2026-04-08 22:30', scenario: '车辆抛锚救援', driverOrFleet: '张永刚 / 车队 · 红树林', amount: 5000, reason: '京新高速 K3580 处车辆故障，现场维修+拖车', approver: '车队长 + 安技部', status: 'cleared', dueDate: '2026-04-15' },
+        { applyTime: '2026-04-15 14:20', scenario: '医疗应急', driverOrFleet: '李建华 / 车队 · 红树林', amount: 2000, reason: '司机感冒就医', approver: '安技部主任', status: 'cleared', dueDate: '2026-04-18' },
+        { applyTime: '2026-04-20 09:15', scenario: '罚款先行', driverOrFleet: '陈志国 / 车队 · 红树林', amount: 1500, reason: '未走 ETC 通道罚款（司机责任，需追回）', approver: '安技部主任', status: 'pending', dueDate: '2026-04-30' },
+        { applyTime: '2026-04-25 16:40', scenario: '其他', driverOrFleet: '车队 · 新鹏运调度', amount: 3000, reason: 'LNG 加气站现场设备故障，临时充值', approver: '安技部主任', status: 'pending', dueDate: '2026-05-02' },
+        { applyTime: '2026-03-28 10:00', scenario: '罚款先行', driverOrFleet: '刘海滨 / 车队 · 新鹏运', amount: 800, reason: '超速罚款（司机责任）', approver: '安技部主任', status: 'overdue', dueDate: '2026-04-04' }
       ]
     }
   },

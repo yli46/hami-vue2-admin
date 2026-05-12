@@ -12,9 +12,14 @@
           />
         </el-form-item>
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="车队" value="fleet" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="车型">
@@ -67,7 +72,8 @@
             <el-tag size="mini" :type="scope.row.vehicleType === '母车' ? '' : 'info'">{{ scope.row.vehicleType }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="unit" label="业务单元" width="100" align="center" />
+        <el-table-column prop="unit" label="业务单元" width="80" align="center" />
+        <el-table-column prop="subject" label="主体" width="80" align="center" />
         <el-table-column prop="onDutyDays" label="在营天数" width="90" align="right" />
         <el-table-column prop="onDutyRate" label="在营率" width="90" align="right">
           <template slot-scope="scope">{{ scope.row.onDutyRate }}%</template>
@@ -159,7 +165,7 @@ export default {
   name: 'FleetStats',
   data() {
     return {
-      query: { month: '2026-04', unit: '', vehicleType: '' },
+      query: { month: '2026-04', unit: '', subject: '', vehicleType: '' },
       showVehicleDetail: false,
       showHistory: false,
       currentVehicle: { plate: '' },
@@ -172,14 +178,14 @@ export default {
         { month: '2026-04', trips: 28, profit: 8600, gas: '36.2', lossRate: '1.1' }
       ],
       tableData: [
-        { plate: '新A·12345', vehicleType: '母车', unit: '车队 1', onDutyDays: 28, onDutyRate: 96.6, tripCount: 28, monthlyProfit: 8600, gasPer100: 36.2, lossRate: 1.1, miscAnomaly: '正常' },
-        { plate: '新A·12346', vehicleType: '子车', unit: '车队 1', onDutyDays: 29, onDutyRate: 100.0, tripCount: 30, monthlyProfit: 9200, gasPer100: 37.8, lossRate: 0.8, miscAnomaly: '正常' },
-        { plate: '新A·12347', vehicleType: '母车', unit: '车队 1', onDutyDays: 25, onDutyRate: 86.2, tripCount: 22, monthlyProfit: 6400, gasPer100: 35.1, lossRate: 0.6, miscAnomaly: '正常' },
-        { plate: '新A·12348', vehicleType: '母车', unit: '车队 2', onDutyDays: 27, onDutyRate: 93.1, tripCount: 26, monthlyProfit: -1200, gasPer100: 38.4, lossRate: 1.5, miscAnomaly: '突增' },
-        { plate: '新A·12349', vehicleType: '子车', unit: '车队 2', onDutyDays: 28, onDutyRate: 96.6, tripCount: 27, monthlyProfit: 7800, gasPer100: 38.2, lossRate: 0.9, miscAnomaly: '正常' },
-        { plate: '新A·12350', vehicleType: '母车', unit: '车队 2', onDutyDays: 24, onDutyRate: 82.8, tripCount: 20, monthlyProfit: 5200, gasPer100: 36.8, lossRate: 0.7, miscAnomaly: '正常' },
-        { plate: '新A·12351', vehicleType: '子车', unit: '车队 1', onDutyDays: 30, onDutyRate: 100.0, tripCount: 32, monthlyProfit: 10100, gasPer100: 37.2, lossRate: 0.5, miscAnomaly: '正常' },
-        { plate: '新A·12352', vehicleType: '母车', unit: '车队 1', onDutyDays: 19, onDutyRate: 65.5, tripCount: 14, monthlyProfit: 3200, gasPer100: 35.8, lossRate: 1.2, miscAnomaly: '突增' }
+        { plate: '新A·12345', vehicleType: '母车', unit: '车队', subject: '红树林', onDutyDays: 28, onDutyRate: 96.6, tripCount: 28, monthlyProfit: 8600, gasPer100: 36.2, lossRate: 1.1, miscAnomaly: '正常' },
+        { plate: '新A·12346', vehicleType: '子车', unit: '车队', subject: '红树林', onDutyDays: 29, onDutyRate: 100.0, tripCount: 30, monthlyProfit: 9200, gasPer100: 37.8, lossRate: 0.8, miscAnomaly: '正常' },
+        { plate: '新A·12347', vehicleType: '母车', unit: '车队', subject: '红树林', onDutyDays: 25, onDutyRate: 86.2, tripCount: 22, monthlyProfit: 6400, gasPer100: 35.1, lossRate: 0.6, miscAnomaly: '正常' },
+        { plate: '新A·12348', vehicleType: '母车', unit: '车队', subject: '新鹏运', onDutyDays: 27, onDutyRate: 93.1, tripCount: 26, monthlyProfit: -1200, gasPer100: 38.4, lossRate: 1.5, miscAnomaly: '突增' },
+        { plate: '新A·12349', vehicleType: '子车', unit: '车队', subject: '新鹏运', onDutyDays: 28, onDutyRate: 96.6, tripCount: 27, monthlyProfit: 7800, gasPer100: 38.2, lossRate: 0.9, miscAnomaly: '正常' },
+        { plate: '新A·12350', vehicleType: '母车', unit: '车队', subject: '新鹏运', onDutyDays: 24, onDutyRate: 82.8, tripCount: 20, monthlyProfit: 5200, gasPer100: 36.8, lossRate: 0.7, miscAnomaly: '正常' },
+        { plate: '新A·12351', vehicleType: '子车', unit: '车队', subject: '红树林', onDutyDays: 30, onDutyRate: 100.0, tripCount: 32, monthlyProfit: 10100, gasPer100: 37.2, lossRate: 0.5, miscAnomaly: '正常' },
+        { plate: '新A·12352', vehicleType: '母车', unit: '车队', subject: '红树林', onDutyDays: 19, onDutyRate: 65.5, tripCount: 14, monthlyProfit: 3200, gasPer100: 35.8, lossRate: 1.2, miscAnomaly: '突增' }
       ],
       indicators: [
         { code: 'P1-L1-D2-001', name: '运力车辆在营率', level: 'L1', source: '车辆运营总表.派车次数', target: '≥95%', threshold: '<90%', freq: '日' },
@@ -197,7 +203,7 @@ export default {
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { month: '2026-04', unit: '', vehicleType: '' } },
+    reset() { this.query = { month: '2026-04', unit: '', subject: '', vehicleType: '' } },
     viewVehicleDetail(row) {
       this.currentVehicle = row
       this.showVehicleDetail = true

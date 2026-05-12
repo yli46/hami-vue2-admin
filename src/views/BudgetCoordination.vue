@@ -18,9 +18,17 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 130px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -65,6 +73,9 @@
           <template slot-scope="scope">
             <span>{{ scope.row.name }}</span>
           </template>
+        </el-table-column>
+        <el-table-column v-if="query.dim === 'unit'" label="主体" width="90" align="center">
+          <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
         </el-table-column>
         <el-table-column label="预算（万元）" width="130" align="right">
           <template slot-scope="scope">{{ scope.row.budget }}</template>
@@ -112,9 +123,9 @@
       </el-table>
     </el-card>
 
-    <el-dialog :title="`${currentRow.name} - 下钻明细`" :visible.sync="showDrill" width="900px" top="6vh">
+    <el-dialog :title="`${currentRow.name}${currentRow.subject ? ' · ' + currentRow.subject : ''} - 下钻明细`" :visible.sync="showDrill" width="900px" top="6vh">
       <el-descriptions :column="3" size="small" border>
-        <el-descriptions-item :label="query.dim === 'unit' ? '业务单元' : '费用科目'">{{ currentRow.name }}</el-descriptions-item>
+        <el-descriptions-item :label="query.dim === 'unit' ? '业务单元' : '费用科目'">{{ currentRow.name }}{{ currentRow.subject ? ' · ' + currentRow.subject : '' }}</el-descriptions-item>
         <el-descriptions-item label="预算">¥ {{ currentRow.budget }} 万</el-descriptions-item>
         <el-descriptions-item label="累计实际">¥ {{ currentRow.actualYTD }} 万</el-descriptions-item>
         <el-descriptions-item label="执行率">{{ currentRow.execPct }}%</el-descriptions-item>
@@ -172,7 +183,7 @@ export default {
   name: 'BudgetCoordination',
   data() {
     return {
-      query: { month: '2026-04', dim: 'unit', unit: '' },
+      query: { month: '2026-04', dim: 'unit', unit: '', subject: '' },
       showDrill: false,
       currentRow: {},
       drillMonthly: [
@@ -189,8 +200,11 @@ export default {
         { source: '手动录入（已复核）', module: '134 核算', amount: '104', share: 3.1 }
       ],
       unitData: [
-        { name: '车队 1', budget: 8500, actualMonth: 850, actualYTD: 3360, execPct: 39.5, targetPct: 33.3 },
-        { name: '车队 2', budget: 7200, actualMonth: 706, actualYTD: 2655, execPct: 36.9, targetPct: 33.3 }
+        { name: '车队', subject: '红树林', budget: 13500, actualMonth: 1320, actualYTD: 5232, execPct: 38.8, targetPct: 33.3 },
+        { name: '车队', subject: '新鹏运', budget: 11200, actualMonth: 1180, actualYTD: 4685, execPct: 41.8, targetPct: 33.3 },
+        { name: '廊道（建设期）', subject: '', budget: 480000, actualMonth: 32000, actualYTD: 156000, execPct: 32.5, targetPct: 33.3 },
+        { name: '加气站（天山乡站等）', subject: '', budget: 7400, actualMonth: 0, actualYTD: 0, execPct: 0.0, targetPct: 33.3 },
+        { name: '制氢工厂', subject: '', budget: 12000, actualMonth: 0, actualYTD: 0, execPct: 0.0, targetPct: 33.3 }
       ],
       accountData: [
         { name: 'LNG 燃料费', budget: 4710, actualMonth: 502, actualYTD: 1928, execPct: 40.9, targetPct: 33.3 },
@@ -211,7 +225,7 @@ export default {
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { month: '2026-04', dim: 'unit', unit: '' } },
+    reset() { this.query = { month: '2026-04', dim: 'unit', unit: '', subject: '' } },
     drillDown(row) {
       this.currentRow = row
       this.showDrill = true
