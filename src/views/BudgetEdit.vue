@@ -3,9 +3,17 @@
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" size="small">
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
+            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 130px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
@@ -39,7 +47,10 @@
         </div>
       </div>
       <el-table :data="tableData" border size="small">
-        <el-table-column prop="unit" label="业务单元" width="100" align="center" />
+        <el-table-column prop="unit" label="业务单元" width="140" align="center" />
+        <el-table-column prop="subject" label="主体" width="90" align="center">
+          <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="period" label="周期" width="120" align="center" />
         <el-table-column prop="totalBudget" label="预算总额" width="130" align="right">
           <template slot-scope="scope">¥ {{ formatMoney(scope.row.totalBudget) }}</template>
@@ -76,15 +87,25 @@
     <el-dialog :title="dialogTitle" :visible.sync="showCreate" width="980px">
       <el-form :model="form" label-width="100px" size="small">
         <el-row :gutter="16">
-          <el-col :span="8">
+          <el-col :span="6">
             <el-form-item label="业务单元">
               <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;" :disabled="isViewOnly">
-                <el-option label="车队 1" value="fleet1" />
-                <el-option label="车队 2" value="fleet2" />
+                <el-option label="车队" value="fleet" />
+                <el-option label="廊道（建设期）" value="corridor" />
+                <el-option label="加气站（天山乡站等）" value="gas-tsx" />
+                <el-option label="制氢工厂" value="h2-plant" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="6">
+            <el-form-item label="主体" v-if="form.unit === 'fleet'">
+              <el-select v-model="form.subject" placeholder="车队需选主体" style="width: 100%;" :disabled="isViewOnly">
+                <el-option label="红树林" value="hsl" />
+                <el-option label="新鹏运" value="xpy" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
             <el-form-item label="周期">
               <el-select v-model="form.period" placeholder="请选择" style="width: 100%;" :disabled="isViewOnly">
                 <el-option label="2026 全年" value="2026" />
@@ -93,7 +114,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="6">
             <el-form-item label="版本">
               <el-input v-model="form.version" placeholder="如 v1.0 草案" :disabled="isViewOnly" />
             </el-form-item>
@@ -129,7 +150,7 @@
       </span>
     </el-dialog>
 
-    <el-dialog :title="`${currentRow.unit} ${currentRow.period} - 版本历史`" :visible.sync="showVersion" width="720px">
+    <el-dialog :title="`${currentRow.unit || ''}${currentRow.subject ? ' · ' + currentRow.subject : ''} ${currentRow.period || ''} - 版本历史`" :visible.sync="showVersion" width="720px">
       <el-table :data="versionHistory" border size="small">
         <el-table-column prop="version" label="版本号" width="110" align="center" />
         <el-table-column prop="totalBudget" label="预算总额" width="130" align="right">
@@ -191,7 +212,7 @@ export default {
   name: 'BudgetEdit',
   data() {
     return {
-      query: { unit: '', year: '2026', status: '' },
+      query: { unit: '', subject: '', year: '2026', status: '' },
       months: MONTHS,
       showCreate: false,
       showImport: false,
@@ -207,6 +228,7 @@ export default {
       ],
       form: {
         unit: '',
+        subject: '',
         period: '2026',
         version: 'v1.0 草案',
         details: [
@@ -224,24 +246,25 @@ export default {
       },
       dialogTitle: '新增预算',
       tableData: [
-        { unit: '车队 / 红树林', period: '2026 全年', totalBudget: 135000000, version: 'v2.0 终版', status: 'effective', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 16:00' },
-        { unit: '车队 / 新鹏运', period: '2026 全年', totalBudget: 112000000, version: 'v1.2', status: 'reviewing', reviewLevel: '2/3 财务总监', editor: '车队财务', updatedAt: '2026-05-12 09:30' },
-        { unit: '加气站（天山乡站等）', period: '2026 9-12 月', totalBudget: 7400000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 14:20' },
-        { unit: '廊道（建设期）', period: '2026 全年', totalBudget: 4800000000, version: 'v1.0', status: 'reviewing', reviewLevel: '1/3 车队长', editor: '马伶俐', updatedAt: '2026-05-12 13:45' },
-        { unit: '制氢工厂', period: '2026 全年', totalBudget: 120000000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 15:00' },
-        { unit: '车队 / 红树林', period: '2026 Q3', totalBudget: 33750000, version: 'v1.1', status: 'rejected', reviewLevel: '', editor: '车队财务', updatedAt: '2026-05-09 11:15' }
+        { unit: '车队', subject: '红树林', period: '2026 全年', totalBudget: 135000000, version: 'v2.0 终版', status: 'effective', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 16:00' },
+        { unit: '车队', subject: '新鹏运', period: '2026 全年', totalBudget: 112000000, version: 'v1.2', status: 'reviewing', reviewLevel: '2/3 财务总监', editor: '车队财务', updatedAt: '2026-05-12 09:30' },
+        { unit: '廊道（建设期）', subject: '', period: '2026 全年', totalBudget: 4800000000, version: 'v1.0', status: 'reviewing', reviewLevel: '1/3 车队长', editor: '马伶俐', updatedAt: '2026-05-12 13:45' },
+        { unit: '加气站（天山乡站等）', subject: '', period: '2026 9-12 月', totalBudget: 7400000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 14:20' },
+        { unit: '制氢工厂', subject: '', period: '2026 全年', totalBudget: 120000000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 15:00' },
+        { unit: '车队', subject: '红树林', period: '2026 Q3', totalBudget: 33750000, version: 'v1.1', status: 'rejected', reviewLevel: '', editor: '车队财务', updatedAt: '2026-05-09 11:15' }
       ]
     }
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
-    reset() { this.query = { unit: '', year: '2026', status: '' } },
+    reset() { this.query = { unit: '', subject: '', year: '2026', status: '' } },
     openCreate() {
       this.isEdit = false
       this.isViewOnly = false
       this.dialogTitle = '新增预算'
       this.form = {
         unit: '',
+        subject: '',
         period: '2026',
         version: 'v1.0 草案',
         details: [
@@ -270,11 +293,22 @@ export default {
       this.$message.success('已提交审批，进入一级（车队长）审批环节（演示）')
       this.showCreate = false
     },
+    rowLabel(row) {
+      return row.unit + (row.subject ? ' · ' + row.subject : '')
+    },
+    mapUnitCode(name) {
+      const map = { '车队': 'fleet', '廊道（建设期）': 'corridor', '加气站（天山乡站等）': 'gas-tsx', '制氢工厂': 'h2-plant' }
+      return map[name] || ''
+    },
+    mapSubjectCode(name) {
+      const map = { '红树林': 'hsl', '新鹏运': 'xpy' }
+      return map[name] || ''
+    },
     viewDetail(row) {
       this.isEdit = false
       this.isViewOnly = true
       this.currentRow = row
-      this.dialogTitle = `${row.unit} ${row.period} ${row.version} - 详情`
+      this.dialogTitle = `${this.rowLabel(row)} ${row.period} ${row.version} - 详情`
       const detailRows = [
         { account: 'LNG 燃料费', ...this.distributeMonthly(row.totalBudget * 0.32) },
         { account: '路桥费', ...this.distributeMonthly(row.totalBudget * 0.18) },
@@ -285,7 +319,8 @@ export default {
         { account: '车辆保险', ...this.distributeMonthly(row.totalBudget * 0.02) }
       ]
       this.form = {
-        unit: row.unit === '车队 1' ? 'fleet1' : 'fleet2',
+        unit: this.mapUnitCode(row.unit),
+        subject: this.mapSubjectCode(row.subject),
         period: row.period.includes('全年') ? '2026' : row.period,
         version: row.version,
         details: detailRows
@@ -307,7 +342,8 @@ export default {
         { account: '车辆保险', ...this.distributeMonthly(row.totalBudget * 0.02) }
       ]
       this.form = {
-        unit: row.unit === '车队 1' ? 'fleet1' : 'fleet2',
+        unit: this.mapUnitCode(row.unit),
+        subject: this.mapSubjectCode(row.subject),
         period: row.period.includes('全年') ? '2026' : row.period,
         version: row.version,
         details: detailRows
@@ -328,14 +364,14 @@ export default {
       this.$message.info(`对比版本 ${row.version} 与当前版本（演示，由后端实现差异对比）`)
     },
     submitReview(row) {
-      this.$confirm(`确认将 ${row.unit} ${row.period} ${row.version} 提交审批？`, '提交确认', {
+      this.$confirm(`确认将 ${this.rowLabel(row)} ${row.period} ${row.version} 提交审批？`, '提交确认', {
         confirmButtonText: '提交',
         cancelButtonText: '取消'
       }).then(() => this.$message.success('已提交')).catch(() => {})
     },
     confirmDelete(row) {
       this.$confirm(
-        `确认删除 ${row.unit} ${row.period} 的预算草稿（${row.version}）？删除后无法恢复。`,
+        `确认删除 ${this.rowLabel(row)} ${row.period} 的预算草稿（${row.version}）？删除后无法恢复。`,
         '删除确认',
         { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'warning' }
       ).then(() => this.$message.success('已删除（演示）')).catch(() => {})

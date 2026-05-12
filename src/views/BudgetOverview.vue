@@ -3,12 +3,17 @@
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" size="small">
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 200px;">
-            <el-option label="车队 / 红树林" value="fleet-hsl" />
-            <el-option label="车队 / 新鹏运" value="fleet-xpy" />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 180px;">
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
             <el-option label="加气站（天山乡站等）" value="gas-tsx" />
             <el-option label="制氢工厂" value="h2-plant" />
-            <el-option label="廊道（建设期）" value="corridor" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体">
+          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 140px;">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
@@ -34,6 +39,9 @@
       </div>
       <el-table :data="tableData" border stripe size="small">
         <el-table-column prop="unitName" label="业务单元" min-width="120" />
+        <el-table-column prop="subject" label="主体" width="100" align="center">
+          <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="year" label="年度" width="80" align="center" />
         <el-table-column prop="totalAmount" label="资源总盘（万元）" width="160" align="right">
           <template slot-scope="scope">{{ formatMoney(scope.row.totalAmount) }}</template>
@@ -69,10 +77,16 @@
       <el-form :model="form" label-width="120px" size="small">
         <el-form-item label="业务单元">
           <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;" :disabled="isEdit">
-            <el-option label="车队 / 红树林" value="fleet-hsl" />
-            <el-option label="车队 / 新鹏运" value="fleet-xpy" />
+            <el-option label="车队" value="fleet" />
+            <el-option label="廊道（建设期）" value="corridor" />
             <el-option label="加气站（天山乡站等）" value="gas-tsx" />
             <el-option label="制氢工厂" value="h2-plant" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主体" v-if="form.unit === 'fleet'">
+          <el-select v-model="form.subject" placeholder="车队需选主体" style="width: 100%;" :disabled="isEdit">
+            <el-option label="红树林" value="hsl" />
+            <el-option label="新鹏运" value="xpy" />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
@@ -103,9 +117,10 @@
       </span>
     </el-dialog>
 
-    <el-dialog :title="`${currentRow.unitName} - 年度资源池详情`" :visible.sync="showDetail" width="720px">
+    <el-dialog :title="`${currentRow.unitName}${currentRow.subject ? ' · ' + currentRow.subject : ''} - 年度资源池详情`" :visible.sync="showDetail" width="720px">
       <el-descriptions :column="2" size="small" border>
         <el-descriptions-item label="业务单元">{{ currentRow.unitName }}</el-descriptions-item>
+        <el-descriptions-item label="主体">{{ currentRow.subject || '—' }}</el-descriptions-item>
         <el-descriptions-item label="年度">{{ currentRow.year }}</el-descriptions-item>
         <el-descriptions-item label="资源总盘">¥ {{ formatMoney(currentRow.totalAmount) }} 万元</el-descriptions-item>
         <el-descriptions-item label="已分配">¥ {{ formatMoney(currentRow.allocated) }} 万元</el-descriptions-item>
@@ -141,8 +156,8 @@ export default {
   name: 'BudgetOverview',
   data() {
     return {
-      query: { unit: '', year: '2026' },
-      form: { unit: '', year: 2026, totalAmount: 1000, remark: '' },
+      query: { unit: '', subject: '', year: '2026' },
+      form: { unit: '', subject: '', year: 2026, totalAmount: 1000, remark: '' },
       showForm: false,
       showDetail: false,
       isEdit: false,
@@ -154,11 +169,11 @@ export default {
         { month: '4月', planned: 708, actual: 745, execRate: 105.2, note: 'LNG 燃料超支' }
       ],
       tableData: [
-        { unitName: '车队 / 红树林', year: 2026, totalAmount: 13500, allocated: 9600, balance: 3900, status: '执行中', updatedAt: '2026-05-12 10:30', creator: '马伶俐' },
-        { unitName: '车队 / 新鹏运', year: 2026, totalAmount: 11200, allocated: 11280, balance: -80, status: '超额预警', updatedAt: '2026-05-11 16:42', creator: '车队财务' },
-        { unitName: '加气站（天山乡站等）', year: 2026, totalAmount: 7400, allocated: 3200, balance: 4200, status: '执行中', updatedAt: '2026-05-10 09:15', creator: '马伶俐' },
-        { unitName: '廊道（建设期）', year: 2026, totalAmount: 480000, allocated: 384000, balance: 96000, status: '执行中', updatedAt: '2026-05-12 11:20', creator: '马伶俐' },
-        { unitName: '制氢工厂', year: 2026, totalAmount: 12000, allocated: 0, balance: 12000, status: '草稿', updatedAt: '2026-05-12 15:00', creator: '马伶俐' }
+        { unitName: '车队', subject: '红树林', year: 2026, totalAmount: 13500, allocated: 9600, balance: 3900, status: '执行中', updatedAt: '2026-05-12 10:30', creator: '马伶俐' },
+        { unitName: '车队', subject: '新鹏运', year: 2026, totalAmount: 11200, allocated: 11280, balance: -80, status: '超额预警', updatedAt: '2026-05-11 16:42', creator: '车队财务' },
+        { unitName: '廊道（建设期）', subject: '', year: 2026, totalAmount: 480000, allocated: 384000, balance: 96000, status: '执行中', updatedAt: '2026-05-12 11:20', creator: '马伶俐' },
+        { unitName: '加气站（天山乡站等）', subject: '', year: 2026, totalAmount: 7400, allocated: 3200, balance: 4200, status: '执行中', updatedAt: '2026-05-10 09:15', creator: '马伶俐' },
+        { unitName: '制氢工厂', subject: '', year: 2026, totalAmount: 12000, allocated: 0, balance: 12000, status: '草稿', updatedAt: '2026-05-12 15:00', creator: '马伶俐' }
       ]
     }
   },
@@ -167,17 +182,20 @@ export default {
       this.$message.info('查询逻辑由后端实现（演示）')
     },
     reset() {
-      this.query = { unit: '', year: '2026' }
+      this.query = { unit: '', subject: '', year: '2026' }
     },
     openCreate() {
       this.isEdit = false
-      this.form = { unit: '', year: 2026, totalAmount: 1000, remark: '' }
+      this.form = { unit: '', subject: '', year: 2026, totalAmount: 1000, remark: '' }
       this.showForm = true
     },
     openEdit(row) {
       this.isEdit = true
+      const unitMap = { '车队': 'fleet', '廊道（建设期）': 'corridor', '加气站（天山乡站等）': 'gas-tsx', '制氢工厂': 'h2-plant' }
+      const subjMap = { '红树林': 'hsl', '新鹏运': 'xpy' }
       this.form = {
-        unit: row.unitName === '车队 1' ? 'fleet1' : 'fleet2',
+        unit: unitMap[row.unitName] || '',
+        subject: subjMap[row.subject] || '',
         year: row.year,
         totalAmount: row.totalAmount,
         remark: ''
@@ -195,12 +213,13 @@ export default {
       this.showForm = false
     },
     confirmDelete(row) {
+      const label = row.unitName + (row.subject ? ' · ' + row.subject : '')
       this.$confirm(
-        `确认删除 ${row.unitName} 的 ${row.year} 年度资源池？删除后已分配数据将一并清理，操作不可恢复。`,
+        `确认删除 ${label} 的 ${row.year} 年度资源池？删除后已分配数据将一并清理，操作不可恢复。`,
         '删除确认',
         { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'warning' }
       ).then(() => {
-        this.$message.success(`已删除 ${row.unitName}（演示）`)
+        this.$message.success(`已删除 ${label}（演示）`)
       }).catch(() => {})
     },
     formatMoney(v) {
