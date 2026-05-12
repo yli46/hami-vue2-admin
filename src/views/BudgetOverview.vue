@@ -3,11 +3,12 @@
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" size="small">
         <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 160px;">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
-            <el-option label="廊道（本期不参与）" value="corridor" disabled />
-            <el-option label="加氢站（本期不参与）" value="hydrogen" disabled />
+          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 200px;">
+            <el-option label="车队 / 红树林" value="fleet-hsl" />
+            <el-option label="车队 / 新鹏运" value="fleet-xpy" />
+            <el-option label="加气站（天山乡站）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
+            <el-option label="廊道（已移交政府）" value="corridor" disabled />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
@@ -68,8 +69,10 @@
       <el-form :model="form" label-width="120px" size="small">
         <el-form-item label="业务单元">
           <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;" :disabled="isEdit">
-            <el-option label="车队 1" value="fleet1" />
-            <el-option label="车队 2" value="fleet2" />
+            <el-option label="车队 / 红树林" value="fleet-hsl" />
+            <el-option label="车队 / 新鹏运" value="fleet-xpy" />
+            <el-option label="加气站（天山乡站）" value="gas-tsx" />
+            <el-option label="制氢工厂" value="h2-plant" />
           </el-select>
         </el-form-item>
         <el-form-item label="年度">
@@ -151,8 +154,9 @@ export default {
         { month: '4月', planned: 708, actual: 745, execRate: 105.2, note: 'LNG 燃料超支' }
       ],
       tableData: [
-        { unitName: '车队 1', year: 2026, totalAmount: 8500, allocated: 6200, balance: 2300, status: '执行中', updatedAt: '2026-05-07 10:30', creator: '马伶俐' },
-        { unitName: '车队 2', year: 2026, totalAmount: 7200, allocated: 7300, balance: -100, status: '超额预警', updatedAt: '2026-05-06 16:42', creator: '车队 2 财务' }
+        { unitName: '车队 / 红树林', year: 2026, totalAmount: 13500, allocated: 9600, balance: 3900, status: '执行中', updatedAt: '2026-05-12 10:30', creator: '马伶俐' },
+        { unitName: '车队 / 新鹏运', year: 2026, totalAmount: 11200, allocated: 11280, balance: -80, status: '超额预警', updatedAt: '2026-05-11 16:42', creator: '车队财务' },
+        { unitName: '加气站（天山乡站）', year: 2026, totalAmount: 7400, allocated: 3200, balance: 4200, status: '执行中', updatedAt: '2026-05-10 09:15', creator: '马伶俐' }
       ]
     }
   },

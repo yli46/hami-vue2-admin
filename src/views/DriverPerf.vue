@@ -65,45 +65,61 @@
         </div>
       </div>
       <el-table :data="tableData" border size="small" stripe>
-        <el-table-column prop="name" label="司机姓名" width="100" />
-        <el-table-column prop="driverNo" label="工号" width="90" align="center" />
-        <el-table-column prop="unit" label="业务单元" width="100" align="center" />
-        <el-table-column prop="gasMatch" label="气耗达标" width="100" align="center">
+        <el-table-column prop="name" label="司机姓名" width="90" fixed="left" />
+        <el-table-column prop="driverNo" label="工号" width="80" align="center" fixed="left" />
+        <el-table-column prop="unit" label="业务单元" width="90" align="center" />
+        <el-table-column label="基础工资 (30%)" width="110" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k01 }}</template>
+        </el-table-column>
+        <el-table-column label="气耗 (17%)" width="100" align="right">
           <template slot-scope="scope">
-            <el-tag size="mini" :type="scope.row.gasMatch ? 'success' : 'danger'">
-              {{ scope.row.gasMatch ? '达标' : '超标' }}
-            </el-tag>
+            <span :class="{ 'warning-text': scope.row.k02 < 250 }">¥ {{ scope.row.k02 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="timeMatch" label="时效达标" width="100" align="center">
+        <el-table-column label="时效 (15%)" width="100" align="right">
           <template slot-scope="scope">
-            <span :class="{ 'warning-text': scope.row.timeMatch < 90 }">{{ scope.row.timeMatch }} 分</span>
+            <span :class="{ 'warning-text': scope.row.k03 < 160 }">¥ {{ scope.row.k03 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="violationPoints" label="违规扣分" width="100" align="right">
+        <el-table-column label="安全 (10%)" width="100" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k04 }}</template>
+        </el-table-column>
+        <el-table-column label="煤损 (10%)" width="100" align="right">
           <template slot-scope="scope">
-            <span :class="{ 'warning-text': scope.row.violationPoints > 0 }">{{ scope.row.violationPoints }}</span>
+            <span :class="{ 'warning-text': scope.row.k05 < 160 }">¥ {{ scope.row.k05 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="safetyPoints" label="安全积分" width="100" align="right">
-          <template slot-scope="scope">{{ scope.row.safetyPoints }}</template>
+        <el-table-column label="随车工具 (5%)" width="110" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k06 }}</template>
         </el-table-column>
-        <el-table-column prop="videoCompliance" label="视频录入合规率" width="140" align="right">
+        <el-table-column label="路线偏离 (3%)" width="110" align="right">
           <template slot-scope="scope">
-            <span :class="{ 'warning-text': scope.row.videoCompliance < 95 }">{{ scope.row.videoCompliance }}%</span>
+            <span :class="{ 'warning-text': scope.row.k07 < 40 }">¥ {{ scope.row.k07 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="totalScore" label="综合得分" width="100" align="right">
+        <el-table-column label="单趟杂费 (3%)" width="110" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k08 }}</template>
+        </el-table-column>
+        <el-table-column label="应急维修 (3%)" width="110" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k09 }}</template>
+        </el-table-column>
+        <el-table-column label="低值易耗 (3%)" width="110" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k10 }}</template>
+        </el-table-column>
+        <el-table-column label="放空 (1%)" width="90" align="right">
+          <template slot-scope="scope">¥ {{ scope.row.k11 }}</template>
+        </el-table-column>
+        <el-table-column label="实发合计" width="100" align="right">
           <template slot-scope="scope">
-            <strong>{{ scope.row.totalScore }}</strong>
+            <strong>¥ {{ rowTotal(scope.row) }}</strong>
           </template>
         </el-table-column>
-        <el-table-column prop="grade" label="等级" width="80" align="center">
+        <el-table-column prop="grade" label="等级" width="70" align="center">
           <template slot-scope="scope">
             <el-tag :type="gradeType(scope.row.grade)" size="mini">{{ scope.row.grade }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column label="操作" width="130" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" size="mini" @click="viewDriverDetail(scope.row)">详情</el-button>
             <el-button type="text" size="mini" @click="viewDriverHistory(scope.row)">历史</el-button>
@@ -116,7 +132,7 @@
     </el-card>
 
     <el-card class="indicators-card" shadow="never">
-      <div slot="header"><span>本模块指标定义（基于《指标方案 v2-0424 修订版》）</span></div>
+      <div slot="header"><span>本模块指标定义（基于《指标方案 v2.1-0512 调研修订版》— 业主官方 11 项细则）</span></div>
       <el-table :data="indicators" border size="small">
         <el-table-column prop="code" label="编号" width="160" />
         <el-table-column prop="name" label="指标名称" min-width="180" />
@@ -127,22 +143,30 @@
       </el-table>
     </el-card>
 
-    <el-dialog :title="`${currentDriver.name} - 绩效详情`" :visible.sync="showDriverDetail" width="720px">
+    <el-dialog :title="`${currentDriver.name} - 绩效详情（业主官方 11 项）`" :visible.sync="showDriverDetail" width="760px">
       <el-descriptions :column="2" size="small" border>
         <el-descriptions-item label="姓名">{{ currentDriver.name }}</el-descriptions-item>
         <el-descriptions-item label="工号">{{ currentDriver.driverNo }}</el-descriptions-item>
         <el-descriptions-item label="业务单元">{{ currentDriver.unit }}</el-descriptions-item>
-        <el-descriptions-item label="本月趟次">{{ currentDriver.tripCount }}</el-descriptions-item>
-        <el-descriptions-item label="气耗（kg/100km）">{{ currentDriver.gas }}</el-descriptions-item>
-        <el-descriptions-item label="平均时效得分">{{ currentDriver.timeMatch }} 分</el-descriptions-item>
-        <el-descriptions-item label="违规扣分">{{ currentDriver.violationPoints }}</el-descriptions-item>
-        <el-descriptions-item label="安全积分">{{ currentDriver.safetyPoints }}</el-descriptions-item>
-        <el-descriptions-item label="视频录入合规率">{{ currentDriver.videoCompliance }}%</el-descriptions-item>
-        <el-descriptions-item label="综合得分"><strong>{{ currentDriver.totalScore }}</strong></el-descriptions-item>
         <el-descriptions-item label="等级">
           <el-tag :type="gradeType(currentDriver.grade)" size="mini">{{ currentDriver.grade }}</el-tag>
         </el-descriptions-item>
       </el-descriptions>
+      <el-divider content-position="left">11 项考核明细（业主官方 / 月总额 1,700 元）</el-divider>
+      <el-table :data="kpi11Rows(currentDriver)" border size="small">
+        <el-table-column prop="serial" label="序" width="50" align="center" />
+        <el-table-column prop="name" label="考核项" min-width="160" />
+        <el-table-column prop="weight" label="权重" width="80" align="center" />
+        <el-table-column prop="cap" label="满分（元）" width="100" align="right" />
+        <el-table-column prop="actual" label="实发（元）" width="100" align="right">
+          <template slot-scope="scope">
+            <strong :class="{ 'warning-text': scope.row.actual < scope.row.cap * 0.85 }">¥ {{ scope.row.actual }}</strong>
+          </template>
+        </el-table-column>
+        <el-table-column prop="rate" label="达成率" width="90" align="right">
+          <template slot-scope="scope">{{ scope.row.rate }}%</template>
+        </el-table-column>
+      </el-table>
       <el-divider content-position="left">违规与扣分明细</el-divider>
       <el-table :data="driverViolations" border size="small">
         <el-table-column prop="date" label="日期" width="120" />
@@ -190,31 +214,58 @@ export default {
         { month: '2026-04', totalScore: 82, grade: 'B', violationPoints: -5, note: '气耗超标 + 运损超标' }
       ],
       tableData: [
-        { name: '张永刚', driverNo: 'D0023', unit: '车队 1', tripCount: 28, gas: '36.8', gasMatch: false, timeMatch: 92, violationPoints: -5, safetyPoints: 96, videoCompliance: 98, totalScore: 82, grade: 'B' },
-        { name: '李建华', driverNo: 'D0041', unit: '车队 1', tripCount: 32, gas: '33.6', gasMatch: true, timeMatch: 96, violationPoints: 0, safetyPoints: 100, videoCompliance: 100, totalScore: 95, grade: 'A' },
-        { name: '王志远', driverNo: 'D0058', unit: '车队 2', tripCount: 26, gas: '37.8', gasMatch: false, timeMatch: 88, violationPoints: -3, safetyPoints: 92, videoCompliance: 94, totalScore: 78, grade: 'B' },
-        { name: '陈志国', driverNo: 'D0067', unit: '车队 1', tripCount: 30, gas: '34.2', gasMatch: true, timeMatch: 95, violationPoints: 0, safetyPoints: 100, videoCompliance: 100, totalScore: 94, grade: 'A' },
-        { name: '刘海滨', driverNo: 'D0072', unit: '车队 2', tripCount: 29, gas: '38.4', gasMatch: false, timeMatch: 80, violationPoints: -8, safetyPoints: 85, videoCompliance: 89, totalScore: 68, grade: 'C' },
-        { name: '赵明远', driverNo: 'D0085', unit: '车队 1', tripCount: 27, gas: '34.6', gasMatch: true, timeMatch: 93, violationPoints: -1, safetyPoints: 98, videoCompliance: 97, totalScore: 90, grade: 'A' },
-        { name: '孙国锋', driverNo: 'D0091', unit: '车队 2', tripCount: 31, gas: '37.2', gasMatch: true, timeMatch: 89, violationPoints: -2, safetyPoints: 95, videoCompliance: 96, totalScore: 86, grade: 'B' }
+        { name: '张永刚', driverNo: 'D0023', unit: '车队 1', k01: 500, k02: 250, k03: 200, k04: 180, k05: 160, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' },
+        { name: '李建华', driverNo: 'D0041', unit: '车队 1', k01: 500, k02: 300, k03: 200, k04: 200, k05: 200, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
+        { name: '王志远', driverNo: 'D0058', unit: '车队 2', k01: 500, k02: 220, k03: 170, k04: 200, k05: 180, k06: 70, k07: 40, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' },
+        { name: '陈志国', driverNo: 'D0067', unit: '车队 1', k01: 500, k02: 290, k03: 195, k04: 200, k05: 195, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
+        { name: '刘海滨', driverNo: 'D0072', unit: '车队 2', k01: 500, k02: 180, k03: 140, k04: 150, k05: 130, k06: 60, k07: 30, k08: 45, k09: 50, k10: 45, k11: 15, grade: 'C' },
+        { name: '赵明远', driverNo: 'D0085', unit: '车队 1', k01: 500, k02: 280, k03: 190, k04: 200, k05: 200, k06: 80, k07: 50, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'A' },
+        { name: '孙国锋', driverNo: 'D0091', unit: '车队 2', k01: 500, k02: 270, k03: 175, k04: 195, k05: 190, k06: 80, k07: 45, k08: 50, k09: 50, k10: 50, k11: 20, grade: 'B' }
       ],
       indicators: [
-        { code: 'P1-L3-R06-K1', name: '气耗达标', level: 'L3', source: '车辆运营总表.百公里用气', target: '母 ≤34 / 子 ≤37', note: '沿用既有规则' },
-        { code: 'P1-L3-R06-K2', name: '时效达标', level: 'L3', source: '2026 年明细.本单耗时 vs 路线均值', target: '100 分', note: '沿用既有规则' },
-        { code: 'P1-L3-R06-K3', name: '违规扣分', level: 'L3', source: '杂费 2026.罚款扣分 + 运损', target: '零违规', note: '沿用既有规则' },
-        { code: 'P1-L3-R06-K4', name: '安全积分', level: 'L3', source: '事故/违章记录（待采集）', target: '100 分', note: '沿用既有规则 / 待采集' },
-        { code: 'P2-L3-R06-K5', name: '视频录入合规率（新增）', level: 'L3', source: '司机录入双重录入达标 / 总录入', target: '100%', note: '0424 喻总要求' },
+        { code: 'P3-L3-R06-K01', name: '基础工资 (30%)', level: 'L3', source: '业主官方', target: '500 元', note: '业主官方·5/12 调研' },
+        { code: 'P3-L3-R06-K02', name: '气耗 (17%)', level: 'L3', source: '车辆运营总表.百公里用气', target: '300 元（母≤34/子≤37 满分）', note: '沿用既有规则' },
+        { code: 'P3-L3-R06-K03', name: '时效 (15%)', level: 'L3', source: '2026 年明细.本单耗时', target: '200 元（100% 时效满分）', note: '业主官方·5/12 调研' },
+        { code: 'P3-L3-R06-K04', name: '安全 (10%)', level: 'L3', source: '事故/违章记录', target: '200 元（零违规满分）', note: '沿用既有规则' },
+        { code: 'P3-L3-R06-K05', name: '煤损 (10%)', level: 'L3', source: '2026 年明细.超出亏损范围', target: '200 元（零超标满分）', note: '业主官方·5/12 新增独立项' },
+        { code: 'P3-L3-R06-K06', name: '随车工具及资料 (5%)', level: 'L3', source: '车队内勤检查', target: '80 元', note: '业主官方·5/12 新增' },
+        { code: 'P3-L3-R06-K07', name: '路线偏离 (3%)', level: 'L3', source: '民太安 GPS', target: '50 元（无偏离满分）', note: '业主官方·5/12 独立项（v2 旧版埋在违规中）' },
+        { code: 'P3-L3-R06-K08', name: '单趟杂费 (3%)', level: 'L3', source: '内部杂费台账', target: '50 元', note: '业主官方·5/12 新增' },
+        { code: 'P3-L3-R06-K09', name: '应急维修费 (3%)', level: 'L3', source: '维保单据', target: '50 元', note: '业主官方·5/12 新增' },
+        { code: 'P3-L3-R06-K10', name: '低值易耗品 (3%)', level: 'L3', source: '内部物料台账', target: '50 元', note: '业主官方·5/12 新增' },
+        { code: 'P3-L3-R06-K11', name: '放空 (1%)', level: 'L3', source: '调度模块', target: '20 元', note: '业主官方·5/12 独立项（v2 旧版在 L2 调度类）' },
         { code: 'P1-L3-R05-K1', name: '派单公平性', level: 'L3', source: '司机派单总表', target: 'Max/Min ≤1.5', note: '建议值' },
         { code: 'P1-L3-R05-K2', name: '母子车配对率（重定位）', level: 'L3', source: '车辆登记 + 派单交叉', target: '异常 ≤2%', note: '道亨主理 / 看板复用' },
-        { code: 'P1-L3-R05-K3', name: '派单异常人工干预率（重定位）', level: 'L3', source: '本平台调度模块异常情况', target: '≤2%', note: '道亨主理 / 看板复用' },
-        { code: 'P1-L3-R05-K4', name: '计划完成率', level: 'L3', source: '计划管理 + 实际卸货', target: '≥95%', note: '建议值 / 待采集' },
-        { code: 'P1-L2-D1-004', name: '司机派单次数分布', level: 'L2', source: '司机派单总表.计数', target: 'Max/Min ≤1.5', note: '管理层关注' }
+        { code: 'P1-L3-R05-K3', name: '派单异常人工干预率（重定位）', level: 'L3', source: '本平台调度模块异常情况', target: '≤2%', note: '道亨主理 / 看板复用' }
       ]
     }
   },
   methods: {
     search() { this.$message.info('查询逻辑由后端实现（演示）') },
     reset() { this.query = { month: '2026-04', unit: '', driver: '', grade: '' } },
+    rowTotal(row) {
+      return ['k01','k02','k03','k04','k05','k06','k07','k08','k09','k10','k11']
+        .reduce((sum, k) => sum + (row[k] || 0), 0)
+    },
+    kpi11Rows(row) {
+      const items = [
+        { serial: 1, name: '基础工资', weight: '30%', cap: 500, actual: row.k01 || 0 },
+        { serial: 2, name: '气耗', weight: '17%', cap: 300, actual: row.k02 || 0 },
+        { serial: 3, name: '时效', weight: '15%', cap: 200, actual: row.k03 || 0 },
+        { serial: 4, name: '安全', weight: '10%', cap: 200, actual: row.k04 || 0 },
+        { serial: 5, name: '煤损', weight: '10%', cap: 200, actual: row.k05 || 0 },
+        { serial: 6, name: '随车工具及资料', weight: '5%', cap: 80, actual: row.k06 || 0 },
+        { serial: 7, name: '路线偏离', weight: '3%', cap: 50, actual: row.k07 || 0 },
+        { serial: 8, name: '单趟杂费', weight: '3%', cap: 50, actual: row.k08 || 0 },
+        { serial: 9, name: '应急维修费', weight: '3%', cap: 50, actual: row.k09 || 0 },
+        { serial: 10, name: '低值易耗品', weight: '3%', cap: 50, actual: row.k10 || 0 },
+        { serial: 11, name: '放空', weight: '1%', cap: 20, actual: row.k11 || 0 }
+      ]
+      return items.map(item => ({
+        ...item,
+        rate: item.cap > 0 ? Math.round(item.actual / item.cap * 100) : 0
+      }))
+    },
     viewDriverDetail(row) {
       this.currentDriver = row
       this.showDriverDetail = true

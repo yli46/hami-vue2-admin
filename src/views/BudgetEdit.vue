@@ -99,9 +99,10 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-divider content-position="left">月度预算明细 — 按费用科目</el-divider>
+        <el-divider content-position="left">月度预算明细 — 按费用科目（业主 ERP 编码 + 趟结/杂费拆开）</el-divider>
         <el-table :data="form.details" border size="small">
-          <el-table-column prop="account" label="费用科目" min-width="140" fixed="left" />
+          <el-table-column prop="account" label="费用科目" min-width="160" fixed="left" />
+          <el-table-column prop="accountCode" label="ERP 编码" width="160" align="center" fixed="left" />
           <el-table-column v-for="m in months" :key="m" :label="m" width="100" align="right">
             <template slot-scope="scope">
               <el-input-number
@@ -209,21 +210,24 @@ export default {
         period: '2026',
         version: 'v1.0 草案',
         details: [
-          { account: 'LNG 燃料费', ...zeros() },
-          { account: '路桥费', ...zeros() },
-          { account: '司机趟结工资', ...zeros() },
-          { account: '司机基本工资', ...zeros() },
-          { account: '车辆维保费', ...zeros() },
-          { account: '车辆折旧', ...zeros() },
-          { account: '车辆保险', ...zeros() }
+          { account: 'LNG 加气费', accountCode: '业主自定义', ...zeros() },
+          { account: 'ETC 路桥费', accountCode: '业主自定义', ...zeros() },
+          { account: '司机趟结工资', accountCode: '660209-司机', ...zeros() },
+          { account: '司机基本工资', accountCode: '660209-司机', ...zeros() },
+          { account: '管理人员工资', accountCode: '660209-管理', ...zeros() },
+          { account: '车辆维修费', accountCode: '660214 车辆使用费', ...zeros() },
+          { account: '车辆折旧费', accountCode: '660225 折旧费', ...zeros() },
+          { account: '车辆保险费', accountCode: '660219 保险费', ...zeros() },
+          { account: '车辆杂费（5/12 拆开）', accountCode: '业主自定义', ...zeros() },
+          { account: '低值易耗品', accountCode: '业主自定义', ...zeros() }
         ]
       },
       dialogTitle: '新增预算',
       tableData: [
-        { unit: '车队 1', period: '2026 全年', totalBudget: 8500000, version: 'v2.0 终版', status: 'effective', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-04-28 16:00' },
-        { unit: '车队 2', period: '2026 全年', totalBudget: 7200000, version: 'v1.2', status: 'reviewing', reviewLevel: '2/3 财务总监', editor: '车队 2 财务', updatedAt: '2026-05-08 09:30' },
-        { unit: '车队 1', period: '2026 Q3', totalBudget: 2200000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-09 14:20' },
-        { unit: '车队 2', period: '2026 Q2 调整', totalBudget: 1800000, version: 'v1.1', status: 'rejected', reviewLevel: '', editor: '车队 2 财务', updatedAt: '2026-05-06 11:15' }
+        { unit: '车队 / 红树林', period: '2026 全年', totalBudget: 135000000, version: 'v2.0 终版', status: 'effective', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 16:00' },
+        { unit: '车队 / 新鹏运', period: '2026 全年', totalBudget: 112000000, version: 'v1.2', status: 'reviewing', reviewLevel: '2/3 财务总监', editor: '车队财务', updatedAt: '2026-05-12 09:30' },
+        { unit: '加气站（天山乡站）', period: '2026 9-12 月', totalBudget: 7400000, version: 'v1.0 草案', status: 'draft', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-05-12 14:20' },
+        { unit: '车队 / 红树林', period: '2026 Q3', totalBudget: 33750000, version: 'v1.1', status: 'rejected', reviewLevel: '', editor: '车队财务', updatedAt: '2026-05-09 11:15' }
       ]
     }
   },

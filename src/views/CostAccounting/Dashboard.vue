@@ -26,14 +26,14 @@
 
     <div class="kpi-row">
       <el-card class="kpi-card" shadow="never">
-        <div class="kpi-label">当期吨公里成本</div>
+        <div class="kpi-label">当期吨公里成本（含税）</div>
         <div class="kpi-value">¥ {{ stats.actualUnit }}</div>
         <div class="kpi-meta">本月累计</div>
       </el-card>
       <el-card class="kpi-card" shadow="never">
-        <div class="kpi-label">预算吨公里成本</div>
+        <div class="kpi-label">业主官方预算</div>
         <div class="kpi-value">¥ {{ stats.budgetUnit }}</div>
-        <div class="kpi-meta">2026 年度</div>
+        <div class="kpi-meta">2026 经营测算</div>
       </el-card>
       <el-card class="kpi-card" shadow="never">
         <div class="kpi-label">偏差</div>
@@ -43,9 +43,9 @@
         <div class="kpi-meta">阈值 ±{{ stats.threshold }}%</div>
       </el-card>
       <el-card class="kpi-card" shadow="never">
-        <div class="kpi-label">累计运量</div>
-        <div class="kpi-value">{{ stats.totalTonKm }}</div>
-        <div class="kpi-meta">万吨公里</div>
+        <div class="kpi-label">利润率（含税）</div>
+        <div class="kpi-value">6.3%</div>
+        <div class="kpi-meta">业主目标 7.6%</div>
       </el-card>
     </div>
 
@@ -57,14 +57,14 @@
         </div>
       </div>
       <el-table :data="tableData" border size="small">
-        <el-table-column prop="category" label="成本细项" min-width="140" />
-        <el-table-column prop="actualAmount" label="实际金额（元/吨公里）" width="170" align="right">
-          <template slot-scope="scope">{{ scope.row.actualAmount.toFixed(4) }}</template>
+        <el-table-column prop="category" label="成本细项（11 项业主官方）" min-width="180" />
+        <el-table-column prop="actualAmount" label="实际（元/吨公里）" width="160" align="right">
+          <template slot-scope="scope">{{ scope.row.actualAmount.toFixed(5) }}</template>
         </el-table-column>
-        <el-table-column prop="actualPct" label="实际占比" width="100" align="right">
+        <el-table-column prop="actualPct" label="实际占收入比" width="120" align="right">
           <template slot-scope="scope">{{ scope.row.actualPct }}%</template>
         </el-table-column>
-        <el-table-column prop="budgetPct" label="预算占比" width="100" align="right">
+        <el-table-column prop="budgetPct" label="业主官方占比" width="120" align="right">
           <template slot-scope="scope">{{ scope.row.budgetPct }}%</template>
         </el-table-column>
         <el-table-column label="偏差" width="100" align="right">
@@ -115,30 +115,33 @@ export default {
     return {
       query: { month: '2026-04', unit: '' },
       stats: {
-        actualUnit: '1.382',
-        budgetUnit: '1.310',
-        variance: 5.5,
+        actualUnit: '0.1832',
+        budgetUnit: '0.1802',
+        variance: 1.7,
         threshold: 5,
-        varianceLevel: 'high',
+        varianceLevel: 'normal',
         totalTonKm: '128.4'
       },
       tableData: [
-        { category: 'LNG 燃料费', actualAmount: 0.4423, actualPct: 32.0, budgetPct: 30.0, threshold: 5, dataSource: '中石化加气站结算（待对接）' },
-        { category: '路桥费', actualAmount: 0.2487, actualPct: 18.0, budgetPct: 18.0, threshold: 3, dataSource: '山东高速 ETC' },
-        { category: '司机趟结工资', actualAmount: 0.3042, actualPct: 22.0, budgetPct: 22.0, threshold: 3, dataSource: '内部趟结台账' },
-        { category: '车辆维保费', actualAmount: 0.1244, actualPct: 9.0, budgetPct: 8.0, threshold: 5, dataSource: '维保单据 + 手动录入' },
-        { category: '车辆折旧', actualAmount: 0.1382, actualPct: 10.0, budgetPct: 12.0, threshold: 3, dataSource: '资产台账' },
-        { category: '车辆保险', actualAmount: 0.0414, actualPct: 3.0, budgetPct: 3.0, threshold: 2, dataSource: '保险台账' },
-        { category: '司机基本工资（非趟结）', actualAmount: 0.0691, actualPct: 5.0, budgetPct: 6.0, threshold: 3, dataSource: '人事系统' },
-        { category: '其他直接成本', actualAmount: 0.0138, actualPct: 1.0, budgetPct: 1.0, threshold: 5, dataSource: '手动录入' }
+        { category: '吨公里加气', actualAmount: 0.06950, actualPct: 35.6, budgetPct: 34.6, threshold: 5, dataSource: '中石化加气站结算（替代广汇/桥湾，待对接）' },
+        { category: '吨公里司机工资', actualAmount: 0.03323, actualPct: 17.0, budgetPct: 17.0, threshold: 3, dataSource: '内部趟结台账 + 工资系统' },
+        { category: '吨公里 ETC 费用', actualAmount: 0.03200, actualPct: 16.4, budgetPct: 16.1, threshold: 3, dataSource: '山东高速 ETC' },
+        { category: '吨公里折旧', actualAmount: 0.02780, actualPct: 14.2, budgetPct: 14.2, threshold: 3, dataSource: '资产台账（11 个月）' },
+        { category: '吨公里保险', actualAmount: 0.00771, actualPct: 3.9, budgetPct: 4.0, threshold: 2, dataSource: '保险台账' },
+        { category: '吨公里杂费', actualAmount: 0.00650, actualPct: 3.3, budgetPct: 3.1, threshold: 3, dataSource: '内部杂费台账' },
+        { category: '吨公里维修费', actualAmount: 0.00380, actualPct: 1.9, budgetPct: 1.9, threshold: 5, dataSource: '维保单据 + 手动录入' },
+        { category: '吨公里管理人员工资', actualAmount: 0.00240, actualPct: 1.2, budgetPct: 1.2, threshold: 3, dataSource: '人事系统（管理层）' },
+        { category: '吨公里低值易耗', actualAmount: 0.00038, actualPct: 0.2, budgetPct: 0.2, threshold: 5, dataSource: '内部物料台账' },
+        { category: '——成本合计', actualAmount: 0.18332, actualPct: 93.7, budgetPct: 92.4, threshold: 3, dataSource: '小计（含税）' },
+        { category: '吨公里利润', actualAmount: 0.01176, actualPct: 6.3, budgetPct: 7.6, threshold: 2, dataSource: '收入 − 成本' }
       ],
       trendData: [
-        { month: '2025-11', actual: '1.298', budget: '1.310', note: '正常' },
-        { month: '2025-12', actual: '1.325', budget: '1.310', note: '冬季气价小幅上涨' },
-        { month: '2026-01', actual: '1.340', budget: '1.310', note: '冬季气价持续' },
-        { month: '2026-02', actual: '1.305', budget: '1.310', note: '正常' },
-        { month: '2026-03', actual: '1.353', budget: '1.310', note: '春节后人员调整' },
-        { month: '2026-04', actual: '1.382', budget: '1.310', note: '燃料超阈值，已发预警' }
+        { month: '2025-11', actual: '0.1798', budget: '0.1802', note: '达标' },
+        { month: '2025-12', actual: '0.1825', budget: '0.1802', note: '冬季气价小幅上涨' },
+        { month: '2026-01', actual: '0.1840', budget: '0.1802', note: '冬季气价持续' },
+        { month: '2026-02', actual: '0.1810', budget: '0.1802', note: '达标' },
+        { month: '2026-03', actual: '0.1826', budget: '0.1802', note: '春节运量略低' },
+        { month: '2026-04', actual: '0.1832', budget: '0.1802', note: '气耗略偏高（接近阈值）' }
       ]
     }
   },
