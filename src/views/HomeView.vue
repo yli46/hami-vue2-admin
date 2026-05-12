@@ -19,7 +19,7 @@
     <el-card class="module-card" shadow="never">
       <div slot="header" class="card-header">
         <span>模块清单</span>
-        <span class="muted">共 {{ modules.length }} 项 / 本期排除廊道 / 加氢站</span>
+        <span class="muted">共 {{ modules.length }} 项 / 全面预算覆盖业主官方 4 板块（车队 / 廊道 / 加气站 / 制氢工厂）</span>
       </div>
       <el-table :data="modules" size="small" border :row-class-name="rowClass">
         <el-table-column prop="domain" label="所属域" width="120" />
@@ -46,7 +46,7 @@ export default {
   data() {
     return {
       modules: [
-        { domain: '全面预算', name: '概算管理', desc: '业务单元年度资源池切分（本期仅车队；廊道 / 加氢站排除）', path: '/budget/overview', status: '原型就绪' },
+        { domain: '全面预算', name: '概算管理', desc: '业主官方 4 板块年度资源池：车队（红树林+新鹏运双主体）/ 廊道（建设期）/ 加气站 / 制氢工厂', path: '/budget/overview', status: '原型就绪' },
         { domain: '全面预算', name: '预算编制', desc: '年度 / 季度收支预算编制 + 多级审批 + Excel 导入', path: '/budget/edit', status: '原型就绪' },
         { domain: '全面预算', name: '核算处理', desc: '主营业务直接成本归集 + 预算前控 + 预警（含趟结归口 / 备用金 / 手动录入）', path: '/cost-accounting', status: '原型就绪' },
         { domain: '全面预算', name: '决算分析', desc: '期末汇总 / 利润核算 / 决算报告 + 关账', path: '/decision-analysis', status: '原型就绪' },
