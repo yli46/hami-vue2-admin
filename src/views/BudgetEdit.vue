@@ -58,9 +58,10 @@
         </el-table-column>
         <el-table-column prop="editor" label="编制人" width="100" align="center" />
         <el-table-column prop="updatedAt" label="最近更新" width="150" />
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+        <el-table-column label="操作" width="240" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button type="text" size="mini" @click="edit(scope.row)">编辑</el-button>
+            <el-button type="text" size="mini" @click="viewDetail(scope.row)">详情</el-button>
+            <el-button type="text" size="mini" @click="edit(scope.row)" v-if="scope.row.status === 'draft'">编辑</el-button>
             <el-button type="text" size="mini" @click="viewVersion(scope.row)">版本</el-button>
             <el-button type="text" size="mini" @click="submitReview(scope.row)" v-if="scope.row.status === 'draft'">提交审批</el-button>
             <el-button type="text" size="mini" class="danger-text" @click="confirmDelete(scope.row)" v-if="scope.row.status === 'draft'">删除</el-button>
@@ -72,12 +73,12 @@
       </div>
     </el-card>
 
-    <el-dialog :title="isEdit ? '编辑预算' : '新增预算'" :visible.sync="showCreate" width="980px">
+    <el-dialog :title="dialogTitle" :visible.sync="showCreate" width="980px">
       <el-form :model="form" label-width="100px" size="small">
         <el-row :gutter="16">
           <el-col :span="8">
             <el-form-item label="业务单元">
-              <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;">
+              <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;" :disabled="isViewOnly">
                 <el-option label="车队 1" value="fleet1" />
                 <el-option label="车队 2" value="fleet2" />
               </el-select>
@@ -85,7 +86,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="周期">
-              <el-select v-model="form.period" placeholder="请选择" style="width: 100%;">
+              <el-select v-model="form.period" placeholder="请选择" style="width: 100%;" :disabled="isViewOnly">
                 <el-option label="2026 全年" value="2026" />
                 <el-option label="2026 Q3" value="2026-Q3" />
                 <el-option label="2026 Q4" value="2026-Q4" />
@@ -94,7 +95,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="版本">
-              <el-input v-model="form.version" placeholder="如 v1.0 草案" />
+              <el-input v-model="form.version" placeholder="如 v1.0 草案" :disabled="isViewOnly" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -108,6 +109,7 @@
                 size="mini"
                 :controls="false"
                 :step="1000"
+                :disabled="isViewOnly"
                 style="width: 90px;"
               />
             </template>
@@ -120,9 +122,9 @@
         </el-table>
       </el-form>
       <span slot="footer">
-        <el-button @click="showCreate = false">取消</el-button>
-        <el-button @click="saveDraft">保存草稿</el-button>
-        <el-button type="primary" @click="submitDirect">保存并提交审批</el-button>
+        <el-button @click="showCreate = false">{{ isViewOnly ? '关闭' : '取消' }}</el-button>
+        <el-button v-if="!isViewOnly" @click="saveDraft">保存草稿</el-button>
+        <el-button v-if="!isViewOnly" type="primary" @click="submitDirect">保存并提交审批</el-button>
       </span>
     </el-dialog>
 
@@ -194,6 +196,7 @@ export default {
       showImport: false,
       showVersion: false,
       isEdit: false,
+      isViewOnly: false,
       currentRow: { unit: '', period: '' },
       versionHistory: [
         { version: 'v2.0 终版', totalBudget: 8500000, status: 'effective', editor: '马伶俐', reviewedBy: '财务总监', changeLog: '一级审批反馈：燃料预算上调 3%', updatedAt: '2026-04-28 16:00' },
@@ -215,6 +218,7 @@ export default {
           { account: '车辆保险', ...zeros() }
         ]
       },
+      dialogTitle: '新增预算',
       tableData: [
         { unit: '车队 1', period: '2026 全年', totalBudget: 8500000, version: 'v2.0 终版', status: 'effective', reviewLevel: '', editor: '马伶俐', updatedAt: '2026-04-28 16:00' },
         { unit: '车队 2', period: '2026 全年', totalBudget: 7200000, version: 'v1.2', status: 'reviewing', reviewLevel: '2/3 财务总监', editor: '车队 2 财务', updatedAt: '2026-05-08 09:30' },
@@ -228,6 +232,8 @@ export default {
     reset() { this.query = { unit: '', year: '2026', status: '' } },
     openCreate() {
       this.isEdit = false
+      this.isViewOnly = false
+      this.dialogTitle = '新增预算'
       this.form = {
         unit: '',
         period: '2026',
@@ -258,8 +264,32 @@ export default {
       this.$message.success('已提交审批，进入一级（车队长）审批环节（演示）')
       this.showCreate = false
     },
+    viewDetail(row) {
+      this.isEdit = false
+      this.isViewOnly = true
+      this.currentRow = row
+      this.dialogTitle = `${row.unit} ${row.period} ${row.version} - 详情`
+      const detailRows = [
+        { account: 'LNG 燃料费', ...this.distributeMonthly(row.totalBudget * 0.32) },
+        { account: '路桥费', ...this.distributeMonthly(row.totalBudget * 0.18) },
+        { account: '司机趟结工资', ...this.distributeMonthly(row.totalBudget * 0.22) },
+        { account: '司机基本工资', ...this.distributeMonthly(row.totalBudget * 0.06) },
+        { account: '车辆维保费', ...this.distributeMonthly(row.totalBudget * 0.08) },
+        { account: '车辆折旧', ...this.distributeMonthly(row.totalBudget * 0.12) },
+        { account: '车辆保险', ...this.distributeMonthly(row.totalBudget * 0.02) }
+      ]
+      this.form = {
+        unit: row.unit === '车队 1' ? 'fleet1' : 'fleet2',
+        period: row.period.includes('全年') ? '2026' : row.period,
+        version: row.version,
+        details: detailRows
+      }
+      this.showCreate = true
+    },
     edit(row) {
       this.isEdit = true
+      this.isViewOnly = false
+      this.dialogTitle = '编辑预算'
       this.currentRow = row
       const detailRows = [
         { account: 'LNG 燃料费', ...this.distributeMonthly(row.totalBudget * 0.32) },

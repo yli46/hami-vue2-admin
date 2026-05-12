@@ -64,7 +64,7 @@
       </div>
     </el-card>
 
-    <el-dialog :title="isEdit ? '编辑业务单元资源池' : '新增业务单元资源池'" :visible.sync="showForm" width="520px">
+    <el-dialog :title="isEdit ? '编辑业务单元资源池' : '新增业务单元资源池'" :visible.sync="showForm" width="560px">
       <el-form :model="form" label-width="120px" size="small">
         <el-form-item label="业务单元">
           <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;" :disabled="isEdit">
@@ -86,6 +86,14 @@
           <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="编辑原因（可选）" />
         </el-form-item>
       </el-form>
+      <div class="auto-fields-note">
+        <strong>系统自动维护字段（无需录入）：</strong>
+        <ul>
+          <li><b>已分配额</b>：从 133 预算编制"已生效"状态的预算自动累加</li>
+          <li><b>待分配额</b>：= 资源总盘 − 已分配额（实时计算）</li>
+          <li><b>状态</b>：草稿 → 执行中 → 超额预警（待分配 &lt; 0 自动判定）→ 关账</li>
+        </ul>
+      </div>
       <span slot="footer">
         <el-button @click="showForm = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit">{{ isEdit ? '保存' : '确认' }}</el-button>
@@ -233,5 +241,31 @@ export default {
 .pagination {
   margin-top: 12px;
   text-align: right;
+}
+
+.auto-fields-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #606266;
+  background: #FAFBFC;
+  padding: 10px 14px;
+  border-radius: 2px;
+  border: 1px solid #E4E7ED;
+  line-height: 1.8;
+}
+
+.auto-fields-note strong {
+  color: #303133;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.auto-fields-note ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.auto-fields-note b {
+  color: #409EFF;
 }
 </style>
