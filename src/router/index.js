@@ -30,18 +30,6 @@ const routes = [
     meta: { title: '核算处理', module: '134' }
   },
   {
-    path: '/decision-analysis',
-    name: 'decision-analysis',
-    component: () => import('../views/DecisionAnalysis.vue'),
-    meta: { title: '决算分析', module: '135' }
-  },
-  {
-    path: '/budget/coordination',
-    name: 'budget-coordination',
-    component: () => import('../views/BudgetCoordination.vue'),
-    meta: { title: '预算目标协同', module: '136' }
-  },
-  {
     path: '/stats/fleet',
     name: 'stats-fleet',
     component: () => import('../views/FleetStats.vue'),

@@ -27,8 +27,6 @@
           <el-menu-item index="/budget/overview">概算管理</el-menu-item>
           <el-menu-item index="/budget/edit">预算编制</el-menu-item>
           <el-menu-item index="/cost-accounting">核算处理</el-menu-item>
-          <el-menu-item index="/decision-analysis">决算分析</el-menu-item>
-          <el-menu-item index="/budget/coordination">预算目标协同</el-menu-item>
         </el-submenu>
 
         <el-submenu index="stats">
@@ -74,7 +72,7 @@ export default {
     moduleLabel() {
       const m = this.$route.meta?.module
       if (!m) return '首页'
-      if (m >= '132' && m <= '136') return '全面预算'
+      if (m >= '132' && m <= '134') return '全面预算'
       if (m >= '140' && m <= '142') return '统计分析'
       return '其他'
     }
