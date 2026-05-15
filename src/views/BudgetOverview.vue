@@ -1,24 +1,18 @@
 <template>
   <div class="page">
-    <!-- 角色切换（演示用，便于查看不同角色的权限差异）-->
-    <el-card class="role-card" shadow="never">
-      <div class="role-row">
-        <span class="role-label">当前角色（演示）</span>
-        <el-radio-group v-model="currentRole" size="small">
-          <el-radio-button label="group-admin">红树林集团管理层</el-radio-button>
-          <el-radio-button label="company-finance">公司财务（马伶俐）</el-radio-button>
-          <el-radio-button label="subsidiary-finance">子公司新鹏运财务</el-radio-button>
-        </el-radio-group>
-        <span class="role-tip">{{ roleTip }}</span>
+    <!-- 顶部说明 -->
+    <el-card class="rule-note" shadow="never">
+      <div class="rule-content">
+        <strong>132 概算管理 · 数据模型</strong>：一个年度 = 一条概算数据，含业主官方 4 板块（车队 / 廊道 / 加气站 / 制氢工厂）的资源总盘。红树林集团管理层在当年第四季度拍板下一年度概算。主体维度（红树林 / 新鹏运）由 133 预算编制 / 134 核算处理细化。
       </div>
     </el-card>
 
     <!-- 顶部 KPI 卡 -->
     <div class="kpi-row">
       <el-card class="kpi-card" shadow="never">
-        <div class="kpi-label">2026 年度资源总盘合计</div>
+        <div class="kpi-label">当前年度资源总盘合计</div>
         <div class="kpi-value">¥ {{ formatMoney(kpiTotal) }} 万</div>
-        <div class="kpi-meta">4 板块累加</div>
+        <div class="kpi-meta">{{ activeYearLabel }} · 4 板块累加</div>
       </el-card>
       <el-card class="kpi-card" shadow="never">
         <div class="kpi-label">已分配合计</div>
@@ -40,24 +34,18 @@
     <!-- 查询区 -->
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" size="small">
-        <el-form-item label="业务单元">
-          <el-select v-model="query.unit" placeholder="全部" clearable style="width: 180px;">
-            <el-option label="车队" value="fleet" />
-            <el-option label="廊道（建设期）" value="corridor" />
-            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
-            <el-option label="制氢工厂" value="h2-plant" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="主体">
-          <el-select v-model="query.subject" placeholder="全部" clearable style="width: 140px;">
-            <el-option label="红树林" value="hsl" />
-            <el-option label="新鹏运" value="xpy" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="年度">
-          <el-select v-model="query.year" style="width: 120px;">
+          <el-select v-model="query.year" placeholder="全部" clearable style="width: 140px;">
             <el-option label="2026" value="2026" />
             <el-option label="2027" value="2027" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="query.status" placeholder="全部" clearable style="width: 140px;">
+            <el-option label="草稿" value="草稿" />
+            <el-option label="已生效" value="已生效" />
+            <el-option label="超额预警" value="超额预警" />
+            <el-option label="关账" value="关账" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -71,48 +59,76 @@
     <el-card class="table-card" shadow="never">
       <div slot="header" class="card-toolbar">
         <div>
-          <span>业务单元年度资源池</span>
-          <span class="muted">每条记录 = 业务单元 × 主体 × 年度</span>
+          <span>年度概算列表</span>
+          <span class="muted">一行 = 一个年度的概算（含 4 板块）</span>
         </div>
         <div>
-          <el-button v-if="canCreate" type="primary" icon="el-icon-plus" size="small" @click="openCreate">新增</el-button>
+          <el-button type="primary" icon="el-icon-plus" size="small" @click="openCreate">新增年度概算</el-button>
           <el-button icon="el-icon-download" size="small" plain>导出</el-button>
         </div>
       </div>
-      <el-table :data="filteredData" border stripe size="small">
-        <el-table-column prop="unitName" label="业务单元" min-width="120" />
-        <el-table-column prop="subject" label="主体" width="100" align="center">
-          <template slot-scope="scope">{{ scope.row.subject || '—' }}</template>
-        </el-table-column>
-        <el-table-column prop="year" label="年度" width="80" align="center" />
-        <el-table-column prop="totalAmount" label="资源总盘（万元）" width="160" align="right">
-          <template slot-scope="scope">
-            <span v-if="scope.row.totalAmount === null" class="pending">🔴 待业主提供</span>
-            <span v-else>{{ formatMoney(scope.row.totalAmount) }}</span>
+      <el-table
+        :data="filteredData"
+        border
+        stripe
+        size="small"
+        @expand-change="onExpandChange"
+        @row-click="onRowClick"
+        :row-key="row => row.id"
+      >
+        <el-table-column type="expand">
+          <template slot-scope="props">
+            <div class="expand-pane">
+              <div class="expand-title">{{ props.row.year }} 年度 · 4 板块明细</div>
+              <el-table :data="props.row.sections" border size="mini" class="expand-table">
+                <el-table-column prop="unitName" label="业务板块" width="180" />
+                <el-table-column label="资源总盘（万元）" width="180" align="right">
+                  <template slot-scope="s">
+                    <span v-if="s.row.totalAmount === null" class="pending">🔴 待业主提供</span>
+                    <span v-else>{{ formatMoney(s.row.totalAmount) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="已分配（万元）" width="160" align="right">
+                  <template slot-scope="s">{{ formatMoney(s.row.allocated) }}</template>
+                </el-table-column>
+                <el-table-column label="待分配（万元）" width="160" align="right">
+                  <template slot-scope="s">
+                    <span v-if="s.row.totalAmount === null">—</span>
+                    <span v-else :class="{ warning: s.row.balance < 0 }">{{ formatMoney(s.row.balance) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="dataSource" label="数据来源" min-width="320" />
+              </el-table>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="allocated" label="已分配（万元）" width="140" align="right">
-          <template slot-scope="scope">{{ formatMoney(scope.row.allocated) }}</template>
-        </el-table-column>
-        <el-table-column prop="balance" label="待分配（万元）" width="140" align="right">
-          <template slot-scope="scope">
-            <span v-if="scope.row.totalAmount === null">—</span>
-            <span v-else :class="{ warning: scope.row.balance < 0 }">{{ formatMoney(scope.row.balance) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100" align="center">
+        <el-table-column prop="year" label="年度" width="90" align="center" />
+        <el-table-column label="状态" width="120" align="center">
           <template slot-scope="scope">
             <el-tag :type="statusTag(scope.row.status)" size="mini">{{ scope.row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="dataSource" label="数据来源" min-width="160" />
-        <el-table-column prop="creator" label="创建人" width="100" align="center" />
-        <el-table-column prop="updatedAt" label="最近更新" width="150" />
+        <el-table-column label="4 板块总盘合计（万元）" width="200" align="right">
+          <template slot-scope="scope">
+            <strong>{{ formatMoney(sumTotal(scope.row)) }}</strong>
+            <span v-if="hasPending(scope.row)" class="pending"> +🔴</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="已分配合计（万元）" width="170" align="right">
+          <template slot-scope="scope">{{ formatMoney(sumAllocated(scope.row)) }}</template>
+        </el-table-column>
+        <el-table-column label="待分配合计（万元）" width="170" align="right">
+          <template slot-scope="scope">
+            <span :class="{ warning: sumBalance(scope.row) < 0 }">{{ formatMoney(sumBalance(scope.row)) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="decisionTime" label="拍板时点" width="160" />
+        <el-table-column prop="decisionMaker" label="拍板人" width="160" align="center" />
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button type="text" size="mini" @click="openDetail(scope.row)">详情</el-button>
-            <el-button v-if="canEdit(scope.row)" type="text" size="mini" @click="openEdit(scope.row)">编辑</el-button>
-            <el-button v-if="canDelete" type="text" size="mini" class="danger-text" @click="confirmDelete(scope.row)">删除</el-button>
+            <el-button type="text" size="mini" @click.stop="openDetail(scope.row)">详情</el-button>
+            <el-button type="text" size="mini" @click.stop="openEdit(scope.row)">编辑</el-button>
+            <el-button type="text" size="mini" class="danger-text" @click.stop="confirmDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -121,34 +137,39 @@
       </div>
     </el-card>
 
-    <!-- 新增 / 编辑 弹窗 -->
-    <el-dialog :title="isEdit ? '编辑资源池' : '新增资源池'" :visible.sync="showForm" width="640px">
-      <el-form :model="form" label-width="140px" size="small" :rules="formRules" ref="formRef">
-        <el-form-item label="业务单元" prop="unit">
-          <el-select v-model="form.unit" placeholder="请选择" style="width: 100%;" :disabled="isEdit" @change="onUnitChange">
-            <el-option label="车队" value="fleet" />
-            <el-option label="廊道（建设期）" value="corridor" />
-            <el-option label="加气站（天山乡站等）" value="gas-tsx" />
-            <el-option label="制氢工厂" value="h2-plant" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="主体" prop="subject" v-if="form.unit === 'fleet'">
-          <el-select v-model="form.subject" placeholder="车队板块下必填" style="width: 100%;" :disabled="isEdit">
-            <el-option label="红树林" value="hsl" />
-            <el-option label="新鹏运" value="xpy" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="年度" prop="year">
-          <el-select v-model="form.year" style="width: 100%;" :disabled="isEdit">
+    <!-- 新建 / 编辑 弹窗：一次性录入 4 板块 -->
+    <el-dialog :title="isEdit ? '编辑年度概算' : '新增年度概算'" :visible.sync="showForm" width="780px">
+      <el-form :model="form" label-width="120px" size="small">
+        <el-form-item label="年度" required>
+          <el-select v-model="form.year" :disabled="isEdit" style="width: 200px;">
             <el-option label="2026" :value="2026" />
             <el-option label="2027" :value="2027" />
           </el-select>
+          <span class="hint">数据模型：一个年度只允许一条概算记录</span>
         </el-form-item>
-        <el-form-item label="资源总盘（万元）" prop="totalAmount">
-          <el-input-number v-model="form.totalAmount" :min="0" :step="100" style="width: 100%;" />
-          <div class="preset-tip" v-if="presetTip">{{ presetTip }}</div>
-        </el-form-item>
-        <el-form-item :label="isEdit ? '编辑原因' : '备注'" prop="reason">
+
+        <el-divider content-position="left">4 板块资源总盘（来源：M001 §6.1 + M002 经营计划测算）</el-divider>
+
+        <div class="section-grid">
+          <div v-for="s in form.sections" :key="s.unit" class="section-row">
+            <div class="section-label">
+              <div class="section-name">{{ s.unitName }}</div>
+              <div class="section-source">{{ s.dataSource }}</div>
+            </div>
+            <div class="section-input">
+              <el-input-number
+                v-model="s.totalAmount"
+                :min="0"
+                :step="1000"
+                :placeholder="s.placeholder || '请输入金额'"
+                style="width: 240px;"
+              />
+              <span class="unit-tag">万元</span>
+            </div>
+          </div>
+        </div>
+
+        <el-form-item :label="isEdit ? '编辑原因' : '备注'" style="margin-top: 16px;">
           <el-input
             v-model="form.reason"
             type="textarea"
@@ -157,62 +178,64 @@
           />
         </el-form-item>
       </el-form>
+
       <div class="dialog-note">
-        <strong>预填规则（来自 inputs/ 业主原件）</strong>：
+        <strong>4 板块预填值出处（业主原件）</strong>
         <ul>
-          <li>车队（运输板块）：营收 24,700 万 / 利润 450 万（M001 §6.1）。红树林、新鹏运两主体分别按合同比例分摊</li>
-          <li>廊道：总投资 48 亿 = 480,000 万元（M001 §6.1）</li>
-          <li>加气站（天山乡站）：投资 0.74 亿 = 7,400 万元（M001 §6.1）</li>
-          <li>制氢工厂：业主"另行提报"（M001 §6.1），🔴 待业主提供具体金额</li>
+          <li>车队（运输板块）24,700 万：M001 §6.1 "运输版块：营收 24700 万元，利润总额 450 万元"</li>
+          <li>廊道 480,000 万 = 48 亿：M001 §6.1 "廊道版块：计划总投资 48 亿元"</li>
+          <li>加气站（天山乡站）7,400 万 = 0.74 亿：M001 §6.1 "天山乡站：2026 年计划投资 0.74 亿元"</li>
+          <li>制氢工厂 🔴：M001 §6.1 "具体投资计划按最终方案另行提报"，待业主提供</li>
         </ul>
-        <strong>系统自动维护字段</strong>：已分配额（来自 133 已生效预算实时累加）/ 待分配（实时计算）/ 状态（自动判定）
       </div>
+
       <span slot="footer">
         <el-button @click="showForm = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">{{ isEdit ? '保存' : '确认拍板' }}</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ isEdit ? '保存' : '集团管理层确认拍板' }}</el-button>
       </span>
     </el-dialog>
 
-    <!-- 详情 弹窗 -->
-    <el-dialog :title="`${currentRow.unitName || ''}${currentRow.subject ? ' · ' + currentRow.subject : ''} ${currentRow.year || ''} 年度资源池详情`" :visible.sync="showDetail" width="820px">
+    <!-- 详情弹窗 -->
+    <el-dialog :title="`${currentRow.year || ''} 年度概算详情`" :visible.sync="showDetail" width="900px">
       <el-descriptions :column="2" size="small" border>
-        <el-descriptions-item label="业务单元">{{ currentRow.unitName }}</el-descriptions-item>
-        <el-descriptions-item label="主体">{{ currentRow.subject || '—' }}</el-descriptions-item>
         <el-descriptions-item label="年度">{{ currentRow.year }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="statusTag(currentRow.status)" size="mini">{{ currentRow.status }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="资源总盘">
-          <span v-if="currentRow.totalAmount === null" class="pending">🔴 待业主提供</span>
-          <span v-else>¥ {{ formatMoney(currentRow.totalAmount) }} 万元</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="已分配">¥ {{ formatMoney(currentRow.allocated) }} 万元</el-descriptions-item>
-        <el-descriptions-item label="待分配">
-          <span v-if="currentRow.totalAmount === null">—</span>
-          <span v-else :class="{ warning: currentRow.balance < 0 }">¥ {{ formatMoney(currentRow.balance) }} 万元</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="数据来源">{{ currentRow.dataSource }}</el-descriptions-item>
-        <el-descriptions-item label="创建人">{{ currentRow.creator }}</el-descriptions-item>
-        <el-descriptions-item label="最近更新">{{ currentRow.updatedAt }}</el-descriptions-item>
+        <el-descriptions-item label="拍板时点">{{ currentRow.decisionTime }}</el-descriptions-item>
+        <el-descriptions-item label="拍板人">{{ currentRow.decisionMaker }}</el-descriptions-item>
+        <el-descriptions-item label="4 板块总盘合计">¥ {{ formatMoney(sumTotal(currentRow)) }} 万元</el-descriptions-item>
+        <el-descriptions-item label="已分配合计">¥ {{ formatMoney(sumAllocated(currentRow)) }} 万元</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ currentRow.note || '—' }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-divider content-position="left">月度执行情况（数据来自 133 已生效预算 + 134 实际归集）</el-divider>
-      <el-table :data="monthlyAllocation" border size="small">
-        <el-table-column prop="month" label="月份" width="80" align="center" />
-        <el-table-column prop="planned" label="计划分配（万）" width="140" align="right" />
-        <el-table-column prop="actual" label="实际累计（万）" width="140" align="right" />
-        <el-table-column prop="execRate" label="执行率" width="100" align="right">
-          <template slot-scope="scope">{{ scope.row.execRate }}%</template>
+      <el-divider content-position="left">4 板块明细</el-divider>
+      <el-table :data="currentRow.sections || []" border size="small">
+        <el-table-column prop="unitName" label="业务板块" width="180" />
+        <el-table-column label="资源总盘（万元）" width="170" align="right">
+          <template slot-scope="s">
+            <span v-if="s.row.totalAmount === null" class="pending">🔴 待业主提供</span>
+            <span v-else>{{ formatMoney(s.row.totalAmount) }}</span>
+          </template>
         </el-table-column>
-        <el-table-column prop="note" label="备注" min-width="200" />
+        <el-table-column label="已分配（万元）" width="150" align="right">
+          <template slot-scope="s">{{ formatMoney(s.row.allocated) }}</template>
+        </el-table-column>
+        <el-table-column label="待分配（万元）" width="150" align="right">
+          <template slot-scope="s">
+            <span v-if="s.row.totalAmount === null">—</span>
+            <span v-else :class="{ warning: s.row.balance < 0 }">{{ formatMoney(s.row.balance) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="dataSource" label="数据来源" min-width="300" />
       </el-table>
 
       <el-divider content-position="left">历史变更日志</el-divider>
-      <el-table :data="historyLog" border size="small">
-        <el-table-column prop="time" label="时点" width="150" />
-        <el-table-column prop="actor" label="操作人" width="120" align="center" />
-        <el-table-column prop="action" label="动作" width="100" align="center" />
-        <el-table-column prop="change" label="变更" min-width="200" />
+      <el-table :data="currentRow.history || []" border size="small">
+        <el-table-column prop="time" label="时点" width="160" />
+        <el-table-column prop="actor" label="操作人" width="150" align="center" />
+        <el-table-column prop="action" label="动作" width="120" align="center" />
+        <el-table-column prop="change" label="变更" min-width="240" />
         <el-table-column prop="reason" label="原因" min-width="200" />
       </el-table>
     </el-dialog>
@@ -220,146 +243,138 @@
 </template>
 
 <script>
-const PRESET = {
-  fleet_hsl: { amount: 13500, source: '基于 M001 §6.1 运输板块 24,700 万 + M006 双主体分摊' },
-  fleet_xpy: { amount: 11200, source: '基于 M001 §6.1 运输板块 24,700 万 + M006 双主体分摊' },
-  corridor: { amount: 480000, source: 'M001 §6.1 廊道总投资 48 亿' },
-  'gas-tsx': { amount: 7400, source: 'M001 §6.1 天山乡站投资 0.74 亿' },
-  'h2-plant': { amount: null, source: 'M001 §6.1 "具体投资计划按最终方案另行提报" 🔴 待业主提供' }
+const SECTION_PRESET = [
+  { unit: 'fleet', unitName: '车队（运输板块）', totalAmount: 24700, placeholder: '24700', dataSource: 'M001 §6.1 运输板块年度营收 24,700 万 · M002 LNG 营收测算' },
+  { unit: 'corridor', unitName: '廊道（建设期）', totalAmount: 480000, placeholder: '480000', dataSource: 'M001 §6.1 廊道总投资 48 亿' },
+  { unit: 'gas-tsx', unitName: '加气站（天山乡站等）', totalAmount: 7400, placeholder: '7400', dataSource: 'M001 §6.1 天山乡站投资 0.74 亿' },
+  { unit: 'h2-plant', unitName: '制氢工厂', totalAmount: null, placeholder: '🔴 待业主提供', dataSource: 'M001 §6.1 "具体投资计划按最终方案另行提报"' }
+]
+
+function blankSections() {
+  return SECTION_PRESET.map(s => ({
+    unit: s.unit,
+    unitName: s.unitName,
+    totalAmount: s.totalAmount,
+    allocated: 0,
+    balance: s.totalAmount === null ? 0 : s.totalAmount,
+    dataSource: s.dataSource,
+    placeholder: s.placeholder
+  }))
 }
 
 export default {
   name: 'BudgetOverview',
   data() {
     return {
-      currentRole: 'group-admin',
-      query: { unit: '', subject: '', year: '2026' },
-      form: { unit: '', subject: '', year: 2026, totalAmount: null, reason: '' },
-      formRules: {
-        unit: [{ required: true, message: '请选择业务单元', trigger: 'change' }],
-        year: [{ required: true, message: '请选择年度', trigger: 'change' }],
-        totalAmount: [{ required: true, message: '请输入资源总盘', trigger: 'blur' }]
-      },
+      query: { year: '2026', status: '' },
+      form: { year: 2026, sections: blankSections(), reason: '' },
       showForm: false,
       showDetail: false,
       isEdit: false,
       currentRow: {},
-      monthlyAllocation: [
-        { month: '1月', planned: 1125, actual: 1080, execRate: 96.0, note: '正常' },
-        { month: '2月', planned: 1125, actual: 980, execRate: 87.1, note: '春节运量略降' },
-        { month: '3月', planned: 1125, actual: 1180, execRate: 104.9, note: '业务恢复' },
-        { month: '4月', planned: 1125, actual: 1220, execRate: 108.4, note: 'LNG 燃料超支' }
-      ],
-      historyLog: [
-        { time: '2025-12-15 10:00', actor: '红树林集团管理层', action: '拍板', change: '总盘 13,500 万', reason: '基于 M001 §6.1 测算' },
-        { time: '2026-01-10 14:30', actor: '马伶俐（公司财务）', action: '编辑', change: '备注调整', reason: '补充板块描述' },
-        { time: '2026-03-26 09:00', actor: '系统自动', action: '状态变更', change: '草稿 → 已生效', reason: '集团管理层拍板生效' }
-      ],
       tableData: [
-        { id: 1, unit: 'fleet', unitName: '车队', subject: '红树林', year: 2026, totalAmount: 13500, allocated: 9600, balance: 3900, status: '已生效', dataSource: 'M001 §6.1 + 主体分摊', creator: '红树林集团管理层', updatedAt: '2025-12-15 10:00' },
-        { id: 2, unit: 'fleet', unitName: '车队', subject: '新鹏运', year: 2026, totalAmount: 11200, allocated: 11280, balance: -80, status: '超额预警', dataSource: 'M001 §6.1 + 主体分摊', creator: '红树林集团管理层', updatedAt: '2025-12-15 10:00' },
-        { id: 3, unit: 'corridor', unitName: '廊道（建设期）', subject: '', year: 2026, totalAmount: 480000, allocated: 384000, balance: 96000, status: '已生效', dataSource: 'M001 §6.1 廊道总投资 48 亿', creator: '红树林集团管理层', updatedAt: '2025-12-15 10:00' },
-        { id: 4, unit: 'gas-tsx', unitName: '加气站（天山乡站）', subject: '', year: 2026, totalAmount: 7400, allocated: 3200, balance: 4200, status: '已生效', dataSource: 'M001 §6.1 天山乡站 0.74 亿', creator: '红树林集团管理层', updatedAt: '2025-12-15 10:00' },
-        { id: 5, unit: 'h2-plant', unitName: '制氢工厂', subject: '', year: 2026, totalAmount: null, allocated: 0, balance: 0, status: '草稿', dataSource: 'M001 §6.1 "另行提报" · 🔴 待业主', creator: '马伶俐（公司财务）', updatedAt: '2026-05-15 09:00' }
+        {
+          id: 1,
+          year: 2026,
+          status: '已生效',
+          decisionTime: '2025-12-15 10:00',
+          decisionMaker: '红树林集团管理层',
+          note: '基于业主官方 2026 年度经营计划测算',
+          sections: [
+            { unit: 'fleet', unitName: '车队（运输板块）', totalAmount: 24700, allocated: 18000, balance: 6700, dataSource: 'M001 §6.1 + M002 LNG 营收测算' },
+            { unit: 'corridor', unitName: '廊道（建设期）', totalAmount: 480000, allocated: 384000, balance: 96000, dataSource: 'M001 §6.1 廊道总投资 48 亿' },
+            { unit: 'gas-tsx', unitName: '加气站（天山乡站等）', totalAmount: 7400, allocated: 3200, balance: 4200, dataSource: 'M001 §6.1 天山乡站 0.74 亿' },
+            { unit: 'h2-plant', unitName: '制氢工厂', totalAmount: null, allocated: 0, balance: 0, dataSource: 'M001 §6.1 "另行提报" · 🔴 待业主' }
+          ],
+          history: [
+            { time: '2025-10-15 14:00', actor: '红树林集团管理层', action: '创建草稿', change: '初版录入', reason: 'Q4 启动 2026 年度概算决策' },
+            { time: '2025-12-15 10:00', actor: '红树林集团管理层', action: '拍板生效', change: '草稿 → 已生效', reason: '集团管理层拍板通过' },
+            { time: '2026-03-26 09:00', actor: '马伶俐（公司财务）', action: '编辑', change: '车队已分配 17,200 → 18,000', reason: '133 已生效预算回写' }
+          ]
+        },
+        {
+          id: 2,
+          year: 2027,
+          status: '草稿',
+          decisionTime: '—',
+          decisionMaker: '—',
+          note: '2026 Q4 启动编制 · 待集团管理层拍板',
+          sections: blankSections(),
+          history: [
+            { time: '2026-10-10 09:00', actor: '马伶俐（公司财务）', action: '创建草稿', change: '初版（4 板块均未填）', reason: '提前启动 2027 年度概算编制' }
+          ]
+        }
       ]
     }
   },
   computed: {
-    roleTip() {
-      const map = {
-        'group-admin': '拥有拍板 / 关账权；可新增 / 编辑 / 删除任意板块',
-        'company-finance': '组织编制；可编辑录入但无拍板权；不能删除',
-        'subsidiary-finance': '仅可编辑本主体（新鹏运）范围；不能新增 / 删除'
-      }
-      return map[this.currentRole] || ''
-    },
-    canCreate() {
-      return this.currentRole === 'group-admin'
-    },
-    canDelete() {
-      return this.currentRole === 'group-admin'
-    },
-    presetTip() {
-      if (!this.form.unit) return ''
-      let key = this.form.unit
-      if (this.form.unit === 'fleet' && this.form.subject) {
-        key = `fleet_${this.form.subject}`
-      }
-      const preset = PRESET[key]
-      if (!preset) return ''
-      if (preset.amount === null) {
-        return `🔴 ${preset.source}`
-      }
-      return `预填值 ${preset.amount} 万元 · 出处：${preset.source}`
+    activeYearLabel() {
+      const yearRow = this.tableData.find(r => String(r.year) === String(this.query.year)) || this.tableData[0]
+      return yearRow ? `${yearRow.year} 年度` : '—'
     },
     filteredData() {
       return this.tableData.filter(row => {
-        if (this.query.unit && row.unit !== this.query.unit) return false
-        if (this.query.subject) {
-          const subjMap = { hsl: '红树林', xpy: '新鹏运' }
-          if (row.subject !== subjMap[this.query.subject]) return false
-        }
         if (this.query.year && String(row.year) !== this.query.year) return false
-        if (this.currentRole === 'subsidiary-finance' && row.subject && row.subject !== '新鹏运') return false
+        if (this.query.status && row.status !== this.query.status) return false
         return true
       })
     },
+    kpiRow() {
+      return this.tableData.find(r => String(r.year) === String(this.query.year)) || this.tableData[0]
+    },
     kpiTotal() {
-      return this.filteredData.reduce((s, r) => s + (r.totalAmount || 0), 0)
+      return this.kpiRow ? this.sumTotal(this.kpiRow) : 0
     },
     kpiAllocated() {
-      return this.filteredData.reduce((s, r) => s + (r.allocated || 0), 0)
+      return this.kpiRow ? this.sumAllocated(this.kpiRow) : 0
     },
     kpiBalance() {
       return this.kpiTotal - this.kpiAllocated
     },
     kpiOverCount() {
-      return this.filteredData.filter(r => r.balance < 0).length
+      if (!this.kpiRow) return 0
+      return this.kpiRow.sections.filter(s => s.totalAmount !== null && s.balance < 0).length
     }
   },
   methods: {
-    canEdit(row) {
-      if (this.currentRole === 'group-admin') return true
-      if (this.currentRole === 'company-finance') return true
-      if (this.currentRole === 'subsidiary-finance') return row.subject === '新鹏运'
-      return false
+    sumTotal(row) {
+      if (!row || !row.sections) return 0
+      return row.sections.reduce((s, x) => s + (x.totalAmount || 0), 0)
     },
+    sumAllocated(row) {
+      if (!row || !row.sections) return 0
+      return row.sections.reduce((s, x) => s + (x.allocated || 0), 0)
+    },
+    sumBalance(row) {
+      return this.sumTotal(row) - this.sumAllocated(row)
+    },
+    hasPending(row) {
+      if (!row || !row.sections) return false
+      return row.sections.some(s => s.totalAmount === null)
+    },
+    onRowClick(row, col) {
+      // 点击行（非操作列）不动作；展开由 expand 列控制
+    },
+    onExpandChange() {},
     search() {
       this.$message.info('查询已生效（前端筛选）')
     },
     reset() {
-      this.query = { unit: '', subject: '', year: '2026' }
-    },
-    onUnitChange() {
-      if (this.form.unit !== 'fleet') {
-        this.form.subject = ''
-      }
-      let key = this.form.unit
-      if (this.form.unit === 'fleet' && this.form.subject) {
-        key = `fleet_${this.form.subject}`
-      }
-      const preset = PRESET[key]
-      if (preset && preset.amount !== null) {
-        this.form.totalAmount = preset.amount
-      }
+      this.query = { year: '2026', status: '' }
     },
     openCreate() {
       this.isEdit = false
-      this.form = { unit: '', subject: '', year: 2026, totalAmount: null, reason: '' }
+      this.form = { year: 2027, sections: blankSections(), reason: '' }
       this.showForm = true
     },
     openEdit(row) {
       this.isEdit = true
-      const unitMap = { '车队': 'fleet', '廊道（建设期）': 'corridor', '加气站（天山乡站）': 'gas-tsx', '制氢工厂': 'h2-plant' }
-      const subjMap = { '红树林': 'hsl', '新鹏运': 'xpy' }
+      this.currentRow = row
       this.form = {
-        unit: unitMap[row.unitName] || '',
-        subject: subjMap[row.subject] || '',
         year: row.year,
-        totalAmount: row.totalAmount,
+        sections: JSON.parse(JSON.stringify(row.sections)),
         reason: ''
       }
-      this.currentRow = row
       this.showForm = true
     },
     openDetail(row) {
@@ -371,14 +386,12 @@ export default {
         this.$message.warning('编辑原因必填')
         return
       }
-      const action = this.isEdit ? '已保存修改' : '已确认拍板（演示，未实际写入）'
-      this.$message.success(action)
+      this.$message.success(this.isEdit ? '已保存（演示）' : '集团管理层已拍板（演示）')
       this.showForm = false
     },
     confirmDelete(row) {
-      const label = row.unitName + (row.subject ? ' · ' + row.subject : '')
       this.$prompt(
-        `确认删除 ${label} 的 ${row.year} 年度资源池？删除后关联的 133 已分配数据将一并清理。请填写删除原因：`,
+        `确认删除 ${row.year} 年度的概算记录？该年度所有 4 板块明细 + 关联的 133 已分配数据将一并清理。请填写删除原因：`,
         '删除确认',
         { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'warning', inputType: 'textarea', inputPlaceholder: '删除原因必填' }
       ).then(({ value }) => {
@@ -386,7 +399,7 @@ export default {
           this.$message.warning('删除原因必填')
           return
         }
-        this.$message.success(`已删除 ${label}（演示）`)
+        this.$message.success(`已删除 ${row.year} 年度概算（演示）`)
       }).catch(() => {})
     },
     formatMoney(v) {
@@ -408,28 +421,25 @@ export default {
   gap: 12px;
 }
 
-.role-card,
+.rule-note,
 .search-card,
 .table-card {
   border: 1px solid #DCDFE6;
 }
 
-.role-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+.rule-note {
+  background: #FAFBFC;
 }
 
-.role-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #303133;
-}
-
-.role-tip {
+.rule-content {
   font-size: 12px;
-  color: #909399;
+  color: #606266;
+  line-height: 1.8;
+}
+
+.rule-content strong {
+  color: #303133;
+  margin-right: 6px;
 }
 
 .kpi-row {
@@ -496,10 +506,60 @@ export default {
   text-align: right;
 }
 
-.preset-tip {
+.expand-pane {
+  padding: 12px 16px 16px 56px;
+  background: #FAFBFC;
+}
+
+.expand-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.section-row {
+  border: 1px solid #E4E7ED;
+  border-radius: 4px;
+  padding: 12px 14px;
+  background: #FAFBFC;
+}
+
+.section-label .section-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.section-label .section-source {
   font-size: 11px;
-  color: #2F80ED;
-  margin-top: 4px;
+  color: #909399;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.section-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unit-tag {
+  font-size: 12px;
+  color: #606266;
+}
+
+.hint {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #909399;
 }
 
 .dialog-note {

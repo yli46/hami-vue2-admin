@@ -1,5 +1,11 @@
 <template>
   <div class="page">
+    <el-card class="rule-banner" shadow="never">
+      <div class="banner-content">
+        <strong>133 预算编制 · 周期口径（5/15 用户裁决）</strong>：以月为编制周期 · 当月末编制下个月预算（例如 4 月底编制 5 月预算）。系统默认新增 / 重置时选中 <code>M{{ String(autoNextMonth).padStart(2, '0') }}</code>。
+      </div>
+    </el-card>
+
     <!-- A 查询条件 -->
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" size="small">
@@ -48,7 +54,7 @@
     <!-- B 操作 + 表格 -->
     <el-card class="table-card" shadow="never">
       <div slot="header" class="card-toolbar">
-        <span>预算编制 — {{ query.year }} 年度（业主官方 4 板块 · 按月编制）</span>
+        <span>预算编制 — {{ query.year }} 年度（4 板块 · 月为周期 · 当月末编下月预算）</span>
         <div>
           <el-button type="primary" icon="el-icon-plus" size="small" @click="openCreate">新增预算</el-button>
           <el-button icon="el-icon-upload2" size="small" plain @click="openImport">Excel 导入</el-button>
@@ -548,6 +554,12 @@ export default {
     }
   },
   computed: {
+    autoNextMonth() {
+      const now = new Date()
+      let m = now.getMonth() + 2
+      if (m > 12) m = 1
+      return m
+    },
     filteredTable() {
       return this.tableData.filter(r => {
         if (this.query.unit && r.unit !== this.query.unit) return false
@@ -576,9 +588,13 @@ export default {
     }
   },
   methods: {
+    nextMonthCode() {
+      let m = this.autoNextMonth
+      return 'M' + (m < 10 ? '0' + m : m)
+    },
     emptyForm() {
       return {
-        unit: '', subject: '', year: '2026', period: 'YEAR',
+        unit: '', subject: '', year: '2026', period: this.nextMonthCode(),
         version: 'v1.0 草案', editor: '马伶俐',
         useLastYearBaseline: false, growthRate: 0.08,
         details: defaultAccounts()
