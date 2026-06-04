@@ -877,35 +877,35 @@ function startTour() {
         element: '.ant-steps',
         popover: {
           title: '预算编制走几步',
-          description: '全年预算的编制流程分四步：集团先定大方向目标 → 各业务团队按月填报细项 → 主管初审、财务终审 → 审批通过后正式生效。页面顶部的步骤条实时显示当前进展到哪一步。',
+          description: '全年预算编制分四步：集团先定大方向 → 各团队按月填报细项 → 主管初审、财务终审 → 审批通过正式生效。步骤条实时显示当前进展到哪步。',
           side: 'bottom', align: 'start'
         }
       },
       {
         element: '.statistic-grid',
         popover: {
-          title: '编制进度一眼掌握',
-          description: '四张卡片显示当前状态：多少个业务单元已提交（进度）、多少正在等待审批、多少被驳回需要修改，以及有没有超出年度预算上限的情况。帮助财务负责人快速掌握整体进度，知道还有哪些在卡着。',
+          title: '编制进度总览',
+          description: '四张卡片显示当前状态：多少业务单元已提交、多少在等待审批、多少被驳回需修改，以及有没有超出年度预算上限的情况。帮助财务负责人快速掌握整体进度。',
           side: 'bottom'
         }
       },
       {
-        element: '.tax-switch',
+        element: '.ant-search-bar',
         popover: {
-          title: '含税还是不含税',
-          description: '这个切换按钮影响列表里"全年预算总额"的显示方式。切到"含税"看含税价格，切到"不含税"看不含税价格。原始录入数据不变，只是换一个视角看同一份数据。',
-          side: 'bottom', align: 'end'
+          title: '筛选与口径切换',
+          description: '可按年度、主体、业务单元、状态组合筛选。右侧的"含税 / 不含税"切换影响列表里"全年预算总额"的显示方式，切换视角查看同一份数据，原始录入数字不变。',
+          side: 'bottom', align: 'start'
         }
       },
       {
         element: '.ant-tabs-nav',
         popover: {
           title: '两种视图随时切换',
-          description: '"列表视图"按记录一行一行显示，适合看状态和审批进度；"年度矩阵视图"把所有主体和业务单元铺成一张大表，横轴是 1 到 12 月，可以一眼看出哪个月哪个团队的预算高低。点"下一步"看矩阵视图。',
+          description: '"列表视图"按记录逐行显示，看状态和审批进度；"年度矩阵视图"把所有主体铺成大表，横轴是 12 个月，一眼看出哪个月哪个团队预算高低。点"下一步"切到矩阵视图看看。',
           side: 'bottom',
           onNextClick: () => {
-            const matrixTab = document.querySelector('.ant-tabs-tab:last-child');
-            if (matrixTab) matrixTab.click();
+            const t = document.querySelector('.ant-tabs-tab:last-child');
+            if (t) t.click();
             setTimeout(() => driverObj.moveNext(), 400);
           }
         }
@@ -914,7 +914,7 @@ function startTour() {
         element: '#pane-matrix .ant-card-body-sm',
         popover: {
           title: '年度矩阵视图',
-          description: '这张大表一眼看完全年：每行是一个业务单元，每列是一个月份，数字是当月预算合计。底部一行是所有团队当月的汇总。点击任意一个月份格子，还可以看到那个月 19 个费用科目的详细分拆。',
+          description: '每行是一个业务单元，每列是一个月份，数字是当月预算合计。底行汇总所有团队当月预算总额。点击任意月份格子，还能看到那个月 19 个费用科目的详细分拆。',
           side: 'bottom'
         }
       },
@@ -922,29 +922,32 @@ function startTour() {
         element: '.ant-btn-primary',
         popover: {
           title: '填报月度预算',
-          description: '点"新增预算"进入填报界面。里面有一张 19 个费用科目 × 12 个月的表格，财务人员逐月填入每个科目的预算金额，系统自动汇总行合计和月合计。点"下一步"打开填报界面。',
+          description: '点"新增预算"进入填报表单——19 个费用科目 × 12 个月的矩阵，逐月填入各科目预算，系统自动汇总行合计和月合计。点"下一步"打开填报表单。',
           side: 'left',
           onNextClick: () => {
-            const listTab = document.querySelector('.ant-tabs-tab:first-child');
-            if (listTab) listTab.click();
+            const t = document.querySelector('.ant-tabs-tab:first-child');
+            if (t) t.click();
             setTimeout(() => { openCreate(); setTimeout(() => driverObj.moveNext(), 600); }, 200);
           }
         }
       },
+      // 弹窗内改用浮动提示
       {
-        element: '#budget-hint',
         popover: {
-          title: '超预算会被拦截',
-          description: '提交前系统会自动检查：这份预算的全年总金额，是否超出了年度概算管理里设定的支出上限。超出了就无法提交，必须把数字调小。这样能保证实际预算不会脱离年度整体规划。',
-          side: 'bottom'
+          title: '表单第一区：主体和年度',
+          description: '先选公司主体，业务单元下拉会自动联动显示该主体下的选项。年度选好后，系统会自动查出这个主体今年还剩多少预算空间。',
         }
       },
       {
-        element: '.calc-section',
+        popover: {
+          title: '超预算会被拦截',
+          description: '提交时系统会自动检查：这份预算的全年总金额，是否超出了年度预算管理里设定的支出上限。超出了就无法提交，必须把数字调小才能继续。',
+        }
+      },
+      {
         popover: {
           title: '推算辅助（展开后更实用）',
-          description: '这个折叠区展开后有两个功能：一是实时显示对应业务单元的年度预算上限（还剩多少空间可用）；二是提供推算工具，把预算按比例分摊到 12 个月，省去手动逐月填写的麻烦。点"下一步"展开体验。',
-          side: 'bottom',
+          description: '折叠区展开后有两个功能：①显示该业务单元今年的预算上限，还剩多少空间；②提供自动分摊工具，把全年预算按比例分摊到 12 个月，省去手动逐月填写。点"下一步"展开体验。',
           onNextClick: () => {
             const head = document.querySelector('.calc-head');
             if (head && !document.querySelector('#calc-panel-b.open')) head.click();
@@ -955,27 +958,21 @@ function startTour() {
         }
       },
       {
-        element: '#b-budget-bar',
         popover: {
-          title: '可用额度提示',
-          description: '蓝色信息条显示这个业务单元今年还可以编多少预算——"剩余可用"那个数字就是上限。选了不同的主体或业务单元，这里会自动更新。填预算前先看这里，就不会超限了。',
-          side: 'bottom'
+          title: '可用额度实时提示',
+          description: '展开后蓝色信息条会显示：这个业务单元今年还可以编多少预算。切换主体或业务单元后自动更新。填数字前先看这里，避免超限被退回。',
         }
       },
       {
-        element: '#edit-tbody tr.group-row:first-child',
         popover: {
-          title: '费用分三组填写',
-          description: '19 个费用科目分成三组：蓝色是直接运营成本（气耗、工资、过路费等 8 项）；紫色是管理费用（差旅、招待、办公等 8 项）；橙色是财务费用（利息、手续费等 3 项）。颜色分组让财务填写时更有条理，减少漏项。',
-          side: 'top'
+          title: '19 个科目分三组填写',
+          description: '蓝色是直接运营成本（气耗、工资、过路费等 8 项），紫色是管理费用（差旅、招待、办公等 8 项），橙色是财务费用（利息、手续费等 3 项）。分颜色分组让填写更有条理，不容易漏项。',
         }
       },
       {
-        element: '#d-form .ant-modal-footer',
         popover: {
-          title: '保存草稿还是直接提交',
-          description: '"保存草稿"先存下来，之后再提交；"提交审批"立即进入审批流程，主管初审通过后再到财务终审。审批通过后预算正式生效。年中如需调整，可点列表里的"调整"按钮——已经过去的月份会自动锁定，只允许改后续月份。',
-          side: 'top',
+          title: '年中调整：已过月份自动锁定',
+          description: '预算生效后若需调整，点操作列"调整"按钮。系统自动把已过去的月份设为只读（灰色），只能修改本月及后续月份，保证历史数据不被篡改。调整后走审批，通过后新版本覆盖旧版本。',
           onNextClick: () => { ca('d-form'); driverObj.moveNext(); }
         }
       }

@@ -428,79 +428,59 @@ function startTour() {
       {
         element: '.ant-alert',
         popover: {
-          title: '这个页面做什么用的',
-          description: '专门用来补录"漏网之鱼"——那些因为单据晚到、银行数据没推送等原因，没有自动进账的管理类和财务类费用。比如：上个月的出差发票这个月才拿到、贷款利息银行没及时推送。日常运营成本（加气、过路费、工资等）走的是另一套自动归集，不在这里录。',
+          title: '这个页面做什么',
+          description: '专门用来补录"漏网之鱼"——因单据晚到、银行数据未推送等原因未能自动入账的管理类和财务类费用。日常运营成本（加气、过路费、工资等）走的是另一套自动归集，不在这里录。',
           side: 'bottom', align: 'start'
         }
       },
       {
-        element: '#f-cat',
+        element: '.ant-search-bar',
         popover: {
-          title: '先选费用类型',
-          description: '费用分两大类：管理费用（日常办公经营相关，如差旅、招待、会议等）和财务费用（跟融资借贷相关，如利息、手续费等）。选了类型之后，下面的"具体科目"下拉会自动更新，只显示这个类型下的选项。',
-          side: 'right'
-        }
-      },
-      {
-        element: '.month-strip',
-        popover: {
-          title: '归属月份和录入日期是两回事',
-          description: '这里选的是费用"实际发生"的月份，不是今天填表的日期。举例：4 月份出差，但发票 5 月才到，那这里应该填 4 月（费用归属 4 月），哪怕今天是 5 月才录入。月份归属对财务月度结算很重要。',
-          side: 'bottom'
+          title: '多维度筛选',
+          description: '可按费用类别（管理费用 / 财务费用）、年度、月份、主体、审核状态组合筛选，快速找到需要核对的记录。月份选择条可以快速切换，方便财务按月对账。',
+          side: 'bottom', align: 'start'
         }
       },
       {
         element: '.ant-table-wrapper',
         popover: {
           title: '补录清单',
-          description: '每条补录记录都有状态：草稿（还没提交）、待审核（已提交等财务复核）、已通过（审核通过，纳入统计）、已驳回（有问题被退回来修改）。紫色标签是管理费用，橙色是财务费用，方便快速区分。',
-          side: 'top'
+          description: '紫色标签是管理费用，橙色是财务费用，方便快速区分。状态分：草稿 → 待审核 → 已通过 / 已驳回。科目编码和名称同时显示，便于财务核对。',
+          side: 'top', align: 'start'
         }
       },
       {
         element: '.ant-btn-primary',
         popover: {
           title: '新增一条补录',
-          description: '点进去之后，先选费用类型，科目下拉就会自动显示对应的选项（管理费用有 24 个科目，财务费用有 5 个科目，都来自公司官方科目清单）。金额统一填不含税的数字。点"下一步"打开表单。',
+          description: '点进去选费用类别后，具体科目下拉会自动联动（管理费用 24 个科目，财务费用 5 个科目，来自公司官方科目清单）。金额统一填不含税。点"下一步"打开表单。',
           side: 'left',
           onNextClick: () => { openCreate(); setTimeout(() => driverObj.moveNext(), 600); }
         }
       },
+      // 弹窗内改用浮动提示
       {
-        element: '#f-cat-sel',
         popover: {
           title: '选类型，科目自动更新',
-          description: '这里是表单里的费用类型下拉。选完之后，右边的"具体科目"选项立刻变成对应类别的科目列表，不会出现选错科目的情况。点"下一步"选择"管理费用"看看效果。',
-          side: 'right',
-          onNextClick: () => {
-            document.getElementById('f-cat-sel').value = '管理费用';
-            updateAcctOptions();
-            setTimeout(() => driverObj.moveNext(), 300);
-          }
+          description: '先选费用类别（管理 / 财务），然后具体科目下拉立刻变成该类别下的选项，不会填错科目。每个科目都带 ERP 编码，直接映射到财务系统。',
         }
       },
       {
-        element: '#f-acct',
         popover: {
-          title: '24 个管理费用科目',
-          description: '选了管理费用后，这里列出 24 个具体科目，比如差旅费、业务招待费、工资、会议费等，每个都带着公司 ERP 里的编码，方便财务和后台系统对接，不用手动输入编码。',
-          side: 'right'
+          title: '归属月份很关键',
+          description: '填的是费用"实际发生"的月份，不是今天录入的日期。比如 4 月出差、5 月才拿到发票，归属月份应填 4 月。这对财务月度结算非常重要。',
         }
       },
       {
-        element: '#f-remark',
         popover: {
-          title: '说明补录原因（提交时必填）',
-          description: '保存草稿可以先不填，但提交给财务审核时这里必须写清楚。写明为什么要补录——比如"4 月差旅报销单推迟到 5 月到财务"、"银行系统未及时推送利息数据"。财务审核时主要依据这里的说明来判断是否通过。',
-          side: 'top'
+          title: '补录原因提交时必填',
+          description: '保存草稿可以先不写，但提交给财务审核时必须说明原因——比如"差旅报销单推迟一个月到财务"。财务审核时主要依据这里判断是否通过。',
         }
       },
       {
-        element: '#d-form .ant-modal-footer',
         popover: {
           title: '两种保存方式',
-          description: '"保存草稿"先存着，随时可以继续修改或提交；"提交审核"立即发给财务复核。审核通过后，这条费用会纳入当月统计数据，出现在成本分析看板里。',
-          side: 'top',
+          description: '"保存草稿"先存着随时可改；"提交审核"立即发给财务复核。审核通过后，这条费用会纳入当月统计，出现在成本分析看板里。',
           onNextClick: () => { ca('d-form'); driverObj.moveNext(); }
         }
       }
