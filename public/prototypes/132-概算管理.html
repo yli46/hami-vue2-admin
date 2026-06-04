@@ -815,15 +815,25 @@ function startFormTour132() {
           element: '#d-form #diff-bar',
           popover: {
             title: '两种算法的差异提示',
-            description: '差距 ≤10% 显示绿色（数字可信）；超过 10% 变橙色，建议回头检查某个参数是否填错了。下方汇总表可一键把推算结果填进录入区。',
-            side: 'top', align: 'start'
+            description: '差距 ≤10% 显示绿色（数字可信）；超过 10% 变橙色，建议回头检查某个参数是否填错了。下方汇总表可一键把推算结果填进录入区。点"下一步"查看录入表格。',
+            side: 'top', align: 'start',
+            onNextClick: () => {
+              // 折叠 calc 区，让录入表格出现在可视区域内
+              const p = document.getElementById('calc-panel');
+              const i = document.getElementById('cti');
+              if (p && p.classList.contains('open')) {
+                p.classList.remove('open');
+                if (i) i.classList.remove('open');
+              }
+              setTimeout(() => fd.moveNext(), 350);
+            }
           }
         },
         {
           element: '#d-form #entry-tbody',
           popover: {
             title: '收 / 支 / 余直接录入',
-            description: '按公司/业务板块分行填写收入目标和支出上限，利润自动算出来。建设期板块没有收入，只填支出预算。最底行实时合计。',
+            description: '按公司/业务板块分行填写收入目标和支出上限，利润自动算出来。建设期板块没有收入，只填支出预算。最底行实时合计。推算工具的结果可点"填入"按钮一键填进来。',
             side: 'top', align: 'start'
           }
         },
