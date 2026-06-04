@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>预算编制列表 V2.00 — 预算编制</title>
+<link rel="stylesheet" href="./prototype-standard.css">
+<style>
+/* 局部：参数推算折叠区 */
+.calc-section { border:1px solid var(--border-color-secondary); border-radius:var(--radius-md); overflow:hidden; margin-bottom:var(--space-4); }
+.calc-head { display:flex; align-items:center; gap:var(--space-3); padding:10px var(--space-4); background:var(--gray-2); border-bottom:1px solid var(--border-color-secondary); cursor:pointer; user-select:none; }
+.calc-head:hover { background:var(--blue-1); }
+.calc-toggle { font-size:10px; color:var(--gray-7); transition:transform var(--motion-duration-mid); }
+.calc-toggle.open { transform:rotate(90deg); }
+.calc-panel { padding:var(--space-4); display:none; }
+.calc-panel.open { display:block; }
+.param-table { width:100%; border-collapse:collapse; font-size:var(--font-size-sm); }
+.param-table td { padding:4px 6px; border-bottom:1px solid var(--border-color-secondary); vertical-align:middle; }
+.param-table .plbl { color:var(--text-color-secondary); white-space:nowrap; width:165px; }
+.param-table .pval input { width:110px; height:26px; padding:0 6px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:var(--font-size-sm); text-align:right; outline:none; }
+.param-table .pval input:focus { border-color:var(--color-primary); }
+.param-table .pval input.changed { border-color:var(--color-warning); background:var(--gold-1); }
+.param-src-cell { font-size:11px; color:var(--text-color-tertiary); white-space:nowrap; }
+.param-src-cell.manual { color:var(--gold-7); }
+.pref { font-size:11px; color:var(--blue-7); background:var(--blue-1); padding:1px 5px; border-radius:var(--radius-xs); }
+</style>
+</head>
+<body>
+<div class="ant-page">
+
+<!-- 步骤条 -->
+<div class="ant-card" style="padding:0;overflow:hidden;margin-bottom:var(--space-4)">
+  <div class="ant-steps">
+    <div class="ant-steps-item finish">
+      <div class="ant-steps-item-icon">1</div>
+      <div class="ant-steps-item-content">
+        <div class="ant-steps-item-title">集团下达年度目标</div>
+        <div class="ant-steps-item-description">已完成</div>
+      </div>
+    </div>
+    <div class="ant-steps-item process">
+      <div class="ant-steps-item-icon">2</div>
+      <div class="ant-steps-item-content">
+        <div class="ant-steps-item-title">各单元编制细项预算</div>
+        <div class="ant-steps-item-description">进行中</div>
+      </div>
+    </div>
+    <div class="ant-steps-item wait">
+      <div class="ant-steps-item-icon">3</div>
+      <div class="ant-steps-item-content">
+        <div class="ant-steps-item-title">L1 初审 / L2 终审</div>
+        <div class="ant-steps-item-description">待开始</div>
+      </div>
+    </div>
+    <div class="ant-steps-item wait">
+      <div class="ant-steps-item-icon">4</div>
+      <div class="ant-steps-item-content">
+        <div class="ant-steps-item-title">全面预算生效</div>
+        <div class="ant-steps-item-description">待开始</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="statistic-grid">
+  <div class="ant-statistic ant-statistic-primary">
+    <div class="ant-statistic-title">本年度编制进度</div>
+    <div class="ant-statistic-content color-primary" id="k-prog">5<span class="ant-statistic-suffix">/ 8</span></div>
+    <div class="ant-statistic-extra">条线已提交 / 应编制</div>
+  </div>
+  <div class="ant-statistic ant-statistic-warning">
+    <div class="ant-statistic-title">审批中</div>
+    <div class="ant-statistic-content color-warning" id="k-rev">2</div>
+    <div class="ant-statistic-extra">待终审 1 · 待初审 1</div>
+  </div>
+  <div class="ant-statistic ant-statistic-error">
+    <div class="ant-statistic-title">已驳回</div>
+    <div class="ant-statistic-content color-error" id="k-rej">1</div>
+    <div class="ant-statistic-extra">需重新提交</div>
+  </div>
+  <div class="ant-statistic ant-statistic-success">
+    <div class="ant-statistic-title">超概算预警</div>
+    <div class="ant-statistic-content color-success" id="k-over">0</div>
+    <div class="ant-statistic-extra">超出概算上限的单元</div>
+  </div>
+</div>
+
+<!-- 查询 -->
+<div class="ant-card" style="padding:0;overflow:hidden">
+  <div class="ant-card-body-sm">
+    <div class="ant-search-bar">
+      <div class="ant-search-item"><label class="ant-search-label">年度</label>
+        <select class="ant-input" style="width:100px" id="f-yr"><option>2026</option><option>2025</option></select></div>
+      <div class="ant-search-item"><label class="ant-search-label">主体</label>
+        <select class="ant-input" style="width:140px" id="f-ent"><option value="">全部</option><option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option></select></div>
+      <div class="ant-search-item"><label class="ant-search-label">业务单元</label>
+        <select class="ant-input" style="width:150px" id="f-unit"><option value="">全部</option><option>车队</option><option>廊道（建设期）</option><option>加气站</option><option>制氢工厂</option></select></div>
+      <div class="ant-search-item"><label class="ant-search-label">状态</label>
+        <select class="ant-input" style="width:120px" id="f-st"><option value="">全部</option><option>草稿</option><option>审批中</option><option>已生效</option><option>已驳回</option><option>已归档</option></select></div>
+      <div class="ant-search-item"><label class="ant-search-label">收入口径</label>
+        <div class="tax-switch">
+          <button class="tax-switch-btn active" id="tax-inc" onclick="setTax(true)">含税</button>
+          <button class="tax-switch-btn" id="tax-exc" onclick="setTax(false)">不含税</button>
+        </div></div>
+      <div class="ant-space ml-auto">
+        <button class="ant-btn ant-btn-primary" onclick="renderList()">查询</button>
+        <button class="ant-btn" onclick="resetSearch()">重置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 主卡片 -->
+<div class="ant-card" style="padding:0;overflow:hidden">
+  <div class="ant-card-head">
+    <div style="display:flex;align-items:center;border-bottom:none;margin-bottom:0">
+      <div class="ant-tabs-nav" style="border:none;padding:0;margin-right:var(--space-4)">
+        <div class="ant-tabs-tab active" onclick="switchTab(this,'list')">列表视图</div>
+        <div class="ant-tabs-tab" onclick="switchTab(this,'matrix')">年度矩阵视图</div>
+      </div>
+    </div>
+    <div class="ant-space" style="margin-left:auto">
+      <button class="ant-btn ant-btn-primary" onclick="openCreate()">新增预算</button>
+      <button class="ant-btn" onclick="showMsg('导出成功','success')">导出</button>
+    </div>
+  </div>
+
+  <!-- 列表视图 -->
+  <div id="pane-list">
+    <div class="ant-table-wrapper">
+      <table class="ant-table">
+        <thead><tr>
+          <th>主体</th><th>业务单元</th><th>年度</th>
+          <th class="col-num">全年预算总额（万元）<span id="tax-col" class="ant-tag ant-tag-blue" style="margin-left:4px;vertical-align:middle;font-size:11px">含税</span></th>
+          <th>版本</th><th>状态</th><th>审批进度</th>
+          <th>编制人</th><th>最近更新</th><th>操作</th>
+        </tr></thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 矩阵视图 -->
+  <div id="pane-matrix" style="display:none">
+    <div style="padding:var(--space-3) var(--space-4);font-size:var(--font-size-sm);color:var(--text-color-tertiary)">点击月份单元格可查看该主体-业务单元当月分组明细</div>
+    <div class="ant-table-wrapper" id="matrix-wrap"></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ 新增/编辑 弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-form">
+<div class="ant-modal ant-modal-full">
+  <div class="ant-modal-header">
+    <div class="ant-modal-title" id="form-title">新增年度预算</div>
+    <button class="ant-modal-close" onclick="ca('d-form')">✕</button>
+  </div>
+  <div class="ant-modal-body">
+    <div id="tool-hint" class="ant-alert ant-alert-info" style="display:none">来自参数推算的预算建议已预填，请核对后确认。</div>
+    <div class="grid-2" style="margin-bottom:var(--space-4)">
+      <div style="display:flex;gap:var(--space-4)">
+        <div class="ant-form-item" style="margin-bottom:0">
+          <div class="ant-form-item-label"><span class="required">主体</span></div>
+          <select class="ant-input" id="f-entity" style="width:160px" onchange="onEntityChange()">
+            <option value="">请选择</option><option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option>
+          </select>
+        </div>
+        <div class="ant-form-item" style="margin-bottom:0">
+          <div class="ant-form-item-label"><span class="required">业务单元</span></div>
+          <select class="ant-input" id="f-unit-sel" style="width:160px"><option value="">请先选主体</option></select>
+        </div>
+        <div class="ant-form-item" style="margin-bottom:0">
+          <div class="ant-form-item-label"><span class="required">年度</span></div>
+          <select class="ant-input" id="f-year" style="width:100px"><option>2026</option><option>2025</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:var(--space-4)">
+        <div class="ant-form-item" style="margin-bottom:0">
+          <div class="ant-form-item-label">版本</div>
+          <input class="ant-input" id="f-ver" value="V1.0" readonly style="width:80px">
+        </div>
+        <div class="ant-form-item" style="margin-bottom:0">
+          <div class="ant-form-item-label">编制人</div>
+          <input class="ant-input" id="f-author" value="马伶俐" readonly style="width:120px">
+        </div>
+      </div>
+    </div>
+
+    <div id="budget-hint" class="ant-alert ant-alert-info" style="margin-bottom:var(--space-3)">提交前将校验全年合计 ≤ 该主体 / 业务单元年度概算余额（来自 132 概算管理）。管理费用及财务费用由集团统一分摊，各主体据实填报。</div>
+
+    <!-- 参数推算（折叠） -->
+    <div class="calc-section">
+      <div class="calc-head" onclick="toggleCalcB()">
+        <span class="calc-toggle" id="calc-toggle-b">▶</span>
+        <span class="font-medium">参数推算辅助</span>
+        <span class="ant-tag ant-tag-gray" style="font-size:11px">可展开 · 展开后可推算月度收支并预填矩阵</span>
+        <div class="ant-space" style="margin-left:auto" onclick="event.stopPropagation()">
+          <span class="text-secondary" style="font-size:var(--font-size-sm)">收入口径</span>
+          <div class="tax-switch">
+            <button class="tax-switch-btn active" id="b-tax-inc" onclick="setBTax(true)">含税</button>
+            <button class="tax-switch-btn" id="b-tax-exc" onclick="setBTax(false)">不含税</button>
+          </div>
+        </div>
+      </div>
+      <div class="calc-panel" id="calc-panel-b">
+        <!-- 概算约束信息（来自 132）-->
+        <div id="b-budget-bar" style="display:none;margin-bottom:var(--space-3)">
+          <div style="display:flex;align-items:center;gap:var(--space-5);padding:10px 14px;background:var(--blue-1);border:1px solid var(--blue-2);border-radius:var(--radius-md);font-size:var(--font-size-sm);flex-wrap:wrap">
+            <span class="font-medium" style="color:var(--blue-7)">本年度概算约束（来自 132 概算管理）</span>
+            <span class="text-secondary">收入目标：<strong id="bc-rev" class="text-primary">—</strong> 万元</span>
+            <span class="text-secondary">支出上限：<strong id="bc-cost" style="color:var(--color-warning)">—</strong> 万元</span>
+            <span class="text-secondary">已分配支出：<strong id="bc-alloc" class="text-primary">—</strong> 万元</span>
+            <span class="text-secondary">剩余可用：<strong id="bc-rem">—</strong> 万元</span>
+            <span id="bc-warn" style="display:none;font-size:12px;color:var(--color-error)"></span>
+          </div>
+        </div>
+        <div class="grid-2" style="gap:var(--space-3);margin-bottom:var(--space-3)">
+          <div class="income-col income-col-km">
+            <div class="income-col-head">吨公里口径（旧）</div>
+            <table class="param-table">
+              <tr><td class="plbl">LNG 吨公里收入（元/吨·公里）</td><td class="pval"><input id="b-lng-inc" type="number" step="0.00001" value="0.19508" oninput="bCalc()"><br><span class="pref">参考：0.190~0.210</span></td><td class="param-src-cell">系统历史均值</td></tr>
+            </table>
+            <div class="income-col-result" id="b-km-r">计算中…</div>
+          </div>
+          <div class="income-col income-col-m">
+            <div class="income-col-head">单车月收入口径（新）</div>
+            <table class="param-table">
+              <tr><td class="plbl">LNG 单车月收入（万元/车/月）</td><td class="pval"><input id="b-lng-m" type="number" step="0.01" value="7.00" oninput="bCalc()"><br><span class="pref">参考：6.5~7.5</span></td><td class="param-src-cell">系统历史均值</td></tr>
+            </table>
+            <div class="income-col-result" id="b-m-r">计算中…</div>
+          </div>
+        </div>
+        <div class="diff-bar ok" id="b-diff-bar">计算中…</div>
+        <div class="ant-space" style="justify-content:flex-end;margin-top:var(--space-3)">
+          <button class="ant-btn ant-btn-primary ant-btn-sm" onclick="applyBCalc()">将推算月度分摊值预填到矩阵</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12月矩阵 -->
+    <div class="flex-between" style="margin-bottom:var(--space-2)">
+      <span class="text-secondary" style="font-size:var(--font-size-sm)">19 项费用科目 × 12 月（单位：万元）</span>
+    </div>
+    <div class="ant-table-wrapper">
+      <table class="ant-edit-matrix" id="edit-matrix">
+        <thead><tr>
+          <th style="min-width:130px;text-align:left">费用科目</th>
+          <th style="min-width:56px">ERP</th>
+          <th>1月</th><th>2月</th><th>3月</th><th>4月</th><th>5月</th><th>6月</th>
+          <th>7月</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th>
+          <th>全年合计</th>
+        </tr></thead>
+        <tbody id="edit-tbody"></tbody>
+      </table>
+    </div>
+    <div id="form-adjust-block" style="display:none;margin-top:var(--space-4)">
+      <div class="ant-form-item">
+        <div class="ant-form-item-label"><span class="required">调整原因（至少 20 字）</span></div>
+        <textarea class="ant-input" id="f-adj-reason" rows="2" placeholder="请说明调整原因，如：新增氢车 20 台，下半年趟结工资和维修预算需上调 5%"></textarea>
+      </div>
+    </div>
+    <div class="ant-form-item" style="margin-top:var(--space-3)">
+      <div class="ant-form-item-label">备注</div>
+      <input class="ant-input" id="f-remark" placeholder="月度出现波动时请在此说明原因（选填）">
+    </div>
+  </div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-form')">取消</button>
+    <button class="ant-btn" onclick="submitForm('save')">保存草稿</button>
+    <button class="ant-btn ant-btn-primary" onclick="submitForm('submit')">提交审批</button>
+  </div>
+</div></div>
+
+<!-- ═══ 调整弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-adjust">
+<div class="ant-modal ant-modal-full">
+  <div class="ant-modal-header">
+    <div class="ant-modal-title" id="adj-title">预算调整</div>
+    <button class="ant-modal-close" onclick="ca('d-adjust')">✕</button>
+  </div>
+    <div class="ant-modal-body">
+    <div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-4)">本次调整将创建新版本（V2.0）。已过去的月份已锁定不可修改，仅可调整本月及后续月份的预算数据。调整完成后需重新提交审批，原版本归档。</div>
+    <div id="adj-base-info" class="ant-descriptions" style="margin-bottom:var(--space-4)"></div>
+    <div class="ant-form-item">
+      <div class="ant-form-item-label"><span class="required">调整原因（至少 20 字）</span></div>
+      <textarea class="ant-input" id="adj-reason" rows="2" placeholder="请说明调整原因"></textarea>
+    </div>
+    <div class="flex-between" style="margin-bottom:var(--space-2)">
+      <span class="text-secondary" style="font-size:var(--font-size-sm)">调整后 19 项费用科目 × 12 月（单位：万元）</span>
+    </div>
+    <div class="ant-table-wrapper">
+      <table class="ant-edit-matrix" id="adj-matrix">
+        <thead><tr>
+          <th style="min-width:130px;text-align:left">费用科目</th>
+          <th style="min-width:56px">ERP</th>
+          <th>1月</th><th>2月</th><th>3月</th><th>4月</th><th>5月</th><th>6月</th>
+          <th>7月</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th>
+          <th>全年合计</th>
+        </tr></thead>
+        <tbody id="adj-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-adjust')">取消</button>
+    <button class="ant-btn" onclick="submitAdj('save')">保存草稿</button>
+    <button class="ant-btn ant-btn-primary" onclick="submitAdj('submit')">提交审批</button>
+  </div>
+</div></div>
+
+<!-- ═══ 详情弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-detail">
+<div class="ant-modal ant-modal-lg">
+  <div class="ant-modal-header"><div class="ant-modal-title">预算详情</div><button class="ant-modal-close" onclick="ca('d-detail')">✕</button></div>
+  <div class="ant-modal-body" id="detail-content"></div>
+  <div class="ant-modal-footer" id="detail-footer"><button class="ant-btn" onclick="ca('d-detail')">关闭</button></div>
+</div></div>
+
+<!-- ═══ 审批弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-approval">
+<div class="ant-modal ant-modal-md">
+  <div class="ant-modal-header"><div class="ant-modal-title" id="appr-title">审批</div><button class="ant-modal-close" onclick="ca('d-approval')">✕</button></div>
+  <div class="ant-modal-body" id="appr-content"></div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-approval')">取消</button>
+    <button class="ant-btn ant-btn-danger" onclick="doApproval('reject')">驳回</button>
+    <button class="ant-btn ant-btn-success" onclick="doApproval('pass')">通过</button>
+  </div>
+</div></div>
+
+<!-- ═══ 月度明细弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-month">
+<div class="ant-modal ant-modal-md">
+  <div class="ant-modal-header"><div class="ant-modal-title" id="month-title">月度明细</div><button class="ant-modal-close" onclick="ca('d-month')">✕</button></div>
+  <div class="ant-modal-body" id="month-content"></div>
+  <div class="ant-modal-footer"><button class="ant-btn" onclick="ca('d-month')">关闭</button></div>
+</div></div>
+
+<!-- ═══ 删除确认 ═══ -->
+<div class="ant-modal-mask" id="d-del">
+<div class="ant-modal ant-modal-sm">
+  <div class="ant-modal-header"><div class="ant-modal-title">删除确认</div><button class="ant-modal-close" onclick="ca('d-del')">✕</button></div>
+  <div class="ant-modal-body"><p>草稿记录将被删除，确认继续？</p></div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-del')">取消</button>
+    <button class="ant-btn ant-btn-danger" onclick="confirmDel()">确认删除</button>
+  </div>
+</div></div>
+
+<div class="ant-message-notice" id="msg">
+  <div class="ant-message-notice-content"><span id="msg-icon"></span>&nbsp;<span id="msg-text"></span></div>
+</div>
+
+<script>
+// ── 费用科目分组 ──
+const SUBJECT_GROUPS=[
+  {group:'直接成本',cls:'',subjects:[
+    {name:'LNG加气费',erp:'660214'},{name:'ETC路桥费',erp:'660214'},
+    {name:'司机趟结工资',erp:'660209'},{name:'司机杂费/奖惩',erp:'660299'},
+    {name:'车辆维修费',erp:'660299'},{name:'车辆折旧',erp:'660206'},
+    {name:'保险费',erp:'660219'},{name:'低值易耗品',erp:'660299'},
+  ]},
+  {group:'管理费用（期间费用 · 6602）',cls:'mgmt',subjects:[
+    {name:'差旅费',erp:'660207'},{name:'业务招待费',erp:'660205'},
+    {name:'办公费',erp:'660201'},{name:'工资（管理人员）',erp:'660209'},
+    {name:'社保及公积金',erp:'660210'},{name:'车辆使用费',erp:'660214'},
+    {name:'会议费',erp:'660218'},{name:'管理费用-其他',erp:'660299'},
+  ]},
+  {group:'财务费用（期间费用 · 6603）',cls:'fin',subjects:[
+    {name:'利息费用',erp:'660302'},{name:'手续费',erp:'660303'},{name:'财务费用-其他',erp:'660399'},
+  ]},
+];
+const SUBJECTS=SUBJECT_GROUPS.flatMap(g=>g.subjects);
+const UNITS={'红树林集团':['车队'],'新鹏运':['车队'],'哈密普发新能源':['廊道（建设期）','加气站','制氢工厂']};
+
+// 模拟从 132 概算管理拉取的数据（实际系统由 API 提供）
+const BUDGET_132={
+  2026:{
+    hlj:{rev:14000,cost:12000,alloc:9800},   // 红树林集团·车队
+    xpy:{rev:9500, cost:8500, alloc:7200},   // 新鹏运·车队
+    lang:{rev:0,   cost:10000,alloc:0},       // 廊道（建设期）
+    jia:{rev:0,    cost:3200, alloc:0},       // 加氢站
+    zhi:{rev:0,    cost:1200, alloc:0},       // 制氢工厂
+  },
+  2025:{
+    hlj:{rev:12000,cost:10000,alloc:10000},
+    xpy:{rev:8000, cost:7500, alloc:7500},
+    lang:{rev:0,   cost:8000, alloc:0},
+    jia:{rev:0,    cost:2800, alloc:0},
+    zhi:{rev:0,    cost:800,  alloc:0},
+  }
+};
+function get132Key(entity,unit){
+  if(entity==='红树林集团') return 'hlj';
+  if(entity==='新鹏运') return 'xpy';
+  if(unit.includes('廊道')) return 'lang';
+  if(unit.includes('加氢')) return 'jia';
+  if(unit.includes('制氢')) return 'zhi';
+  return null;
+}
+const MONTHS_L=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+let taxIncluded=true,bTaxIncluded=true;
+let editId=null,adjId=null,delId=null,approvalTarget=null,formMode='create';
+const TAX=0.09;
+const f=n=>isNaN(+n)?'—':(+n).toLocaleString('zh',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt2=n=>+parseFloat(n||0).toFixed(2);
+
+function setTax(inc){taxIncluded=inc;document.getElementById('tax-inc').classList.toggle('active',inc);document.getElementById('tax-exc').classList.toggle('active',!inc);document.getElementById('tax-col').textContent=inc?'含税':'不含税';renderList();}
+function setBTax(inc){bTaxIncluded=inc;document.getElementById('b-tax-inc').classList.toggle('active',inc);document.getElementById('b-tax-exc').classList.toggle('active',!inc);bCalc();}
+
+function makeMonths(base){return SUBJECTS.map((_,si)=>Array.from({length:12},(_,mi)=>fmt2(base*(0.8+Math.random()*.4)*(si<8?1.0:si<16?.15:.05))));}
+
+let data=[
+  {id:1,entity:'红树林集团',unit:'车队',year:'2026',ver:'V1.1',status:'已生效',author:'马伶俐',updAt:'2026-01-20 09:00',remark:'',months:makeMonths(120),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-18 14:30',comment:'同意'},{role:'L2',user:'马伶俐',status:'通过',time:'2026-01-20 09:00',comment:'批准'}]},
+  {id:2,entity:'新鹏运',unit:'车队',year:'2026',ver:'V1.1',status:'已生效',author:'李会计',updAt:'2026-01-25 11:00',remark:'',months:makeMonths(80),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-23 14:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'通过',time:'2026-01-25 11:00',comment:'批准'}]},
+  {id:3,entity:'哈密普发新能源',unit:'廊道（建设期）',year:'2026',ver:'V1.0',status:'审批中',author:'张会计',updAt:'2026-02-01 16:40',remark:'',months:makeMonths(50),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-31 11:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'待审',time:null,comment:''}]},
+  {id:4,entity:'哈密普发新能源',unit:'加气站',year:'2026',ver:'V1.0',status:'已驳回',author:'张会计',updAt:'2026-02-10 09:30',remark:'',months:makeMonths(20),approvals:[{role:'L1',user:'朱建国',status:'驳回',time:'2026-02-08 10:00',comment:'管理费用科目有误，请核实后重新提交'}]},
+  {id:5,entity:'哈密普发新能源',unit:'制氢工厂',year:'2026',ver:'V1.0',status:'草稿',author:'张会计',updAt:'2026-02-12 09:00',remark:'',months:makeMonths(15),approvals:[]},
+];
+
+const annualTotal=months=>months.reduce((s,row)=>s+row.reduce((rs,v)=>rs+v,0),0);
+const displayTotal=t=>taxIncluded?t*(1+TAX):t;
+
+function statusTag(s){const m={草稿:'ant-tag-gold',审批中:'ant-tag-blue',已生效:'ant-tag-green',已驳回:'ant-tag-red',已归档:'ant-tag-gray'};return`<span class="ant-tag ${m[s]||'ant-tag-gray'}">${s}</span>`;}
+function approvalDesc(r){
+  if(!r.approvals?.length)return'未提交';
+  if(r.status==='已生效')return'两级审批已通过';
+  if(r.status==='已驳回'){const l=r.approvals[r.approvals.length-1];return`${l.role} 驳回：${(l.comment||'').slice(0,15)}…`;}
+  if(r.status==='审批中'){const p=r.approvals.find(a=>a.status==='待审');return p?`等待 ${p.role} ${p.user} 审批`:'审批中';}
+  return'草稿';
+}
+
+// ── 列表 ──
+function renderList(){
+  const yr=document.getElementById('f-yr').value;
+  const ent=document.getElementById('f-ent').value;
+  const unit=document.getElementById('f-unit').value;
+  const st=document.getElementById('f-st').value;
+  const rows=data.filter(r=>r.year===yr&&(!ent||r.entity===ent)&&(!unit||r.unit===unit)&&(!st||r.status===st));
+  const tbody=document.getElementById('list-tbody');
+  tbody.innerHTML='';
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>`;updateKpi();return;}
+  rows.forEach(r=>{
+    const tot=displayTotal(annualTotal(r.months));
+    const canEdit=r.status==='草稿'||r.status==='已驳回';
+    tbody.innerHTML+=`<tr>
+      <td>${r.entity}</td><td>${r.unit}</td><td class="col-center">${r.year}</td>
+      <td class="col-num"><strong>${f(tot)}</strong></td>
+      <td class="col-center">${r.ver}</td>
+      <td>${statusTag(r.status)}</td>
+      <td class="text-secondary" style="font-size:var(--font-size-sm)">${approvalDesc(r)}</td>
+      <td>${r.author}</td>
+      <td class="text-secondary" style="font-size:var(--font-size-sm)">${r.updAt}</td>
+      <td><div class="ant-space ant-space-sm">
+        <button class="ant-btn ant-btn-link" style="padding:0" onclick="openDetail(${r.id})">详情</button>
+        ${canEdit?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openEdit(${r.id})">编辑</button>`:''}
+        ${r.status==='草稿'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${r.id})">删除</button>`:''}
+        ${r.status==='审批中'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openApproval(${r.id})">审批</button>`:''}
+        ${r.status==='已生效'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openAdjust(${r.id})">调整</button>`:''}
+      </div></td>
+    </tr>`;
+  });
+  updateKpi();renderMatrix();
+}
+function resetSearch(){['f-ent','f-unit','f-st'].forEach(id=>document.getElementById(id).value='');renderList();}
+function updateKpi(){
+  const yr=document.getElementById('f-yr').value;
+  const yd=data.filter(r=>r.year===yr);
+  document.getElementById('k-prog').innerHTML=yd.filter(r=>r.status!=='草稿'&&r.status!=='已驳回').length+`<span class="ant-statistic-suffix">/ ${yd.length}</span>`;
+  document.getElementById('k-rev').textContent=yd.filter(r=>r.status==='审批中').length;
+  document.getElementById('k-rej').textContent=yd.filter(r=>r.status==='已驳回').length;
+  document.getElementById('k-over').textContent=0;
+}
+
+// ── 矩阵视图 ──
+function renderMatrix(){
+  const yr=document.getElementById('f-yr').value;
+  const yd=data.filter(r=>r.year===yr&&r.status==='已生效');
+  const wrap=document.getElementById('matrix-wrap');
+  if(!yd.length){wrap.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-color-tertiary)">暂无已生效预算数据</div>`;return;}
+  const groups={};yd.forEach(r=>{if(!groups[r.entity])groups[r.entity]=[];groups[r.entity].push(r);});
+  let h=`<table class="ant-matrix"><thead><tr><th colspan="2">主体 / 业务单元</th>${MONTHS_L.map(m=>`<th>${m}</th>`).join('')}<th>全年合计</th></tr></thead><tbody>`;
+  const colTot=new Array(12).fill(0);
+  Object.keys(groups).forEach(ent=>{
+    const unitRows=groups[ent];const entTot=new Array(12).fill(0);
+    unitRows.forEach((r,idx)=>{
+      const cs=MONTHS_L.map((_,mi)=>r.months.reduce((s,row)=>s+row[mi],0));
+      cs.forEach((v,mi)=>{entTot[mi]+=v;colTot[mi]+=v;});
+      const an=cs.reduce((s,v)=>s+v,0);
+      h+=`<tr>${idx===0?`<td class="row-head" rowspan="${unitRows.length}" style="vertical-align:middle">${ent}</td>`:''}
+        <td class="sub-head">${r.unit}</td>
+        ${cs.map((v,mi)=>`<td class="month-cell" onclick="openMonthDetail(${r.id},${mi})" title="点击查看分组明细">${f(displayTotal(v))}</td>`).join('')}
+        <td class="total-td">${f(displayTotal(an))}</td></tr>`;
+    });
+    const ea=entTot.reduce((s,v)=>s+v,0);
+    h+=`<tr style="background:var(--blue-1);font-weight:600"><td colspan="2" style="padding:6px 10px;color:var(--blue-7)">${ent} 小计</td>${entTot.map(v=>`<td class="total-td">${f(displayTotal(v))}</td>`).join('')}<td class="total-td">${f(displayTotal(ea))}</td></tr>`;
+  });
+  const gt=colTot.reduce((s,v)=>s+v,0);
+  h+=`<tr style="background:var(--blue-7);color:#fff;font-weight:600"><td colspan="2" style="padding:7px 10px">月度合计</td>${colTot.map(v=>`<td style="text-align:right;padding:7px 10px">${f(displayTotal(v))}</td>`).join('')}<td style="text-align:right;padding:7px 10px">${f(displayTotal(gt))}</td></tr>`;
+  wrap.innerHTML=h+'</tbody></table>';
+}
+
+// ── Tab ──
+function switchTab(el,pane){
+  document.querySelectorAll('.ant-tabs-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.getElementById('pane-list').style.display=pane==='list'?'':'none';
+  document.getElementById('pane-matrix').style.display=pane==='matrix'?'':'none';
+  if(pane==='matrix')renderMatrix();
+}
+
+// ── 主体联动 ──
+function onEntityChange(){
+  const ent=document.getElementById('f-entity').value;
+  const sel=document.getElementById('f-unit-sel');
+  sel.innerHTML='<option value="">请选择</option>';
+  if(ent&&UNITS[ent])UNITS[ent].forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
+  // 如果推算区已展开，刷新概算约束
+  if(document.getElementById('calc-panel-b').classList.contains('open'))updateBudgetConstraint();
+}
+
+// ── 矩阵构建 ──
+function buildMatrix(tbodyId,monthsData,prefix,lockBefore){
+  const tbody=document.getElementById(tbodyId);tbody.innerHTML='';
+  let si=0;
+  SUBJECT_GROUPS.forEach(g=>{
+    const hr=document.createElement('tr');hr.className=`group-row${g.cls?' '+g.cls:''}`;
+    hr.innerHTML=`<td colspan="15">${g.group}</td>`;tbody.appendChild(hr);
+    g.subjects.forEach(sub=>{
+      const tr=document.createElement('tr');
+      let h=`<td class="row-lbl">${sub.name}</td><td class="row-lbl text-secondary" style="min-width:56px">${sub.erp}</td>`;
+      for(let mi=0;mi<12;mi++){
+        const val=monthsData?fmt2(monthsData[si][mi]):'';
+        const locked=lockBefore!==undefined&&mi<lockBefore;
+        h+=`<td><input class="matrix-num-input${locked?' locked':''}" type="number" min="0" step="0.01" data-si="${si}" data-mi="${mi}" data-prefix="${prefix}" value="${val}" ${locked?'readonly':''} oninput="calcRowTotal(${si},'${prefix}')"></td>`;
+      }
+      h+=`<td class="total-td" id="${prefix}-rt-${si}">—</td>`;
+      tr.innerHTML=h;tbody.appendChild(tr);si++;
+    });
+  });
+  const tf=document.createElement('tr');tf.style.background='var(--blue-1)';tf.style.fontWeight='600';
+  let fh=`<td class="row-lbl" style="color:var(--blue-7)">月度合计</td><td></td>`;
+  for(let mi=0;mi<12;mi++)fh+=`<td class="total-td" id="${prefix}-ct-${mi}">—</td>`;
+  fh+=`<td class="total-td" id="${prefix}-grand">—</td>`;
+  tf.innerHTML=fh;tbody.appendChild(tf);
+  SUBJECTS.forEach((_,si)=>calcRowTotal(si,prefix));
+}
+
+function calcRowTotal(si,prefix){
+  const inputs=document.querySelectorAll(`[data-si="${si}"][data-prefix="${prefix}"]`);
+  let rs=0;inputs.forEach(inp=>{rs+=parseFloat(inp.value)||0;});
+  const rtEl=document.getElementById(`${prefix}-rt-${si}`);if(rtEl)rtEl.textContent=f(rs);
+  for(let mi=0;mi<12;mi++){
+    let cs=0;document.querySelectorAll(`[data-mi="${mi}"][data-prefix="${prefix}"]`).forEach(inp=>{cs+=parseFloat(inp.value)||0;});
+    const ctEl=document.getElementById(`${prefix}-ct-${mi}`);if(ctEl)ctEl.textContent=f(cs);
+  }
+  let grand=0;SUBJECTS.forEach((_,si2)=>{document.querySelectorAll(`[data-si="${si2}"][data-prefix="${prefix}"]`).forEach(inp=>{grand+=parseFloat(inp.value)||0;});});
+  const gEl=document.getElementById(`${prefix}-grand`);if(gEl)gEl.textContent=f(grand);
+}
+
+function getMatrixValues(prefix){return SUBJECTS.map((_,si)=>Array.from({length:12},(_,mi)=>parseFloat(document.querySelector(`[data-si="${si}"][data-mi="${mi}"][data-prefix="${prefix}"]`)?.value)||0));}
+
+// ── 参数推算（弹窗内） ──
+function toggleCalcB(){
+  const p=document.getElementById('calc-panel-b'),i=document.getElementById('calc-toggle-b');
+  const open=p.classList.toggle('open');i.classList.toggle('open',open);
+  if(open){updateBudgetConstraint();bCalc();}
+}
+
+function updateBudgetConstraint(){
+  const entity=document.getElementById('f-entity').value;
+  const unit=document.getElementById('f-unit-sel').value;
+  const year=parseInt(document.getElementById('f-year').value);
+  const key=get132Key(entity,unit);
+  const bar=document.getElementById('b-budget-bar');
+  if(!key||!year||!BUDGET_132[year]?.[key]){bar.style.display='none';return;}
+  const bc=BUDGET_132[year][key];
+  const rem=bc.cost-bc.alloc;
+  const hasRev=bc.rev>0;
+  document.getElementById('bc-rev').textContent=hasRev?f(bc.rev)+'':'建设期无收入';
+  document.getElementById('bc-rev').style.color=hasRev?'var(--color-primary)':'var(--text-color-tertiary)';
+  document.getElementById('bc-cost').textContent=f(bc.cost);
+  document.getElementById('bc-alloc').textContent=f(bc.alloc);
+  document.getElementById('bc-rem').textContent=f(rem);
+  document.getElementById('bc-rem').style.color=rem<=0?'var(--color-error)':'var(--color-success)';
+  const warn=document.getElementById('bc-warn');
+  warn.style.display=rem<=0?'inline':'none';
+  if(rem<=0)warn.textContent='⚠ 该单元支出概算已无剩余额度';
+  bar.style.display='block';
+}
+function bCalc(){
+  const inc=(parseFloat(document.getElementById('b-lng-inc')?.value)||0);
+  const mInc=(parseFloat(document.getElementById('b-lng-m')?.value)||0);
+  const base=80,att=92,km=17778,load=34.6;
+  let iK=0,iM=0;let r=base;
+  for(let m=0;m<12;m++){iK+=r*(att/100)*km*load*inc;iM+=r*mInc;}
+  iK/=10000;
+  if(bTaxIncluded){iK*=(1+TAX);iM*=(1+TAX);}
+  const dr=iK>0?Math.abs(iM-iK)/iK*100:0;
+  const tl=bTaxIncluded?'（含税）':'（不含税）';
+  document.getElementById('b-km-r').innerHTML=`吨公里口径年度收入${tl}：<strong>${f(iK)}</strong> 万元`;
+  document.getElementById('b-m-r').innerHTML=`单车月口径年度收入${tl}：<strong>${f(iM)}</strong> 万元`;
+
+  // 对比概算约束
+  const entity=document.getElementById('f-entity').value;
+  const unit=document.getElementById('f-unit-sel').value;
+  const year=parseInt(document.getElementById('f-year').value);
+  const key=get132Key(entity,unit);
+  const bc=key&&BUDGET_132[year]?.[key];
+  let constraintText='';
+  if(bc&&bc.rev>0){
+    const revGap=iM-bc.rev;
+    constraintText+=`&nbsp;|&nbsp;概算收入目标：<strong>${f(bc.rev)}</strong> 万 → <span class="${revGap>=0?'diff-ok':'diff-warn'}">${revGap>=0?'推算可达标':'低于目标 '+f(-revGap)+' 万'}</span>`;
+  }
+  if(bc){
+    const rem=bc.cost-bc.alloc;
+    constraintText+=`&nbsp;|&nbsp;剩余支出额度：<strong style="color:${rem>0?'var(--color-success)':'var(--color-error)'}">${f(rem)}</strong> 万`;
+  }
+
+  const bar=document.getElementById('b-diff-bar');
+  bar.className=`diff-bar${dr<=10?' ok':''}`;
+  bar.innerHTML=`<span class="text-secondary">交叉验证${tl}</span><span>吨公里：<strong>${f(iK)}</strong></span><span>单车月：<strong>${f(iM)}</strong></span><span>差异率：<strong class="${dr<=10?'diff-ok':'diff-warn'}">${dr.toFixed(1)}%</strong></span>${constraintText}`;
+}
+function applyBCalc(){
+  const mInc=parseFloat(document.getElementById('b-lng-m')?.value)||7;
+  const monthly=mInc/12;
+  const prefix=formMode==='adjust'?'adj':'fm';
+  SUBJECTS.forEach((_,si)=>{
+    for(let mi=0;mi<12;mi++){
+      const inp=document.querySelector(`[data-si="${si}"][data-mi="${mi}"][data-prefix="${prefix}"]`);
+      if(inp){inp.value=fmt2(monthly*(si<8?1.5:si<16?.15:.05));}
+    }
+    calcRowTotal(si,prefix);
+  });
+  showMsg('推算月度分摊值已预填，请核对','success');
+}
+
+// ── 新增/编辑 ──
+function openCreate(){
+  formMode='create';editId=null;
+  document.getElementById('form-title').textContent='新增年度预算';
+  document.getElementById('f-entity').value='';document.getElementById('f-unit-sel').innerHTML='<option value="">请先选主体</option>';
+  document.getElementById('f-year').value='2026';document.getElementById('f-ver').value='V1.0';
+  document.getElementById('f-remark').value='';document.getElementById('form-adjust-block').style.display='none';
+  document.getElementById('tool-hint').style.display='none';
+  buildMatrix('edit-tbody',null,'fm');
+  document.getElementById('d-form').classList.add('open');
+}
+function openEdit(id){
+  const r=data.find(x=>x.id===id);if(!r)return;
+  formMode='edit';editId=id;
+  document.getElementById('form-title').textContent=`编辑预算 — ${r.entity} / ${r.unit} ${r.year}年 ${r.ver}`;
+  document.getElementById('f-entity').value=r.entity;onEntityChange();
+  document.getElementById('f-unit-sel').value=r.unit;
+  document.getElementById('f-year').value=r.year;
+  document.getElementById('f-ver').value=r.status==='已驳回'?bumpVer(r.ver):r.ver;
+  document.getElementById('f-remark').value=r.remark||'';
+  document.getElementById('form-adjust-block').style.display='none';
+  document.getElementById('tool-hint').style.display='none';
+  buildMatrix('edit-tbody',r.months,'fm');
+  document.getElementById('d-form').classList.add('open');
+}
+function bumpVer(ver){const n=parseFloat(ver.replace('V',''));return'V'+(n+0.1).toFixed(1);}
+
+function submitForm(action){
+  const entity=document.getElementById('f-entity').value;
+  const unit=document.getElementById('f-unit-sel').value;
+  const year=document.getElementById('f-year').value;
+  if(!entity||!unit){showMsg('请选择主体和业务单元','error');return;}
+  const months=getMatrixValues('fm');
+  const total=annualTotal(months);
+  if(action==='submit'&&total>99999){showMsg('全年预算合计超出概算上限，请调整','error');return;}
+  const newStatus=action==='submit'?'审批中':'草稿';
+  if(formMode==='create'){
+    data.unshift({id:Date.now(),entity,unit,year,ver:'V1.0',status:newStatus,author:'马伶俐',updAt:new Date().toLocaleString('zh'),remark:document.getElementById('f-remark').value,months,approvals:action==='submit'?[{role:'L1',user:'朱建国',status:'待审',time:null,comment:''}]:[]});
+  }else if(formMode==='edit'){
+    const r=data.find(x=>x.id===editId);
+    if(r)Object.assign(r,{months,status:newStatus,updAt:new Date().toLocaleString('zh'),approvals:action==='submit'?[{role:'L1',user:'朱建国',status:'待审',time:null,comment:''}]:r.approvals});
+  }
+  ca('d-form');renderList();showMsg(action==='submit'?'已提交审批':'草稿已保存','success');
+}
+
+// ── 调整 ──
+function openAdjust(id){
+  const r=data.find(x=>x.id===id);if(!r)return;
+  adjId=id;formMode='adjust';
+  document.getElementById('adj-title').textContent=`预算调整 — ${r.entity} / ${r.unit} ${r.year}年（新版本 V2.0）`;
+  document.getElementById('adj-base-info').innerHTML=`
+    <div><span class="ant-descriptions-item-label">主体</span>${r.entity}</div>
+    <div><span class="ant-descriptions-item-label">业务单元</span>${r.unit}</div>
+    <div><span class="ant-descriptions-item-label">年度</span>${r.year}</div>
+    <div><span class="ant-descriptions-item-label">原版本</span>${r.ver}</div>
+    <div><span class="ant-descriptions-item-label">原全年合计</span><strong class="text-primary">${f(annualTotal(r.months))} 万元</strong></div>
+    <div><span class="ant-descriptions-item-label">调整后版本</span><strong>V2.0</strong></div>
+  `;
+  document.getElementById('adj-reason').value='';
+  const lockBefore=new Date().getMonth(); // 当前月份之前的月份（0-indexed）全部锁定
+  buildMatrix('adj-tbody',r.months,'adj',lockBefore);
+  document.getElementById('d-adjust').classList.add('open');
+}
+function submitAdj(action){
+  const reason=document.getElementById('adj-reason').value.trim();
+  if(reason.length<20){showMsg('调整原因至少 20 字','error');return;}
+  const months=getMatrixValues('adj');
+  const r=data.find(x=>x.id===adjId);
+  if(r){
+    const archived={...r,status:'已归档'};
+    data.splice(data.indexOf(r),1,{id:Date.now(),entity:r.entity,unit:r.unit,year:r.year,ver:'V2.0',status:action==='submit'?'审批中':'草稿',author:'马伶俐',updAt:new Date().toLocaleString('zh'),remark:'调整：'+reason.slice(0,30),months,approvals:action==='submit'?[{role:'L1',user:'朱建国',status:'待审',time:null,comment:''}]:[]},archived);
+  }
+  ca('d-adjust');renderList();showMsg(action==='submit'?'调整版本已提交审批':'调整草稿已保存','success');
+}
+
+// ── 详情 ──
+function openDetail(id){
+  const r=data.find(x=>x.id===id);if(!r)return;
+  const total=annualTotal(r.months);
+  const colSums=MONTHS_L.map((_,mi)=>r.months.reduce((s,row)=>s+row[mi],0));
+  const timeline=r.approvals.map(a=>{
+    const cls=a.status==='通过'?'success':a.status==='驳回'?'error':'pending';
+    return`<li class="ant-timeline-item ${cls}"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content"><strong>${a.role} ${a.user}</strong> <span class="ant-tag ${a.status==='通过'?'ant-tag-green':a.status==='驳回'?'ant-tag-red':'ant-tag-gold'}">${a.status}</span>${a.time?`<span class="text-tertiary" style="margin-left:6px;font-size:12px">${a.time}</span>`:''}${a.comment?`<span class="text-secondary" style="margin-left:6px">${a.comment}</span>`:''}</div></li>`;
+  }).join('');
+  // 按分组构建明细表
+  let si=0,matRows='';
+  SUBJECT_GROUPS.forEach(g=>{
+    matRows+=`<tr class="group-row${g.cls?' '+g.cls:''}"><td colspan="${14}">科目组：${g.group}</td></tr>`;
+    g.subjects.forEach(sub=>{
+      const rowT=r.months[si].reduce((s,v)=>s+v,0);
+      matRows+=`<tr><td class="row-lbl">${sub.name}</td><td class="row-lbl text-secondary">${sub.erp}</td>${r.months[si].map(v=>`<td class="total-td" style="background:none;font-weight:400;padding:4px 6px">${f(v)}</td>`).join('')}<td class="total-td">${f(rowT)}</td></tr>`;si++;
+    });
+  });
+  document.getElementById('detail-content').innerHTML=`
+    <div class="ant-descriptions" style="margin-bottom:var(--space-4)">
+      <div><span class="ant-descriptions-item-label">主体</span>${r.entity}</div>
+      <div><span class="ant-descriptions-item-label">业务单元</span>${r.unit}</div>
+      <div><span class="ant-descriptions-item-label">年度</span>${r.year}</div>
+      <div><span class="ant-descriptions-item-label">版本</span>${r.ver}</div>
+      <div><span class="ant-descriptions-item-label">状态</span>${statusTag(r.status)}</div>
+      <div><span class="ant-descriptions-item-label">全年合计</span><strong class="text-primary">${f(displayTotal(total))} 万元</strong></div>
+      <div><span class="ant-descriptions-item-label">编制人</span>${r.author}</div>
+      <div><span class="ant-descriptions-item-label">最近更新</span>${r.updAt}</div>
+    </div>
+    <div class="section-header" style="margin-top:0">月度预算总额概览（单位：万元）</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-4)">
+      ${MONTHS_L.map((lbl,mi)=>`<div style="background:var(--blue-1);border:1px solid var(--blue-2);border-radius:var(--radius-md);padding:6px 10px;text-align:center;min-width:60px"><div style="font-size:11px;color:var(--blue-7)">${lbl}</div><div style="font-size:13px;font-weight:600;color:var(--blue-7)">${f(displayTotal(colSums[mi]))}</div></div>`).join('')}
+    </div>
+    <div class="section-header">19 项科目明细（不含税原始值）</div>
+    <div class="ant-table-wrapper"><table class="ant-edit-matrix" style="font-size:12px">
+      <thead><tr><th style="text-align:left">科目</th><th>ERP</th>${MONTHS_L.map(l=>`<th>${l}</th>`).join('')}<th>合计</th></tr></thead>
+      <tbody>${matRows}</tbody>
+    </table></div>
+    <div class="section-header">审批时间线</div>
+    <ul class="ant-timeline">${timeline||'<li class="ant-timeline-item pending"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content text-secondary">尚未提交审批</div></li>'}</ul>
+  `;
+  const footer=document.getElementById('detail-footer');
+  footer.innerHTML=`<button class="ant-btn" onclick="ca('d-detail')">关闭</button>`;
+  if(r.status==='草稿')footer.innerHTML+=`<button class="ant-btn ant-btn-primary" onclick="ca('d-detail');openEdit(${r.id})">进入编辑</button>`;
+  document.getElementById('d-detail').classList.add('open');
+}
+
+// ── 审批 ──
+function openApproval(id){
+  const r=data.find(x=>x.id===id);if(!r)return;
+  approvalTarget=r;
+  const pending=r.approvals.find(a=>a.status==='待审');
+  document.getElementById('appr-title').textContent=`审批 — ${r.entity}/${r.unit} ${r.year}年 ${r.ver}`;
+  const colSums=MONTHS_L.map((_,mi)=>r.months.reduce((s,row)=>s+row[mi],0));
+  document.getElementById('appr-content').innerHTML=`
+    <div class="ant-descriptions ant-descriptions-2" style="margin-bottom:var(--space-4)">
+      <div><span class="ant-descriptions-item-label">主体/业务单元</span>${r.entity} / ${r.unit}</div>
+      <div><span class="ant-descriptions-item-label">全年预算合计</span><strong class="text-primary">${f(displayTotal(annualTotal(r.months)))} 万元</strong></div>
+      <div><span class="ant-descriptions-item-label">编制人</span>${r.author}</div>
+      <div><span class="ant-descriptions-item-label">当前节点</span>${pending?pending.role+' '+pending.user:'未知'}</div>
+    </div>
+    <div class="section-header" style="margin-top:0">各月预算总额</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-4)">
+      ${MONTHS_L.map((lbl,mi)=>`<div style="background:var(--blue-1);border:1px solid var(--blue-2);border-radius:var(--radius-md);padding:5px 8px;text-align:center;min-width:55px"><div style="font-size:11px;color:var(--blue-7)">${lbl}</div><div style="font-size:13px;font-weight:600;color:var(--blue-7)">${f(displayTotal(colSums[mi]))}</div></div>`).join('')}
+    </div>
+    <div class="section-header">审批时间线</div>
+    <ul class="ant-timeline" style="margin-bottom:var(--space-4)">${r.approvals.map(a=>{const cls=a.status==='通过'?'success':a.status==='驳回'?'error':'pending';return`<li class="ant-timeline-item ${cls}"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content"><strong>${a.role} ${a.user}</strong> <span class="ant-tag ${a.status==='通过'?'ant-tag-green':a.status==='驳回'?'ant-tag-red':'ant-tag-gold'}">${a.status}</span> <span class="text-tertiary" style="font-size:12px">${a.time?a.time:'待审批'} ${a.comment||''}</span></div></li>`;}).join('')}</ul>
+    <div class="ant-form-item"><div class="ant-form-item-label"><span class="required">审批意见</span></div>
+    <textarea class="ant-input" id="appr-comment" rows="2" placeholder="必填"></textarea></div>
+  `;
+  document.getElementById('d-approval').classList.add('open');
+}
+function doApproval(action){
+  const comment=document.getElementById('appr-comment').value.trim();
+  if(!comment){showMsg('请填写审批意见','error');return;}
+  const r=approvalTarget;const pending=r.approvals.find(a=>a.status==='待审');
+  if(!pending){showMsg('无待审批节点','error');return;}
+  pending.status=action==='pass'?'通过':'驳回';pending.time=new Date().toLocaleString('zh');pending.comment=comment;
+  if(action==='reject'){r.status='已驳回';}
+  else{
+    if(pending.role==='L1'){r.approvals.push({role:'L2',user:'马伶俐',status:'待审',time:null,comment:''});r.status='审批中';showMsg('L1 已通过，进入 L2 终审','success');}
+    else{r.status='已生效';showMsg('L2 终审通过，预算已生效','success');}
+  }
+  r.updAt=new Date().toLocaleString('zh');ca('d-approval');renderList();
+}
+
+// ── 月度明细 ──
+function openMonthDetail(rid,mi){
+  const r=data.find(x=>x.id===rid);if(!r)return;
+  document.getElementById('month-title').textContent=`${r.entity} / ${r.unit} · ${MONTHS_L[mi]}明细`;
+  let si=0,rows='';
+  SUBJECT_GROUPS.forEach(g=>{
+    const gT=g.subjects.reduce((s,_,i)=>s+r.months[si+i][mi],0);
+    rows+=`<tr><td colspan="3" style="background:var(--gray-2);font-weight:500;font-size:12px;padding:6px 12px;color:var(--text-color-secondary);">${g.group}<span class="text-tertiary" style="margin-left:8px">小计：${f(gT)} 万元</span></td></tr>`;
+    g.subjects.forEach(sub=>{
+      rows+=`<tr><td style="padding:7px 12px;padding-left:20px">${sub.name}</td><td class="text-secondary" style="padding:7px 12px">${sub.erp}</td><td class="col-num" style="padding:7px 12px;font-weight:600">${f(r.months[si][mi])}</td></tr>`;si++;
+    });
+  });
+  const colTotal=r.months.reduce((s,row)=>s+row[mi],0);
+  document.getElementById('month-content').innerHTML=`
+    <table class="ant-table">
+      <thead><tr><th>科目</th><th>ERP 科目</th><th class="col-num">金额（万元）</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:var(--blue-1);font-weight:600"><td colspan="2" style="padding:8px 12px;color:var(--blue-7)">合计</td><td class="col-num" style="padding:8px 12px;color:var(--blue-7)">${f(colTotal)}</td></tr></tfoot>
+    </table>`;
+  document.getElementById('d-month').classList.add('open');
+}
+
+// ── 删除 ──
+function openDel(id){delId=id;document.getElementById('d-del').classList.add('open');}
+function confirmDel(){data=data.filter(x=>x.id!==delId);ca('d-del');renderList();showMsg('已删除','success');}
+
+function ca(id){document.getElementById(id)?.classList.remove('open');}
+function showMsg(text,type){
+  const ic={success:'✓',error:'✕',warning:'⚠',info:'ℹ'},cl={success:'msg-success',error:'msg-error',warning:'msg-warning',info:'msg-info'};
+  const el=document.getElementById('msg');
+  document.getElementById('msg-icon').className=cl[type];document.getElementById('msg-icon').textContent=ic[type];
+  document.getElementById('msg-text').textContent=text;
+  el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+renderList();
+</script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>年度概算列表 V2.00 — 概算管理</title>
+<link rel="stylesheet" href="./prototype-standard.css">
+<style>
+/* 参数推算折叠区 */
+.calc-section { border:1px solid var(--border-color-secondary); border-radius:var(--radius-md); overflow:hidden; margin-bottom:var(--space-4); }
+.calc-head { display:flex; align-items:center; gap:var(--space-3); padding:10px var(--space-4); background:var(--gray-2); border-bottom:1px solid var(--border-color-secondary); cursor:pointer; user-select:none; }
+.calc-head:hover { background:var(--blue-1); }
+.calc-toggle { font-size:10px; color:var(--gray-7); transition:transform var(--motion-duration-mid); }
+.calc-toggle.open { transform:rotate(90deg); }
+.calc-panel { padding:var(--space-4); display:none; }
+.calc-panel.open { display:block; }
+
+/* 参数表（紧凑） */
+.pt { width:100%; border-collapse:collapse; font-size:var(--font-size-sm); }
+.pt td { padding:4px 6px; border-bottom:1px solid var(--border-color-secondary); vertical-align:middle; }
+.pt .pl { color:var(--text-color-secondary); white-space:nowrap; width:170px; }
+.pt .pv input { width:112px; height:26px; padding:0 6px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:var(--font-size-sm); text-align:right; outline:none; }
+.pt .pv input:focus { border-color:var(--color-primary); }
+.pt .pv input.changed { border-color:var(--color-warning); background:var(--gold-1); }
+.ps { font-size:11px; color:var(--text-color-tertiary); white-space:nowrap; }
+.ps.manual { color:var(--gold-7); }
+.pref { font-size:11px; color:var(--blue-7); background:var(--blue-1); padding:1px 5px; border-radius:var(--radius-xs); }
+
+/* 收/支/余 录入卡 */
+.rev-cost-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-3); }
+.rce-card { border:1px solid var(--border-color-secondary); border-radius:var(--radius-md); padding:var(--space-3); }
+.rce-card-title { font-size:var(--font-size-sm); font-weight:500; margin-bottom:var(--space-3); display:flex; align-items:center; gap:6px; }
+.rce-row { display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-3); }
+.rce-row:last-child { margin-bottom:0; }
+.rce-lbl { flex:1; font-size:var(--font-size-sm); color:var(--text-color-secondary); }
+.rce-inp { width:120px; height:var(--control-height-sm); padding:0 8px; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:var(--font-size-sm); text-align:right; outline:none; }
+.rce-inp:focus { border-color:var(--color-primary); box-shadow:0 0 0 2px rgba(22,119,255,.2); }
+.rce-inp.filled { border-color:var(--color-success); }
+.rce-inp.calc-val { background:var(--gray-3); color:var(--text-color-secondary); cursor:default; }
+.rce-unit { font-size:12px; color:var(--text-color-tertiary); flex-shrink:0; }
+
+/* 展开行 */
+.sub-table { width:100%; border-collapse:collapse; font-size:var(--font-size-sm); }
+.sub-table th { background:var(--gray-3); padding:7px 12px; font-weight:500; font-size:12px; color:var(--text-color-secondary); text-align:left; border-bottom:1px solid var(--border-color-secondary); }
+.sub-table td { padding:7px 12px; border-bottom:1px solid var(--border-color-secondary); color:var(--text-color); font-size:var(--font-size-sm); }
+.sub-table tbody tr:last-child td { border-bottom:none; }
+.sub-table .col-num { text-align:right; font-variant-numeric:tabular-nums; }
+.sub-table .surplus-pos { color:var(--color-success); }
+.sub-table .surplus-neg { color:var(--color-error); }
+
+/* 月度节奏格 */
+.month-compact { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; }
+</style>
+</head>
+<body>
+<div class="ant-page">
+
+<!-- KPI：收/支/余 -->
+<div class="statistic-grid">
+  <div class="ant-statistic ant-statistic-primary">
+    <div class="ant-statistic-title">年度收入概算合计</div>
+    <div class="ant-statistic-content color-primary" id="k-rev">—<span class="ant-statistic-suffix">万元</span></div>
+    <div class="ant-statistic-extra" id="k-year-lbl">2026 年度</div>
+  </div>
+  <div class="ant-statistic ant-statistic-warning">
+    <div class="ant-statistic-title">年度支出概算合计</div>
+    <div class="ant-statistic-content color-warning" id="k-cost">—<span class="ant-statistic-suffix">万元</span></div>
+    <div class="ant-statistic-extra">直接成本 + 管理费用 + 财务费用</div>
+  </div>
+  <div class="ant-statistic ant-statistic-success">
+    <div class="ant-statistic-title">年度余额概算（收−支）</div>
+    <div class="ant-statistic-content" id="k-surplus">—<span class="ant-statistic-suffix">万元</span></div>
+    <div class="ant-statistic-extra">收入 − 支出</div>
+  </div>
+  <div class="ant-statistic ant-statistic-error">
+    <div class="ant-statistic-title">超额业务单元</div>
+    <div class="ant-statistic-content color-error" id="k-over">0<span class="ant-statistic-suffix">个</span></div>
+    <div class="ant-statistic-extra">已分配支出 &gt; 支出概算</div>
+  </div>
+</div>
+
+<!-- 查询 -->
+<div class="ant-card" style="padding:0;overflow:hidden">
+  <div class="ant-card-body-sm">
+    <div class="ant-search-bar">
+      <div class="ant-search-item"><label class="ant-search-label">年度</label>
+        <select class="ant-input" style="width:100px" id="f-yr" onchange="renderList()">
+          <option>2026</option><option>2025</option><option>2024</option>
+        </select></div>
+      <div class="ant-search-item"><label class="ant-search-label">状态</label>
+        <select class="ant-input" style="width:120px" id="f-st">
+          <option value="">全部</option><option>已生效</option><option>关账</option>
+        </select></div>
+      <div class="ant-space ml-auto">
+        <button class="ant-btn ant-btn-primary" onclick="renderList()">查询</button>
+        <button class="ant-btn" onclick="resetSearch()">重置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 主表 -->
+<div class="ant-card" style="padding:0;overflow:hidden">
+  <div class="ant-card-head">
+    <div class="ant-card-head-title">年度概算列表</div>
+    <div class="ant-space">
+      <button class="ant-btn ant-btn-primary" onclick="openCreate()">新增概算</button>
+      <button class="ant-btn" onclick="showMsg('导出成功','success')">导出</button>
+    </div>
+  </div>
+  <div class="ant-table-wrapper">
+    <table class="ant-table">
+      <thead><tr>
+        <th style="width:36px"></th>
+        <th>年度</th><th>状态</th>
+        <th class="col-num">收入概算（万元）</th>
+        <th class="col-num">支出概算（万元）</th>
+        <th class="col-num">余额概算（万元）</th>
+        <th class="col-num">已分配支出（万元）</th>
+        <th>来源</th><th>录入时间</th><th>录入人</th><th>操作</th>
+      </tr></thead>
+      <tbody id="list-tbody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ═══ 新增/编辑 弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-form">
+<div class="ant-modal ant-modal-full">
+  <div class="ant-modal-header">
+    <div class="ant-modal-title" id="form-title">新增年度概算</div>
+    <button class="ant-modal-close" onclick="ca('d-form')">✕</button>
+  </div>
+  <div class="ant-modal-body">
+    <div id="tool-hint" class="ant-alert ant-alert-info" style="display:none">参数推算值已预填，请核对后确认。</div>
+    <div style="display:flex;gap:var(--space-5);margin-bottom:var(--space-4);align-items:flex-end">
+      <div class="ant-form-item" style="margin-bottom:0">
+        <div class="ant-form-item-label"><span class="required">年度</span></div>
+        <select class="ant-input" id="f-year" style="width:160px"><option>2027</option><option selected>2026</option><option>2025</option></select>
+      </div>
+      <div class="ant-form-item" style="margin-bottom:0">
+        <div class="ant-form-item-label">来源标识</div>
+        <input class="ant-input" id="f-source" value="手工录入" readonly style="width:160px">
+      </div>
+    </div>
+
+    <!-- 参数推算（折叠） -->
+    <div class="calc-section">
+      <div class="calc-head" onclick="toggleCalc()">
+        <span class="calc-toggle" id="cti">▶</span>
+        <span class="font-medium">参数推算</span>
+        <span class="ant-tag ant-tag-gray" style="font-size:11px">可展开 · 推算收、支、余建议值后可一键填入</span>
+        <div class="ant-space" style="margin-left:auto" onclick="event.stopPropagation()">
+          <span class="text-secondary" style="font-size:var(--font-size-sm)">收入口径</span>
+          <div class="tax-switch">
+            <button class="tax-switch-btn active" id="tax-inc" onclick="setTax(true)">含税</button>
+            <button class="tax-switch-btn" id="tax-exc" onclick="setTax(false)">不含税</button>
+          </div>
+          <span class="text-tertiary" style="font-size:12px">增值税 9%</span>
+        </div>
+      </div>
+      <div class="calc-panel" id="calc-panel">
+
+        <!-- 收：双口径 -->
+        <div class="section-header" style="margin-top:0">收入参数 <span class="principle-tag pt-high" style="margin-left:6px">收入择高</span></div>
+        <div class="grid-2" style="gap:var(--space-3);margin-bottom:var(--space-3)">
+          <div class="income-col income-col-km">
+            <div class="income-col-head">吨公里口径（旧）<span class="text-tertiary" style="font-weight:400"> — 台数 × 出勤率 × 月里程 × 载重 × 吨公里收入</span></div>
+            <table class="pt">
+              <tr><td class="pl">LNG 吨公里收入（元/吨·公里）</td><td class="pv"><input id="lng-inc" type="number" step="0.00001" value="0.19508" oninput="mP(this,'0.19508');calc()"><br><span class="pref">参考：0.190~0.210</span></td><td class="ps" id="s-li">系统历史均值</td></tr>
+              <tr><td class="pl">氢车 吨公里收入（元/吨·公里）</td><td class="pv"><input id="h2-inc" type="number" step="0.00001" value="0.21000" oninput="mP(this,'0.21000');calc()"><br><span class="pref">参考：0.205~0.225</span></td><td class="ps" id="s-hi">系统历史均值</td></tr>
+            </table>
+            <div class="income-col-result" id="km-r">计算中…</div>
+          </div>
+          <div class="income-col income-col-m">
+            <div class="income-col-head">单车月收入口径（新）<span class="text-tertiary" style="font-weight:400"> — 台数 × 单车月收入（万元/车/月）</span></div>
+            <table class="pt">
+              <tr><td class="pl">LNG 单车月收入（万元/车/月）</td><td class="pv"><input id="lng-m" type="number" step="0.01" value="7.00" oninput="mP(this,'7.00');calc()"><br><span class="pref">参考：6.5~7.5（目标 7 万）</span></td><td class="ps" id="s-lm">系统历史均值</td></tr>
+              <tr><td class="pl">氢车 单车月收入（万元/车/月）</td><td class="pv"><input id="h2-m" type="number" step="0.01" value="8.50" oninput="mP(this,'8.50');calc()"><br><span class="pref">参考：7.5~9.0</span></td><td class="ps" id="s-hm">系统历史均值</td></tr>
+            </table>
+            <div class="income-col-result" id="m-r">计算中…</div>
+          </div>
+        </div>
+        <div class="diff-bar ok" id="diff-bar">计算中…</div>
+
+        <!-- 支：成本参数（直接成本 + 管理费用 + 财务费用） -->
+        <div class="section-header">支出参数 <span class="principle-tag pt-low" style="margin-left:6px">支出择低</span></div>
+        <div class="grid-2" style="gap:var(--space-3);margin-bottom:var(--space-3)">
+          <div>
+            <div class="text-secondary" style="font-size:12px;font-weight:500;margin-bottom:6px">LNG 重卡直接成本（元/吨·公里）</div>
+            <table class="pt">
+              <tr><td class="pl">气耗成本</td><td class="pv"><input id="lg" type="number" step="0.00001" value="0.07200" oninput="mP(this,'0.07200');calc()"><br><span class="pref">0.065~0.080</span></td><td class="ps" id="slg">系统历史均值</td></tr>
+              <tr><td class="pl">司机工资（趟结）</td><td class="pv"><input id="lw" type="number" step="0.00001" value="0.04500" oninput="mP(this,'0.04500');calc()"><br><span class="pref">0.040~0.052</span></td><td class="ps" id="slw">系统历史均值</td></tr>
+              <tr><td class="pl">ETC路桥费</td><td class="pv"><input id="le" type="number" step="0.00001" value="0.02100" oninput="mP(this,'0.02100');calc()"><br><span class="pref">0.018~0.025</span></td><td class="ps" id="sle">系统历史均值</td></tr>
+              <tr><td class="pl">折旧</td><td class="pv"><input id="ld" type="number" step="0.00001" value="0.01800" oninput="mP(this,'0.01800');calc()"><br><span class="pref">0.015~0.022</span></td><td class="ps" id="sld">系统历史均值</td></tr>
+              <tr><td class="pl">车辆维修费</td><td class="pv"><input id="lr" type="number" step="0.00001" value="0.00500" oninput="mP(this,'0.00500');calc()"><br><span class="pref">0.004~0.008</span></td><td class="ps" id="slr">系统历史均值</td></tr>
+              <tr><td class="pl">保险费（660219）</td><td class="pv"><input id="li" type="number" step="0.00001" value="0.00400" oninput="mP(this,'0.00400');calc()"><br><span class="pref">0.003~0.006</span></td><td class="ps" id="sli">系统历史均值</td></tr>
+              <tr><td class="pl">杂费（660299）</td><td class="pv"><input id="lz" type="number" step="0.00001" value="0.00300" oninput="mP(this,'0.00300');calc()"><br><span class="pref">0.002~0.004</span></td><td class="ps" id="slz">系统历史均值</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="text-secondary" style="font-size:12px;font-weight:500;margin-bottom:6px">氢能重卡直接成本（元/吨·公里）</div>
+            <table class="pt">
+              <tr><td class="pl">加氢成本</td><td class="pv"><input id="hg" type="number" step="0.00001" value="0.08500" oninput="mP(this,'0.08500');calc()"><br><span class="pref">0.078~0.095</span></td><td class="ps" id="shg">系统历史均值</td></tr>
+              <tr><td class="pl">司机工资（趟结）</td><td class="pv"><input id="hw" type="number" step="0.00001" value="0.04800" oninput="mP(this,'0.04800');calc()"><br><span class="pref">0.043~0.055</span></td><td class="ps" id="shw">系统历史均值</td></tr>
+              <tr><td class="pl">ETC路桥费</td><td class="pv"><input id="he" type="number" step="0.00001" value="0.02100" oninput="mP(this,'0.02100');calc()"><br><span class="pref">0.018~0.025</span></td><td class="ps" id="she">系统历史均值</td></tr>
+              <tr><td class="pl">折旧</td><td class="pv"><input id="hd" type="number" step="0.00001" value="0.02500" oninput="mP(this,'0.02500');calc()"><br><span class="pref">0.020~0.030</span></td><td class="ps" id="shd">系统历史均值</td></tr>
+              <tr><td class="pl">车辆维修费</td><td class="pv"><input id="hr2" type="number" step="0.00001" value="0.00600" oninput="mP(this,'0.00600');calc()"><br><span class="pref">0.004~0.009</span></td><td class="ps" id="shr">系统历史均值</td></tr>
+              <tr><td class="pl">保险费（660219）</td><td class="pv"><input id="hn" type="number" step="0.00001" value="0.00500" oninput="mP(this,'0.00500');calc()"><br><span class="pref">0.003~0.006</span></td><td class="ps" id="shn">系统历史均值</td></tr>
+              <tr><td class="pl">杂费（660299）</td><td class="pv"><input id="hz" type="number" step="0.00001" value="0.00400" oninput="mP(this,'0.00400');calc()"><br><span class="pref">0.002~0.005</span></td><td class="ps" id="shz">系统历史均值</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- 管理费用 + 财务费用（集团整体估算） -->
+        <div class="grid-2" style="gap:var(--space-3);margin-bottom:var(--space-3)">
+          <div>
+            <div class="text-secondary" style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--purple-6)">管理费用估算（万元/年，集团整体）</div>
+            <table class="pt">
+              <tr><td class="pl">工资及社保公积金（管理人员）</td><td class="pv"><input id="mgmt-sal" type="number" value="800" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
+              <tr><td class="pl">差旅费</td><td class="pv"><input id="mgmt-trav" type="number" value="120" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
+              <tr><td class="pl">业务招待费</td><td class="pv"><input id="mgmt-ent" type="number" value="80" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
+              <tr><td class="pl">其他管理费用</td><td class="pv"><input id="mgmt-oth" type="number" value="200" oninput="calc()"><br><span class="pref">办公/通讯/会议等</span></td><td class="ps">手工填入</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="text-secondary" style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--orange-7)">财务费用估算（万元/年，集团整体）</div>
+            <table class="pt">
+              <tr><td class="pl">利息费用</td><td class="pv"><input id="fin-int" type="number" value="300" oninput="calc()"><br><span class="pref">参考融资规模</span></td><td class="ps">手工填入</td></tr>
+              <tr><td class="pl">手续费及其他</td><td class="pv"><input id="fin-oth" type="number" value="50" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- 运营规模 -->
+        <div class="section-header">运营规模参数</div>
+        <div class="grid-2" style="gap:var(--space-3);margin-bottom:var(--space-3)">
+          <div>
+            <div class="text-secondary" style="font-size:12px;margin-bottom:6px">LNG 重卡</div>
+            <table class="pt">
+              <tr><td class="pl">期初在营台数（台）</td><td class="pv"><input id="lb" type="number" value="80" oninput="calc()"><br><span class="pref">系统在营台数</span></td><td class="ps">系统历史均值</td></tr>
+              <tr><td class="pl">出勤率目标（%）</td><td class="pv"><input id="la" type="number" value="92.00" oninput="calc()"><br><span class="pref">92%（业主目标）</span></td><td class="ps">业主官方目标</td></tr>
+              <tr><td class="pl">单车月里程（公里/月）</td><td class="pv"><input id="lk" type="number" value="17778" oninput="calc()"><br><span class="pref">17,778 km/月</span></td><td class="ps">业主官方目标</td></tr>
+              <tr><td class="pl">平均额定载重（吨）</td><td class="pv"><input id="ll" type="number" step="0.1" value="34.6" oninput="calc()"><br><span class="pref">34.6 吨</span></td><td class="ps">业主官方目标</td></tr>
+            </table>
+            <div style="margin-top:6px;font-size:11px;color:var(--text-color-tertiary)">月度新增台数：</div>
+            <div class="month-compact" id="lng-mg" style="margin-top:4px"></div>
+          </div>
+          <div>
+            <div class="text-secondary" style="font-size:12px;margin-bottom:6px">氢能重卡</div>
+            <table class="pt">
+              <tr><td class="pl">期初在营台数（台）</td><td class="pv"><input id="hb" type="number" value="20" oninput="calc()"><br><span class="pref">系统在营台数</span></td><td class="ps">系统历史均值</td></tr>
+              <tr><td class="pl">出勤率目标（%）</td><td class="pv"><input id="ha" type="number" value="92.00" oninput="calc()"><br><span class="pref">92%</span></td><td class="ps">业主官方目标</td></tr>
+              <tr><td class="pl">单车月里程（公里/月）</td><td class="pv"><input id="hk" type="number" value="17778" oninput="calc()"><br><span class="pref">17,778 km/月</span></td><td class="ps">业主官方目标</td></tr>
+              <tr><td class="pl">平均额定载重（吨）</td><td class="pv"><input id="hl" type="number" step="0.1" value="34.6" oninput="calc()"><br><span class="pref">34.6 吨</span></td><td class="ps">业主官方目标</td></tr>
+            </table>
+            <div style="margin-top:6px;font-size:11px;color:var(--text-color-tertiary)">月度新增台数：</div>
+            <div class="month-compact" id="h2-mg" style="margin-top:4px"></div>
+          </div>
+        </div>
+
+        <!-- 建设期支出 -->
+        <div class="section-header">建设期板块支出（手工填入）</div>
+        <div style="display:flex;gap:var(--space-5);flex-wrap:wrap;margin-bottom:var(--space-3)">
+          <div class="ant-search-item"><label class="ant-search-label" style="width:auto">廊道（建设期）万元</label><input type="number" class="ant-input" style="width:120px" id="bl" value="10000" oninput="calc()"></div>
+          <div class="ant-search-item"><label class="ant-search-label" style="width:auto">加氢站 万元</label><input type="number" class="ant-input" style="width:120px" id="bj" value="3200" oninput="calc()"></div>
+          <div class="ant-search-item"><label class="ant-search-label" style="width:auto">制氢工厂 万元</label><input type="number" class="ant-input" style="width:120px" id="bz" value="1200" oninput="calc()"></div>
+        </div>
+
+        <!-- 差异率 -->
+        <div class="diff-bar ok" id="diff-bar" style="margin-bottom:var(--space-3)">计算中…</div>
+
+        <!-- 收/支/余 推算结果表 -->
+        <div class="ant-table-wrapper" style="margin-bottom:var(--space-3)">
+          <table class="ant-table" style="font-size:var(--font-size-sm)">
+            <thead><tr>
+              <th>板块 / 主体</th>
+              <th class="col-num" style="background:var(--blue-1);color:var(--blue-7)">收（吨公里口径）</th>
+              <th class="col-num" style="background:var(--green-1);color:var(--green-7)">收（单车月口径）</th>
+              <th class="col-num">差异率</th>
+              <th class="col-num" style="background:var(--gold-1);color:var(--gold-7)">支（直接成本）</th>
+              <th class="col-num" style="background:var(--purple-1);color:var(--purple-6)">支（管理+财务）</th>
+              <th class="col-num">支（合计）</th>
+              <th class="col-num" style="color:var(--color-success)">余（单车月口径）</th>
+            </tr></thead>
+            <tbody id="calc-tbody"></tbody>
+          </table>
+        </div>
+        <div class="ant-space" style="justify-content:flex-end">
+          <button class="ant-btn ant-btn-primary" onclick="applyCalc()">填入下方概算金额</button>
+          <button class="ant-btn" onclick="resetParams()">重置参数</button>
+        </div>
+      </div>
+    </div><!-- /calc-section -->
+
+    <!-- 概算金额录入：收/支/余 -->
+    <div class="section-header">概算金额录入（收 / 支 / 余，万元）</div>
+    <div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-3)">余额 = 收入 − 支出，自动计算。建设期板块无收入，仅填支出概算。</div>
+
+    <!-- 表格形式录入，更清晰 -->
+    <div class="ant-table-wrapper">
+      <table class="ant-table">
+        <thead><tr>
+          <th>主体</th><th>业务单元</th>
+          <th class="col-num" style="background:var(--blue-1);color:var(--blue-7)">收入概算（万元）</th>
+          <th class="col-num" style="background:var(--gold-1);color:var(--gold-7)">支出概算（万元）</th>
+          <th class="col-num" style="background:var(--green-1);color:var(--green-7)">余额概算（万元）</th>
+        </tr></thead>
+        <tbody id="entry-tbody">
+          <tr>
+            <td>红树林集团</td><td>车队</td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-hlj-rev" placeholder="0.00" oninput="calcEntry('hlj')"></td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-hlj-cost" placeholder="0.00" oninput="calcEntry('hlj')"></td>
+            <td class="col-num rce-inp calc-val" id="r-hlj-sur">—</td>
+          </tr>
+          <tr>
+            <td>新鹏运</td><td>车队</td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-xpy-rev" placeholder="0.00" oninput="calcEntry('xpy')"></td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-xpy-cost" placeholder="0.00" oninput="calcEntry('xpy')"></td>
+            <td class="col-num rce-inp calc-val" id="r-xpy-sur">—</td>
+          </tr>
+          <tr>
+            <td rowspan="3">哈密普发新能源</td><td>廊道（建设期）</td>
+            <td class="col-num" style="background:var(--gray-3);color:var(--text-color-tertiary);text-align:center">建设期无收入</td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-lang-cost" placeholder="0.00" oninput="calcEntry('lang')"></td>
+            <td class="col-num rce-inp calc-val" id="r-lang-sur">—</td>
+          </tr>
+          <tr>
+            <td>加氢站</td>
+            <td class="col-num" style="background:var(--gray-3);color:var(--text-color-tertiary);text-align:center">建设期无收入</td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-jia-cost" placeholder="0.00" oninput="calcEntry('jia')"></td>
+            <td class="col-num rce-inp calc-val" id="r-jia-sur">—</td>
+          </tr>
+          <tr>
+            <td>制氢工厂</td>
+            <td class="col-num" style="background:var(--gray-3);color:var(--text-color-tertiary);text-align:center">建设期无收入</td>
+            <td class="col-num"><input type="number" class="rce-inp" id="r-zhi-cost" placeholder="0.00" oninput="calcEntry('zhi')"></td>
+            <td class="col-num rce-inp calc-val" id="r-zhi-sur">—</td>
+          </tr>
+          <tr style="background:var(--blue-1);font-weight:600">
+            <td colspan="2" style="color:var(--blue-7);padding:8px 16px">合计</td>
+            <td class="col-num" style="color:var(--blue-7)" id="tot-rev">—</td>
+            <td class="col-num" style="color:var(--gold-7)" id="tot-cost">—</td>
+            <td class="col-num" id="tot-sur">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ant-form-item" style="margin-top:var(--space-4)">
+      <div class="ant-form-item-label">备注</div>
+      <textarea class="ant-input" id="f-remark" rows="2" placeholder="选填"></textarea>
+    </div>
+  </div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-form')">取消</button>
+    <button class="ant-btn ant-btn-primary" onclick="submitForm()">确定</button>
+  </div>
+</div></div>
+
+<!-- 详情 -->
+<div class="ant-modal-mask" id="d-detail">
+<div class="ant-modal ant-modal-lg">
+  <div class="ant-modal-header"><div class="ant-modal-title">概算详情</div><button class="ant-modal-close" onclick="ca('d-detail')">✕</button></div>
+  <div class="ant-modal-body" id="detail-body"></div>
+  <div class="ant-modal-footer"><button class="ant-btn" onclick="ca('d-detail')">关闭</button></div>
+</div></div>
+
+<!-- 删除 -->
+<div class="ant-modal-mask" id="d-del">
+<div class="ant-modal ant-modal-sm">
+  <div class="ant-modal-header"><div class="ant-modal-title">删除确认</div><button class="ant-modal-close" onclick="ca('d-del')">✕</button></div>
+  <div class="ant-modal-body">
+    <div class="ant-alert ant-alert-warning" style="margin-bottom:var(--space-4)">删除后不可恢复。若已有预算编制引用此概算，将被阻止。</div>
+    <div class="ant-form-item" style="margin-bottom:0">
+      <div class="ant-form-item-label"><span class="required">删除原因</span></div>
+      <textarea class="ant-input" id="del-reason" rows="2" placeholder="必填"></textarea>
+    </div>
+  </div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-del')">取消</button>
+    <button class="ant-btn ant-btn-danger" onclick="confirmDel()">确认删除</button>
+  </div>
+</div></div>
+
+<!-- 关账 -->
+<div class="ant-modal-mask" id="d-lock">
+<div class="ant-modal ant-modal-sm">
+  <div class="ant-modal-header"><div class="ant-modal-title">关账确认</div><button class="ant-modal-close" onclick="ca('d-lock')">✕</button></div>
+  <div class="ant-modal-body"><div class="ant-alert ant-alert-warning">关账后该年度概算将锁定，无法再编辑或删除。</div></div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-lock')">取消</button>
+    <button class="ant-btn ant-btn-primary" onclick="confirmLock()">确认关账</button>
+  </div>
+</div></div>
+
+<div class="ant-message-notice" id="msg">
+  <div class="ant-message-notice-content"><span id="mi"></span>&nbsp;<span id="mt"></span></div>
+</div>
+
+<script>
+// ── 数据结构：每个 entity 有 {rev, cost}，余 = rev - cost ──
+const EKEYS=[
+  {key:'hlj',entity:'红树林集团',unit:'车队',hasRev:true},
+  {key:'xpy',entity:'新鹏运',unit:'车队',hasRev:true},
+  {key:'lang',entity:'哈密普发新能源',unit:'廊道（建设期）',hasRev:false},
+  {key:'jia',entity:'哈密普发新能源',unit:'加氢站',hasRev:false},
+  {key:'zhi',entity:'哈密普发新能源',unit:'制氢工厂',hasRev:false},
+];
+
+let budgets=[
+  {id:1,year:2026,status:'已生效',source:'工具推算导入',
+   entries:{hlj:{rev:14000,cost:12000},xpy:{rev:9500,cost:8500},lang:{rev:0,cost:10000},jia:{rev:0,cost:3200},zhi:{rev:0,cost:1200}},
+   allocated:{hlj:9800,xpy:7200,lang:0,jia:0,zhi:0},
+   remark:'',createdAt:'2026-01-15 09:30',createdBy:'马伶俐',
+   history:[{time:'2026-01-15 09:30',user:'马伶俐',action:'新增',desc:'参数推算导入'}]},
+  {id:2,year:2025,status:'关账',source:'手工录入',
+   entries:{hlj:{rev:12000,cost:10000},xpy:{rev:8000,cost:7500},lang:{rev:0,cost:8000},jia:{rev:0,cost:2800},zhi:{rev:0,cost:800}},
+   allocated:{hlj:10000,xpy:7500,lang:0,jia:0,zhi:0},
+   remark:'2025年度已关账',createdAt:'2025-01-20 14:00',createdBy:'马伶俐',history:[]},
+];
+
+let editId=null,delId=null,lockId=null;
+let lngMonths=new Array(12).fill(0),h2Months=new Array(12).fill(0);
+let taxIncluded=true;
+let calcRes={};
+const TAX=0.09;
+const f=(n,d=2)=>isNaN(+n)?'—':(+n).toLocaleString('zh',{minimumFractionDigits:d,maximumFractionDigits:d});
+const v=id=>parseFloat(document.getElementById(id)?.value)||0;
+
+// 月度节奏
+function buildMG(cId,arr,pfx){
+  const c=document.getElementById(cId);c.innerHTML='';
+  for(let m=0;m<12;m++){
+    c.innerHTML+=`<div><label style="font-size:10px;color:var(--text-color-tertiary)">${m+1}月</label>
+    <input type="number" min="0" value="${arr[m]}" style="width:100%;height:20px;padding:0 3px;border:1px solid var(--border-color);border-radius:2px;font-size:11px;text-align:right;outline:none" oninput="upM('${pfx}',${m},this.value)"></div>`;
+  }
+}
+function upM(pfx,idx,val){if(pfx==='lng')lngMonths[idx]=+val||0;else h2Months[idx]=+val||0;calc();}
+buildMG('lng-mg',lngMonths,'lng');buildMG('h2-mg',h2Months,'h2');
+
+// 含税
+function setTax(inc){
+  taxIncluded=inc;
+  document.getElementById('tax-inc').classList.toggle('active',inc);
+  document.getElementById('tax-exc').classList.toggle('active',!inc);
+  calc();
+}
+function applyTx(n){return taxIncluded?n*(1+TAX):n;}
+
+// 参数标记
+function mP(inp,orig){
+  const changed=Math.abs(parseFloat(inp.value)-parseFloat(orig))>0.000001;
+  inp.classList.toggle('changed',changed);
+  const srcEl=inp.closest('tr')?.querySelector('.ps');
+  if(srcEl){srcEl.textContent=changed?`手工覆盖（原：${orig}）`:'系统历史均值';srcEl.className='ps'+(changed?' manual':'');}
+}
+
+// 推算
+function calcVeh(base,months,att,km,load,rate){
+  let s=0,r=base;for(let m=0;m<12;m++){r+=months[m];s+=r*(att/100)*km*load*rate;}return s/10000;
+}
+function calcM(base,months,mRate){let s=0,r=base;for(let m=0;m<12;m++){r+=months[m];s+=r*mRate;}return s;}
+
+function calc(){
+  // 直接成本率
+  const lCR=v('lg')+v('lw')+v('le')+v('ld')+v('lr')+v('li')+v('lz');
+  const hCR=v('hg')+v('hw')+v('he')+v('hd')+v('hr2')+v('hn')+v('hz');
+  // 管理+财务费用（全局，按比例分配到 hlj/xpy）
+  const mgmt=v('mgmt-sal')+v('mgmt-trav')+v('mgmt-ent')+v('mgmt-oth');
+  const fin=v('fin-int')+v('fin-oth');
+  const periodExp=mgmt+fin; // 按 50/50 分配到 hlj/xpy（原型示意）
+  // 收入
+  const lIK=applyTx(calcVeh(v('lb'),lngMonths,v('la'),v('lk'),v('ll'),v('lng-inc')));
+  const hIK=applyTx(calcVeh(v('hb'),h2Months,v('ha'),v('hk'),v('hl'),v('h2-inc')));
+  const lIM=applyTx(calcM(v('lb'),lngMonths,v('lng-m')));
+  const hIM=applyTx(calcM(v('hb'),h2Months,v('h2-m')));
+  // 直接成本
+  const lC=calcVeh(v('lb'),lngMonths,v('la'),v('lk'),v('ll'),lCR);
+  const hC=calcVeh(v('hb'),h2Months,v('ha'),v('hk'),v('hl'),hCR);
+  // 按 hlj/xpy 拆分（LNG 80%/20%，H2 30%/70%）
+  calcRes={
+    hlj:{iK:lIK*.8+hIK*.3,iM:lIM*.8+hIM*.3,dc:lC*.8+hC*.3,pe:periodExp*.5},
+    xpy:{iK:lIK*.2+hIK*.7,iM:lIM*.2+hIM*.7,dc:lC*.2+hC*.7,pe:periodExp*.5},
+    lang:{iK:0,iM:0,dc:v('bl'),pe:0},
+    jia:{iK:0,iM:0,dc:v('bj'),pe:0},
+    zhi:{iK:0,iM:0,dc:v('bz'),pe:0},
+  };
+  const tK=lIK+hIK,tM=lIM+hIM;
+  const dr=tK>0?Math.abs(tM-tK)/tK*100:0;
+  const tl=taxIncluded?'（含税）':'（不含税）';
+  document.getElementById('km-r').innerHTML=`吨公里口径年度收入${tl}：<strong>${f(tK)}</strong> 万元`;
+  document.getElementById('m-r').innerHTML=`单车月口径年度收入${tl}：<strong>${f(tM)}</strong> 万元`;
+  const bar=document.getElementById('diff-bar');
+  bar.className=`diff-bar${dr<=10?' ok':''}`;
+  bar.innerHTML=`<span class="text-secondary">交叉验证${tl}</span><span>吨公里：<strong>${f(tK)}</strong></span><span>单车月：<strong>${f(tM)}</strong></span><span>差异率：<strong class="${dr<=10?'diff-ok':'diff-warn'}">${dr.toFixed(1)}%</strong></span><span class="text-tertiary" style="font-size:12px">${dr<=10?'两种口径基本吻合':'建议核查参数'}</span>`;
+  // 结果表
+  document.getElementById('calc-tbody').innerHTML=EKEYS.map(e=>{
+    const r=calcRes[e.key];const totalCost=r.dc+r.pe;const surplus=r.iM-totalCost;
+    const dr2=r.iK>0?Math.abs(r.iM-r.iK)/r.iK*100:0;
+    return`<tr>
+      <td>${e.entity}·${e.unit}</td>
+      <td class="col-num" style="background:var(--blue-1)">${e.hasRev?f(r.iK):'—'}</td>
+      <td class="col-num" style="background:var(--green-1)">${e.hasRev?f(r.iM):'—'}</td>
+      <td class="col-num"><span class="${dr2>10?'diff-warn':'diff-ok'}">${e.hasRev?dr2.toFixed(1)+'%':'—'}</span></td>
+      <td class="col-num" style="background:var(--gold-1)">${f(r.dc)}</td>
+      <td class="col-num" style="background:var(--purple-1)">${e.hasRev?f(r.pe):'—'}</td>
+      <td class="col-num">${f(totalCost)}</td>
+      <td class="col-num" style="color:${surplus>=0?'var(--color-success)':'var(--color-error)'};font-weight:600">${e.hasRev?f(surplus):'−'+f(r.dc)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// 录入行余额实时计算
+function calcEntry(key){
+  const rev=parseFloat(document.getElementById(`r-${key}-rev`)?.value)||0;
+  const cost=parseFloat(document.getElementById(`r-${key}-cost`)?.value)||0;
+  const surEl=document.getElementById(`r-${key}-sur`);
+  if(surEl){
+    const sur=rev-cost;
+    surEl.textContent=f(sur);
+    surEl.style.color=sur>=0?'var(--color-success)':'var(--color-error)';
+  }
+  updateTotals();
+}
+function updateTotals(){
+  let totR=0,totC=0;
+  EKEYS.forEach(e=>{
+    totR+=parseFloat(document.getElementById(`r-${e.key}-rev`)?.value)||0;
+    totC+=parseFloat(document.getElementById(`r-${e.key}-cost`)?.value)||0;
+  });
+  document.getElementById('tot-rev').textContent=f(totR);
+  document.getElementById('tot-cost').textContent=f(totC);
+  const ts=totR-totC;
+  document.getElementById('tot-sur').textContent=f(ts);
+  document.getElementById('tot-sur').style.color=ts>=0?'var(--color-success)':'var(--color-error)';
+}
+
+// 应用推算值
+function applyCalc(){
+  EKEYS.forEach(e=>{
+    const r=calcRes[e.key];if(!r)return;
+    const revEl=document.getElementById(`r-${e.key}-rev`);
+    const costEl=document.getElementById(`r-${e.key}-cost`);
+    if(revEl&&e.hasRev){revEl.value=r.iM.toFixed(2);revEl.classList.add('filled');}
+    if(costEl){costEl.value=(r.dc+r.pe).toFixed(2);costEl.classList.add('filled');}
+    calcEntry(e.key);
+  });
+  document.getElementById('f-source').value='工具推算导入';
+  showMsg('推算值已填入，请核对后确认','success');
+}
+
+// 折叠
+function toggleCalc(){
+  const p=document.getElementById('calc-panel'),i=document.getElementById('cti');
+  const open=p.classList.toggle('open');i.classList.toggle('open',open);
+  if(open)calc();
+}
+function resetParams(){
+  // (省略，同之前逻辑)
+  calc();showMsg('已重置为历史均值','success');
+}
+
+// ── 列表 ──
+function totalRevCostSur(b){
+  let rev=0,cost=0;
+  EKEYS.forEach(e=>{rev+=(b.entries[e.key]?.rev||0);cost+=(b.entries[e.key]?.cost||0);});
+  return{rev,cost,sur:rev-cost};
+}
+function renderList(){
+  const yr=+document.getElementById('f-yr').value;
+  const st=document.getElementById('f-st').value;
+  const rows=budgets.filter(b=>b.year===yr&&(!st||b.status===st));
+  let kR=0,kC=0,kOver=0;
+  rows.forEach(b=>{const t=totalRevCostSur(b);kR+=t.rev;kC+=t.cost;
+    kOver+=EKEYS.filter(e=>(b.allocated[e.key]||0)>(b.entries[e.key]?.cost||0)).length;});
+  const kS=kR-kC;
+  document.getElementById('k-rev').innerHTML=f(kR)+'<span class="ant-statistic-suffix">万元</span>';
+  document.getElementById('k-cost').innerHTML=f(kC)+'<span class="ant-statistic-suffix">万元</span>';
+  document.getElementById('k-surplus').innerHTML=f(kS)+'<span class="ant-statistic-suffix">万元</span>';
+  document.getElementById('k-surplus').style.color=kS>=0?'var(--color-success)':'var(--color-error)';
+  document.getElementById('k-over').innerHTML=kOver+'<span class="ant-statistic-suffix">个</span>';
+  document.getElementById('k-year-lbl').textContent=yr+' 年度';
+  const tbody=document.getElementById('list-tbody');tbody.innerHTML='';
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>';return;}
+  rows.forEach(b=>{
+    const t=totalRevCostSur(b);
+    const allocCost=EKEYS.reduce((s,e)=>s+(b.allocated[e.key]||0),0);
+    const stTag={已生效:`<span class="ant-tag ant-tag-green">已生效</span>`,关账:`<span class="ant-tag ant-tag-black">已关账</span>`,草稿:`<span class="ant-tag ant-tag-gold">草稿</span>`}[b.status]||`<span class="ant-tag">${b.status}</span>`;
+    tbody.innerHTML+=`<tr>
+      <td style="text-align:center"><button class="ant-btn ant-btn-text" style="font-size:11px" onclick="toggleRow(${b.id},this)">▶</button></td>
+      <td><strong>${b.year}</strong></td>
+      <td>${stTag}</td>
+      <td class="col-num text-primary"><strong>${f(t.rev)}</strong></td>
+      <td class="col-num" style="color:var(--color-warning)"><strong>${f(t.cost)}</strong></td>
+      <td class="col-num" style="color:${t.sur>=0?'var(--color-success)':'var(--color-error)'}"><strong>${f(t.sur)}</strong></td>
+      <td class="col-num">${f(allocCost)}</td>
+      <td><span class="ant-tag ant-tag-${b.source==='工具推算导入'?'blue':'gray'}">${b.source}</span></td>
+      <td class="text-secondary">${b.createdAt}</td><td>${b.createdBy}</td>
+      <td><div class="ant-space ant-space-sm">
+        <button class="ant-btn ant-btn-link" style="padding:0" onclick="openDetail(${b.id})">详情</button>
+        ${b.status!=='关账'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openEdit(${b.id})">编辑</button>`:''}
+        ${b.status==='已生效'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0;color:var(--gray-7)" onclick="openLock(${b.id})">关账</button>`:''}
+        ${b.status!=='关账'&&allocCost===0?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${b.id})">删除</button>`:''}
+      </div></td>
+    </tr>
+    <tr id="exp-${b.id}" style="display:none"><td colspan="11" style="padding:0;background:var(--gray-2)">
+      <div style="padding:var(--space-3) var(--space-6)">
+        <table class="sub-table">
+          <thead><tr><th>主体</th><th>业务单元</th>
+            <th class="col-num" style="background:var(--blue-1);color:var(--blue-7)">收入概算（万元）</th>
+            <th class="col-num" style="background:var(--gold-1);color:var(--gold-7)">支出概算（万元）</th>
+            <th class="col-num" style="background:var(--green-1);color:var(--green-7)">余额概算（万元）</th>
+            <th class="col-num">已分配支出（万元）</th>
+            <th class="col-num">待分配支出（万元）</th>
+          </tr></thead>
+          <tbody>${EKEYS.map(e=>{
+            const en=b.entries[e.key]||{rev:0,cost:0};
+            const al=b.allocated[e.key]||0;
+            const sur=en.rev-en.cost;const rem=en.cost-al;
+            return`<tr>
+              <td>${e.entity}</td><td>${e.unit}</td>
+              <td class="col-num">${e.hasRev?f(en.rev):'<span class="text-tertiary">—</span>'}</td>
+              <td class="col-num">${f(en.cost)}</td>
+              <td class="col-num" style="color:${sur>=0?'var(--color-success)':'var(--color-error)'}">${e.hasRev?f(sur):`<span style="color:var(--color-error)">−${f(en.cost)}</span>`}</td>
+              <td class="col-num text-primary">${f(al)}</td>
+              <td class="col-num" style="color:${rem<0?'var(--color-error)':'var(--color-success)'}">${f(rem)}</td>
+            </tr>`;}).join('')}
+          </tbody>
+        </table>
+      </div>
+    </td></tr>`;
+  });
+}
+function toggleRow(id,btn){const row=document.getElementById('exp-'+id);const show=row.style.display==='none';row.style.display=show?'':'none';btn.textContent=show?'▼':'▶';}
+function resetSearch(){document.getElementById('f-st').value='';renderList();}
+
+// ── 弹窗 ──
+function clearEntryForm(){
+  EKEYS.forEach(e=>{
+    const rev=document.getElementById(`r-${e.key}-rev`);const cost=document.getElementById(`r-${e.key}-cost`);
+    if(rev){rev.value='';rev.classList.remove('filled');}
+    if(cost){cost.value='';cost.classList.remove('filled');}
+    const sur=document.getElementById(`r-${e.key}-sur`);if(sur){sur.textContent='—';sur.style.color='';}
+  });
+  document.getElementById('tot-rev').textContent='—';
+  document.getElementById('tot-cost').textContent='—';
+  document.getElementById('tot-sur').textContent='—';
+}
+function openCreate(){
+  editId=null;
+  document.getElementById('form-title').textContent='新增年度概算';
+  document.getElementById('f-year').value='2026';document.getElementById('f-source').value='手工录入';
+  document.getElementById('f-remark').value='';document.getElementById('tool-hint').style.display='none';
+  clearEntryForm();
+  document.getElementById('d-form').classList.add('open');
+}
+function openEdit(id){
+  const b=budgets.find(x=>x.id===id);if(!b)return;
+  editId=id;
+  document.getElementById('form-title').textContent=`编辑年度概算 — ${b.year}年`;
+  document.getElementById('f-year').value=b.year;document.getElementById('f-source').value=b.source;
+  document.getElementById('f-remark').value=b.remark||'';document.getElementById('tool-hint').style.display='none';
+  clearEntryForm();
+  EKEYS.forEach(e=>{
+    const en=b.entries[e.key];
+    if(!en)return;
+    const rev=document.getElementById(`r-${e.key}-rev`);const cost=document.getElementById(`r-${e.key}-cost`);
+    if(rev)rev.value=en.rev||'';if(cost)cost.value=en.cost||'';
+    calcEntry(e.key);
+  });
+  document.getElementById('d-form').classList.add('open');
+}
+function submitForm(){
+  const year=+document.getElementById('f-year').value;
+  const entries={};
+  EKEYS.forEach(e=>{
+    entries[e.key]={rev:parseFloat(document.getElementById(`r-${e.key}-rev`)?.value)||0,cost:parseFloat(document.getElementById(`r-${e.key}-cost`)?.value)||0};
+  });
+  const hasCost=EKEYS.some(e=>entries[e.key].cost>0);
+  if(!hasCost){showMsg('请至少填写一个支出概算','error');return;}
+  if(!editId&&budgets.find(b=>b.year===year)){showMsg('该年度已存在概算记录，不可重复录入','error');return;}
+  const allocated={};EKEYS.forEach(e=>{allocated[e.key]=0;});
+  if(!editId){
+    budgets.unshift({id:Date.now(),year,status:'已生效',source:document.getElementById('f-source').value,entries,allocated,remark:document.getElementById('f-remark').value,createdAt:new Date().toLocaleString('zh'),createdBy:'马伶俐',history:[{time:new Date().toLocaleString('zh'),user:'马伶俐',action:'新增'}]});
+  }else{
+    const b=budgets.find(x=>x.id===editId);
+    if(b){Object.assign(b,{entries,source:document.getElementById('f-source').value,remark:document.getElementById('f-remark').value});b.history.push({time:new Date().toLocaleString('zh'),user:'马伶俐',action:'编辑'});}
+  }
+  ca('d-form');renderList();showMsg(editId?'已保存修改':'概算录入成功','success');
+}
+
+function openDetail(id){
+  const b=budgets.find(x=>x.id===id);if(!b)return;
+  const t=totalRevCostSur(b);
+  const stTag={已生效:`<span class="ant-tag ant-tag-green">已生效</span>`,关账:`<span class="ant-tag ant-tag-black">已关账</span>`}[b.status]||`<span class="ant-tag">${b.status}</span>`;
+  document.getElementById('detail-body').innerHTML=`
+    <div class="ant-descriptions" style="margin-bottom:var(--space-4)">
+      <div><span class="ant-descriptions-item-label">年度</span><strong>${b.year}</strong></div>
+      <div><span class="ant-descriptions-item-label">状态</span>${stTag}</div>
+      <div><span class="ant-descriptions-item-label">来源</span><span class="ant-tag ant-tag-${b.source==='工具推算导入'?'blue':'gray'}">${b.source}</span></div>
+      <div><span class="ant-descriptions-item-label">收入概算合计</span><strong class="text-primary">${f(t.rev)} 万元</strong></div>
+      <div><span class="ant-descriptions-item-label">支出概算合计</span><strong style="color:var(--color-warning)">${f(t.cost)} 万元</strong></div>
+      <div><span class="ant-descriptions-item-label">余额概算</span><strong style="color:${t.sur>=0?'var(--color-success)':'var(--color-error)'}">${f(t.sur)} 万元</strong></div>
+      <div><span class="ant-descriptions-item-label">录入人</span>${b.createdBy}</div>
+      <div><span class="ant-descriptions-item-label">录入时间</span>${b.createdAt}</div>
+    </div>
+    <div class="section-header" style="margin-top:0">收 / 支 / 余 明细（万元）</div>
+    <table class="sub-table" style="margin-bottom:var(--space-4)">
+      <thead><tr><th>主体</th><th>业务单元</th>
+        <th class="col-num" style="background:var(--blue-1);color:var(--blue-7)">收入概算</th>
+        <th class="col-num" style="background:var(--gold-1);color:var(--gold-7)">支出概算</th>
+        <th class="col-num" style="background:var(--green-1);color:var(--green-7)">余额概算</th>
+        <th class="col-num">已分配支出</th><th class="col-num">待分配支出</th>
+      </tr></thead>
+      <tbody>${EKEYS.map(e=>{const en=b.entries[e.key]||{rev:0,cost:0};const al=b.allocated[e.key]||0;const sur=en.rev-en.cost;const rem=en.cost-al;
+        return`<tr><td>${e.entity}</td><td>${e.unit}</td>
+          <td class="col-num">${e.hasRev?f(en.rev):'<span class="text-tertiary">建设期</span>'}</td>
+          <td class="col-num">${f(en.cost)}</td>
+          <td class="col-num" style="color:${sur>=0?'var(--color-success)':'var(--color-error)'}">${e.hasRev?f(sur):`<span style="color:var(--color-error)">−${f(en.cost)}</span>`}</td>
+          <td class="col-num text-primary">${f(al)}</td>
+          <td class="col-num" style="color:${rem<0?'var(--color-error)':'var(--color-success)'}">${f(rem)}</td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>
+    <div class="section-header">操作历史</div>
+    <table class="ant-table" style="font-size:var(--font-size-sm)">
+      <thead><tr><th>时间</th><th>操作人</th><th>动作</th></tr></thead>
+      <tbody>${(b.history||[]).map(h=>`<tr><td>${h.time}</td><td>${h.user}</td><td>${h.action}</td></tr>`).join('')||'<tr><td colspan="3" class="text-tertiary" style="padding:12px">暂无记录</td></tr>'}</tbody>
+    </table>
+  `;
+  document.getElementById('d-detail').classList.add('open');
+}
+
+function openDel(id){delId=id;document.getElementById('del-reason').value='';document.getElementById('d-del').classList.add('open');}
+function confirmDel(){if(!document.getElementById('del-reason').value.trim()){showMsg('请填写删除原因','error');return;}budgets=budgets.filter(x=>x.id!==delId);ca('d-del');renderList();showMsg('已删除','success');}
+function openLock(id){lockId=id;document.getElementById('d-lock').classList.add('open');}
+function confirmLock(){const b=budgets.find(x=>x.id===lockId);if(b){b.status='关账';b.history.push({time:new Date().toLocaleString('zh'),user:'马伶俐',action:'关账'});}ca('d-lock');renderList();showMsg('已关账','success');}
+
+function ca(id){document.getElementById(id)?.classList.remove('open');}
+function showMsg(text,type){
+  const ic={success:'✓',error:'✕',warning:'⚠',info:'ℹ'},cl={success:'msg-success',error:'msg-error',warning:'msg-warning',info:'msg-info'};
+  const el=document.getElementById('msg');
+  document.getElementById('mi').className=cl[type];document.getElementById('mi').textContent=ic[type];
+  document.getElementById('mt').textContent=text;
+  el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+renderList();calc();
+</script>
+</body>
+</html>

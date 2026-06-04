@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>费用手动补录 V2.00 — 134 核算处理</title>
+<link rel="stylesheet" href="./prototype-standard.css">
+<style>
+.month-strip { display:inline-flex; gap:2px; background:var(--gray-3); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:3px; }
+.ms-item { padding:3px 9px; font-size:var(--font-size-sm); cursor:pointer; border-radius:var(--radius-sm); color:var(--text-color-secondary); user-select:none; transition:all var(--motion-duration-fast); }
+.ms-item:hover { background:var(--gray-1); color:var(--text-color); }
+.ms-item.active { background:var(--color-primary); color:#fff; }
+.acct-code { font-size:12px; color:var(--color-primary); font-family:Consolas,monospace; }
+</style>
+</head>
+<body>
+<div class="ant-page">
+
+<div class="ant-page-header">
+  <div>
+    <div style="font-size:var(--font-size-sm);color:var(--text-color-tertiary);margin-bottom:4px">全面预算 / 核算处理 / 费用手动补录</div>
+    <div class="ant-page-title">费用手动补录</div>
+  </div>
+</div>
+
+<div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-4)">
+  本页仅补录<strong>期间费用</strong>（管理费用 6602 / 财务费用 6603）中因单据延迟、银行数据未推送等原因未能自动入账的费用项，不含直接运营成本（气耗、ETC、维修、工资）。
+</div>
+
+<!-- 查询 -->
+<div class="ant-card" style="padding:0;overflow:hidden">
+  <div class="ant-card-body-sm">
+    <div class="ant-search-bar">
+      <div class="ant-search-item">
+        <label class="ant-search-label">费用类别</label>
+        <select class="ant-input" style="width:140px" id="f-cat">
+          <option value="">全部</option>
+          <option>管理费用（6602）</option>
+          <option>财务费用（6603）</option>
+        </select>
+      </div>
+      <div class="ant-search-item">
+        <label class="ant-search-label">年度</label>
+        <select class="ant-input" style="width:90px"><option selected>2026</option><option>2025</option></select>
+      </div>
+      <div class="ant-search-item">
+        <label class="ant-search-label">月份</label>
+        <div class="month-strip">
+          <span class="ms-item" onclick="pickM(this)">全年</span>
+          <span class="ms-item" onclick="pickM(this)">1</span><span class="ms-item" onclick="pickM(this)">2</span>
+          <span class="ms-item" onclick="pickM(this)">3</span><span class="ms-item" onclick="pickM(this)">4</span>
+          <span class="ms-item active" onclick="pickM(this)">5</span><span class="ms-item" onclick="pickM(this)">6</span>
+          <span class="ms-item" onclick="pickM(this)">7</span><span class="ms-item" onclick="pickM(this)">8</span>
+          <span class="ms-item" onclick="pickM(this)">9</span><span class="ms-item" onclick="pickM(this)">10</span>
+          <span class="ms-item" onclick="pickM(this)">11</span><span class="ms-item" onclick="pickM(this)">12</span>
+        </div>
+      </div>
+      <div class="ant-search-item">
+        <label class="ant-search-label">主体</label>
+        <select class="ant-input" style="width:130px" id="f-entity">
+          <option value="">全部</option><option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option>
+        </select>
+      </div>
+      <div class="ant-search-item">
+        <label class="ant-search-label">状态</label>
+        <select class="ant-input" style="width:110px" id="f-st">
+          <option value="">全部</option><option>草稿</option><option>待审核</option><option>已通过</option><option>已驳回</option>
+        </select>
+      </div>
+      <div class="ant-space ml-auto">
+        <button class="ant-btn ant-btn-primary" onclick="renderList()">查询</button>
+        <button class="ant-btn" onclick="resetSearch()">重置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 主表 -->
+<div class="ant-card" style="padding:0;overflow:hidden">
+  <div class="ant-card-head">
+    <div class="ant-card-head-title">补录明细</div>
+    <div class="ant-space">
+      <button class="ant-btn ant-btn-primary" onclick="openCreate()">新增补录</button>
+      <button class="ant-btn" onclick="showMsg('导出成功','success')">导出</button>
+    </div>
+  </div>
+  <div class="ant-table-wrapper">
+    <table class="ant-table">
+      <thead><tr>
+        <th>单号</th>
+        <th>归属月份</th>
+        <th>费用类别</th>
+        <th>归集科目</th>
+        <th>主体</th>
+        <th>报销人 / 发生部门</th>
+        <th class="col-num">金额（元，不含税）</th>
+        <th>凭证编号</th>
+        <th>录入人</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr></thead>
+      <tbody id="list-tbody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ═══ 新增/编辑 弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-form">
+<div class="ant-modal ant-modal-md">
+  <div class="ant-modal-header">
+    <div class="ant-modal-title" id="form-title">新增费用补录</div>
+    <button class="ant-modal-close" onclick="ca('d-form')">✕</button>
+  </div>
+  <div class="ant-modal-body">
+    <div class="ant-alert ant-alert-warning" style="margin-bottom:var(--space-4)">
+      仅录入期间费用（管理费用/财务费用），不录直接运营成本。金额口径统一为<strong>不含税</strong>。
+    </div>
+    <div class="ant-form-grid">
+      <div class="ant-form-item">
+        <div class="ant-form-item-label"><span class="required">归属月份</span></div>
+        <input class="ant-input" type="month" id="f-month" value="2026-05">
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label"><span class="required">主体</span></div>
+        <select class="ant-input" id="f-entity-sel">
+          <option value="">请选择</option>
+          <option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option>
+        </select>
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label"><span class="required">费用类别</span></div>
+        <select class="ant-input" id="f-cat-sel" onchange="updateAcctOptions()">
+          <option value="">请选择</option>
+          <option value="管理费用">管理费用（6602）</option>
+          <option value="财务费用">财务费用（6603）</option>
+        </select>
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label"><span class="required">归集科目</span></div>
+        <select class="ant-input" id="f-acct">
+          <option value="">请先选费用类别</option>
+        </select>
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label"><span class="required">金额（元，不含税）</span></div>
+        <input class="ant-input" type="number" id="f-amount" placeholder="请输入">
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label">报销人 / 发生部门</div>
+        <input class="ant-input" id="f-person" placeholder="如：马伶俐 / 财务部">
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label">业务日期</div>
+        <input class="ant-input" type="date" id="f-biz-date">
+      </div>
+      <div class="ant-form-item">
+        <div class="ant-form-item-label">凭证编号</div>
+        <input class="ant-input" id="f-voucher" placeholder="可选">
+      </div>
+    </div>
+    <div class="ant-form-item" style="margin-top:var(--space-2)">
+      <div class="ant-form-item-label" style="margin-bottom:var(--space-2)">附件凭证</div>
+      <button class="ant-btn">上传文件</button>
+      <span class="text-tertiary" style="font-size:var(--font-size-sm);margin-left:var(--space-3)">发票/报销单，支持 JPG / PNG / PDF，≤ 10 MB</span>
+    </div>
+    <div class="ant-form-item">
+      <div class="ant-form-item-label"><span class="required">补录原因</span></div>
+      <textarea class="ant-input" id="f-remark" rows="2" placeholder="说明为何手动补录，如：差旅报销单延迟 2 周到财务、银行利息费用未自动推送等"></textarea>
+    </div>
+  </div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-form')">取消</button>
+    <button class="ant-btn" onclick="submitForm('save')">保存草稿</button>
+    <button class="ant-btn ant-btn-primary" onclick="submitForm('submit')">提交审核</button>
+  </div>
+</div></div>
+
+<!-- ═══ 详情弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-detail">
+<div class="ant-modal ant-modal-md">
+  <div class="ant-modal-header"><div class="ant-modal-title">补录详情</div><button class="ant-modal-close" onclick="ca('d-detail')">✕</button></div>
+  <div class="ant-modal-body" id="detail-body"></div>
+  <div class="ant-modal-footer"><button class="ant-btn" onclick="ca('d-detail')">关闭</button></div>
+</div></div>
+
+<!-- ═══ 审核弹窗 ═══ -->
+<div class="ant-modal-mask" id="d-approve">
+<div class="ant-modal ant-modal-sm">
+  <div class="ant-modal-header"><div class="ant-modal-title">审核</div><button class="ant-modal-close" onclick="ca('d-approve')">✕</button></div>
+  <div class="ant-modal-body" id="appr-body"></div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-approve')">取消</button>
+    <button class="ant-btn ant-btn-danger" onclick="doApprove('reject')">驳回</button>
+    <button class="ant-btn ant-btn-success" onclick="doApprove('pass')">通过</button>
+  </div>
+</div></div>
+
+<!-- ═══ 删除确认 ═══ -->
+<div class="ant-modal-mask" id="d-del">
+<div class="ant-modal ant-modal-sm">
+  <div class="ant-modal-header"><div class="ant-modal-title">删除确认</div><button class="ant-modal-close" onclick="ca('d-del')">✕</button></div>
+  <div class="ant-modal-body"><p>草稿记录将被删除，确认继续？</p></div>
+  <div class="ant-modal-footer">
+    <button class="ant-btn" onclick="ca('d-del')">取消</button>
+    <button class="ant-btn ant-btn-danger" onclick="confirmDel()">确认删除</button>
+  </div>
+</div></div>
+
+<div class="ant-message-notice" id="msg">
+  <div class="ant-message-notice-content"><span id="mi"></span>&nbsp;<span id="mt"></span></div>
+</div>
+
+<script>
+// 费用科目（严格对齐管理及财务费用科目明细.xlsx）
+const ACCTS_6602=[
+  {code:'660201',name:'办公费用'},
+  {code:'660202',name:'房租'},
+  {code:'660203',name:'物业管理费'},
+  {code:'660204',name:'水电费'},
+  {code:'660205',name:'业务招待费'},
+  {code:'660206',name:'市内交通费'},
+  {code:'660207',name:'差旅费'},
+  {code:'660208',name:'通讯费'},
+  {code:'660209',name:'工资总额'},
+  {code:'660210',name:'社会保险金'},
+  {code:'660211',name:'住房公积金'},
+  {code:'660212',name:'福利费'},
+  {code:'660213',name:'工会经费'},
+  {code:'660214',name:'车辆使用费'},
+  {code:'660215',name:'咨询费'},
+  {code:'660216',name:'诉讼费'},
+  {code:'660217',name:'职工教育经费'},
+  {code:'660218',name:'会议费'},
+  {code:'660219',name:'保险费'},
+  {code:'660221',name:'技术转让费'},
+  {code:'660222',name:'安全生产费'},
+  {code:'660225',name:'折旧费'},
+  {code:'660229',name:'劳务费'},
+  {code:'660299',name:'其他'},
+];
+const ACCTS_6603=[
+  {code:'660301',name:'汇兑损益'},
+  {code:'660302',name:'利息费用'},
+  {code:'660303',name:'手续费'},
+  {code:'660304',name:'利息收入'},
+  {code:'660399',name:'其他'},
+];
+const ACCTS_ALL={};
+[...ACCTS_6602,...ACCTS_6603].forEach(a=>ACCTS_ALL[a.code]=a.name);
+
+function updateAcctOptions(){
+  const cat=document.getElementById('f-cat-sel').value;
+  const sel=document.getElementById('f-acct');
+  sel.innerHTML='<option value="">请选择科目</option>';
+  const list=cat==='管理费用'?ACCTS_6602:cat==='财务费用'?ACCTS_6603:[];
+  list.forEach(a=>{
+    const o=document.createElement('option');o.value=a.code;o.textContent=`${a.code} ${a.name}`;sel.appendChild(o);
+  });
+}
+
+function pickM(el){el.closest('.month-strip').querySelectorAll('.ms-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+
+const STATUS_MAP={'草稿':'ant-tag-gold','待审核':'ant-tag-blue','已通过':'ant-tag-green','已驳回':'ant-tag-red'};
+
+let data=[
+  {id:1,no:'F2026-0502-001',month:'2026-05',cat:'管理费用',acct:'660207',entity:'红树林集团',person:'马伶俐',amount:8600,bizDate:'2026-04-28',voucher:'CW2026-0430-001',createdBy:'马伶俐',remark:'4 月差旅报销单 5 月初到财务，归属 4 月已关账，补录至 5 月',status:'已通过',attach:'差旅报销.pdf'},
+  {id:2,no:'F2026-0510-002',month:'2026-05',cat:'财务费用',acct:'660302',entity:'新鹏运',person:'财务部',amount:12500,bizDate:'2026-05-08',voucher:'YH2026-0508',createdBy:'李会计',remark:'银行贷款利息，5 月未自动推送，手动补录',status:'待审核',attach:'银行利息对账单.pdf'},
+  {id:3,no:'F2026-0515-003',month:'2026-05',cat:'管理费用',acct:'660205',entity:'哈密普发新能源',person:'王文昊',amount:3200,bizDate:'2026-05-14',voucher:'',createdBy:'张会计',remark:'客户招待发票延迟，补录至 5 月',status:'草稿',attach:''},
+  {id:4,no:'F2026-0518-004',month:'2026-05',cat:'管理费用',acct:'660218',entity:'红树林集团',person:'行政部',amount:6800,bizDate:'2026-05-17',voucher:'HY2026-0517',createdBy:'马伶俐',remark:'5 月股东例会会议费',status:'已通过',attach:'会议费发票.jpg'},
+];
+let editId=null,delId=null,approveTarget=null;
+
+function renderList(){
+  const fCat=document.getElementById('f-cat').value;
+  const fEnt=document.getElementById('f-entity').value;
+  const fSt=document.getElementById('f-st').value;
+  const rows=data.filter(r=>(!fCat||r.cat===fCat.replace('（6602）','').replace('（6603）',''))&&(!fEnt||r.entity===fEnt)&&(!fSt||r.status===fSt));
+  const tbody=document.getElementById('list-tbody');
+  tbody.innerHTML='';
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>';return;}
+  rows.forEach(r=>{
+    const cls=STATUS_MAP[r.status]||'ant-tag-gray';
+    const catTag=r.cat==='管理费用'?`<span class="ant-tag ant-tag-purple">${r.cat}</span>`:`<span class="ant-tag ant-tag-orange">${r.cat}</span>`;
+    tbody.innerHTML+=`<tr>
+      <td class="text-secondary">${r.no}</td>
+      <td>${r.month}</td>
+      <td>${catTag}</td>
+      <td><span class="acct-code">${r.acct}</span> ${ACCTS_ALL[r.acct]||''}</td>
+      <td>${r.entity}</td>
+      <td>${r.person}</td>
+      <td class="col-num">${r.amount.toLocaleString('zh')}</td>
+      <td class="text-secondary">${r.voucher||'—'}</td>
+      <td>${r.createdBy}</td>
+      <td><span class="ant-tag ${cls}">${r.status}</span></td>
+      <td><div class="ant-space ant-space-sm">
+        <button class="ant-btn ant-btn-link" style="padding:0" onclick="openDetail(${r.id})">详情</button>
+        ${r.status==='草稿'||r.status==='已驳回'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openEdit(${r.id})">编辑</button>`:''}
+        ${r.status==='待审核'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openApprove(${r.id})">审核</button>`:''}
+        ${r.status==='草稿'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${r.id})">删除</button>`:''}
+      </div></td>
+    </tr>`;
+  });
+}
+function resetSearch(){['f-cat','f-entity','f-st'].forEach(id=>document.getElementById(id).value='');renderList();}
+
+function clearForm(){
+  document.getElementById('f-cat-sel').value='';updateAcctOptions();
+  document.getElementById('f-entity-sel').value='';
+  document.getElementById('f-month').value='2026-05';
+  ['f-amount','f-person','f-biz-date','f-voucher','f-remark'].forEach(id=>document.getElementById(id).value='');
+}
+function openCreate(){editId=null;document.getElementById('form-title').textContent='新增费用补录';clearForm();document.getElementById('d-form').classList.add('open');}
+function openEdit(id){
+  const r=data.find(x=>x.id===id);if(!r)return;editId=id;
+  document.getElementById('form-title').textContent=`编辑 — ${r.no}`;
+  document.getElementById('f-cat-sel').value=r.cat;updateAcctOptions();
+  document.getElementById('f-acct').value=r.acct;
+  document.getElementById('f-entity-sel').value=r.entity;
+  document.getElementById('f-month').value=r.month;
+  document.getElementById('f-amount').value=r.amount;
+  document.getElementById('f-person').value=r.person;
+  document.getElementById('f-biz-date').value=r.bizDate;
+  document.getElementById('f-voucher').value=r.voucher;
+  document.getElementById('f-remark').value=r.remark;
+  document.getElementById('d-form').classList.add('open');
+}
+function submitForm(action){
+  const cat=document.getElementById('f-cat-sel').value;
+  const acct=document.getElementById('f-acct').value;
+  const entity=document.getElementById('f-entity-sel').value;
+  const amount=parseFloat(document.getElementById('f-amount').value)||0;
+  const remark=document.getElementById('f-remark').value.trim();
+  if(!cat||!acct||!entity||!amount){showMsg('请填写费用类别、科目、主体和金额','error');return;}
+  if(action==='submit'&&!remark){showMsg('提交前请填写补录原因','error');return;}
+  const status=action==='submit'?'待审核':'草稿';
+  const now=new Date().toISOString().slice(0,10);
+  if(!editId){
+    const no=`F${now.replace(/-/g,'').slice(0,8)}-${String(data.length+1).padStart(3,'0')}`;
+    data.unshift({id:Date.now(),no,month:document.getElementById('f-month').value,cat,acct,entity,person:document.getElementById('f-person').value||'—',amount,bizDate:document.getElementById('f-biz-date').value||now,voucher:document.getElementById('f-voucher').value,createdBy:'马伶俐',remark,status,attach:''});
+  }else{
+    const r=data.find(x=>x.id===editId);
+    if(r)Object.assign(r,{cat,acct,entity,amount,person:document.getElementById('f-person').value||r.person,remark,status});
+  }
+  ca('d-form');renderList();showMsg(action==='submit'?'已提交审核':'草稿已保存','success');
+}
+
+function openDetail(id){
+  const r=data.find(x=>x.id===id);if(!r)return;
+  const catTag=r.cat==='管理费用'?`<span class="ant-tag ant-tag-purple">${r.cat}</span>`:`<span class="ant-tag ant-tag-orange">${r.cat}</span>`;
+  const cls=STATUS_MAP[r.status]||'ant-tag-gray';
+  document.getElementById('detail-body').innerHTML=`
+    <div class="ant-descriptions">
+      <div><span class="ant-descriptions-item-label">单号</span>${r.no}</div>
+      <div><span class="ant-descriptions-item-label">归属月份</span>${r.month}</div>
+      <div><span class="ant-descriptions-item-label">费用类别</span>${catTag}</div>
+      <div><span class="ant-descriptions-item-label">归集科目</span><span class="acct-code">${r.acct}</span> ${ACCTS_ALL[r.acct]||''}</div>
+      <div><span class="ant-descriptions-item-label">主体</span>${r.entity}</div>
+      <div><span class="ant-descriptions-item-label">报销人 / 部门</span>${r.person}</div>
+      <div><span class="ant-descriptions-item-label">金额（不含税）</span><strong class="text-primary">¥ ${r.amount.toLocaleString('zh')}</strong></div>
+      <div><span class="ant-descriptions-item-label">业务日期</span>${r.bizDate}</div>
+      <div><span class="ant-descriptions-item-label">凭证编号</span>${r.voucher||'—'}</div>
+      <div><span class="ant-descriptions-item-label">录入人</span>${r.createdBy}</div>
+      <div><span class="ant-descriptions-item-label">附件</span>${r.attach||'—'}</div>
+      <div><span class="ant-descriptions-item-label">状态</span><span class="ant-tag ${cls}">${r.status}</span></div>
+    </div>
+    <div class="section-header" style="margin-top:var(--space-4)">补录原因</div>
+    <div style="padding:10px 12px;background:var(--gray-2);border-radius:var(--radius-md);font-size:var(--font-size-sm)">${r.remark||'未填写'}</div>
+  `;
+  document.getElementById('d-detail').classList.add('open');
+}
+
+function openApprove(id){
+  const r=data.find(x=>x.id===id);if(!r)return;
+  approveTarget=r;
+  const catTag=r.cat==='管理费用'?`<span class="ant-tag ant-tag-purple">${r.cat}</span>`:`<span class="ant-tag ant-tag-orange">${r.cat}</span>`;
+  document.getElementById('appr-body').innerHTML=`
+    <div class="ant-descriptions ant-descriptions-2" style="margin-bottom:var(--space-3)">
+      <div><span class="ant-descriptions-item-label">费用类别</span>${catTag}</div>
+      <div><span class="ant-descriptions-item-label">归集科目</span><span class="acct-code">${r.acct}</span> ${ACCTS_ALL[r.acct]||''}</div>
+      <div><span class="ant-descriptions-item-label">主体</span>${r.entity}</div>
+      <div><span class="ant-descriptions-item-label">金额（不含税）</span><strong class="text-primary">¥ ${r.amount.toLocaleString('zh')}</strong></div>
+      <div><span class="ant-descriptions-item-label">报销人 / 部门</span>${r.person}</div>
+      <div><span class="ant-descriptions-item-label">附件</span>${r.attach||'无'}</div>
+    </div>
+    <div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-3)">补录原因：${r.remark}</div>
+    <div class="ant-form-item" style="margin-bottom:0">
+      <div class="ant-form-item-label"><span class="required">审核意见</span></div>
+      <textarea class="ant-input" id="appr-comment" rows="2" placeholder="必填"></textarea>
+    </div>
+  `;
+  document.getElementById('d-approve').classList.add('open');
+}
+function doApprove(action){
+  const comment=document.getElementById('appr-comment').value.trim();
+  if(!comment){showMsg('请填写审核意见','error');return;}
+  if(approveTarget)approveTarget.status=action==='pass'?'已通过':'已驳回';
+  ca('d-approve');renderList();showMsg(action==='pass'?'审核已通过':'已驳回','success');
+}
+
+function openDel(id){delId=id;document.getElementById('d-del').classList.add('open');}
+function confirmDel(){data=data.filter(x=>x.id!==delId);ca('d-del');renderList();showMsg('已删除','success');}
+
+function ca(id){document.getElementById(id)?.classList.remove('open');}
+function showMsg(text,type){
+  const ic={success:'✓',error:'✕',warning:'⚠',info:'ℹ'},cl={success:'msg-success',error:'msg-error',warning:'msg-warning',info:'msg-info'};
+  const el=document.getElementById('msg');
+  document.getElementById('mi').className=cl[type];document.getElementById('mi').textContent=ic[type];
+  document.getElementById('mt').textContent=text;
+  el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+renderList();
+</script>
+</body>
+</html>
