@@ -325,7 +325,7 @@ function startTour() {
         element: '.ant-alert',
         popover: {
           title: '备用金是什么',
-          description: '公司预留给各主体用于临时小额支出的专项资金，比如路上爆胎修车、临时停车费这类突发情况。这个页面管额度规划和补充申请，实际每笔花销在其他业务模块里记录，这里不重复录。',
+          description: '公司预留给各主体用于临时小额支出的专项资金，比如路上爆胎修车、临时停车费这类突发情况。这里管额度规划和补充申请，实际每笔花销在其他业务模块里记录，不重复录。',
           side: 'bottom', align: 'start'
         }
       },
@@ -341,7 +341,7 @@ function startTour() {
         element: '.fund-table',
         popover: {
           title: '各公司的额度使用情况',
-          description: '按公司分行显示分配了多少额度、用了多少、还剩多少，进度条直观显示使用比例。快用完时状态自动变成"申请补充中"。右上角按钮可在年中重新分配各公司额度。',
+          description: '按公司分行显示分配了多少额度、用了多少、还剩多少，进度条直观显示使用比例。快用完时状态自动变成"申请补充中"。',
           side: 'top', align: 'start'
         }
       },
@@ -349,7 +349,7 @@ function startTour() {
         element: '#apply-tbody',
         popover: {
           title: '补充申请记录',
-          description: '每次申请增加备用金都有记录在案：申请了多少、理由是什么、审批结果如何。财务审批通过后余额自动增加，历史记录永久保留，方便回溯每笔资金变动。',
+          description: '每次申请增加备用金都有记录在案：申请了多少、理由是什么、审批结果如何。财务审批通过后余额自动增加，历史记录永久保留。',
           side: 'top', align: 'start'
         }
       },
@@ -357,7 +357,7 @@ function startTour() {
         element: 'button[onclick="openApply()"]',
         popover: {
           title: '发起补充申请',
-          description: '当余额不足时，点这里填写申请补充多少钱和原因（比如"本月集中维修，备用金接近耗尽"）。提交后财务收到通知进行审批，通过后余额自动更新。',
+          description: '当余额不足时，点这里填写申请补充多少钱和原因（比如"本月集中维修，备用金接近耗尽"）。提交后财务收到通知审批，通过后余额自动更新。',
           side: 'bottom', align: 'start'
         }
       },
@@ -365,7 +365,7 @@ function startTour() {
         element: '.ant-card:last-of-type',
         popover: {
           title: '月度使用汇总（只看不录）',
-          description: '这张汇总表是从其他系统自动同步过来的数据，在这里只能看，不能修改。每笔支出在发生的业务模块里记录，这里只做汇总展示，保证数据来源唯一、不重复录入。',
+          description: '这张汇总表从其他系统自动同步过来，在这里只能看，不能修改。每笔支出在发生的业务模块里记录，这里只做汇总展示，保证数据来源唯一。',
           side: 'top', align: 'start'
         }
       }

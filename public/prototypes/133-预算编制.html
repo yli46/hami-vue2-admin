@@ -25,29 +25,11 @@
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
 <style>
-/* 隔离 driver.js 气泡，防止页面全局 button 样式渗入 */
-.driver-popover { background:#fff!important; border-radius:10px!important; box-shadow:0 8px 32px rgba(0,0,0,.16)!important; padding:18px 20px 14px!important; max-width:320px!important; min-width:260px!important; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important; }
-.driver-popover * { box-sizing:border-box!important; }
-.driver-popover-title { display:block!important; font-size:14px!important; font-weight:600!important; color:#1A2233!important; margin:0 0 8px!important; line-height:1.5!important; padding:0!important; }
-.driver-popover-description { display:block!important; font-size:13px!important; color:#595959!important; line-height:1.75!important; margin:0 0 12px!important; padding:0!important; }
-.driver-popover-footer { display:flex!important; align-items:center!important; justify-content:space-between!important; margin:0!important; padding:0!important; }
-.driver-popover-progress-text { font-size:12px!important; color:#BFBFBF!important; line-height:1!important; }
-.driver-popover-navigation-btns { display:flex!important; gap:8px!important; align-items:center!important; }
-.driver-popover-prev-btn,
-.driver-popover-next-btn,
-.driver-popover-done-btn {
-  all:unset!important;
-  display:inline-flex!important; align-items:center!important; justify-content:center!important;
-  height:28px!important; padding:0 14px!important; font-size:12px!important; font-weight:500!important;
-  border-radius:5px!important; cursor:pointer!important; border:1px solid!important;
-  white-space:nowrap!important; line-height:1!important; box-sizing:border-box!important;
-}
-.driver-popover-prev-btn { background:#fff!important; border-color:#D9D9D9!important; color:#595959!important; }
-.driver-popover-next-btn,
-.driver-popover-done-btn { background:#1677FF!important; border-color:#1677FF!important; color:#fff!important; }
-.driver-popover-close-btn { all:unset!important; position:absolute!important; top:14px!important; right:14px!important; width:20px!important; height:20px!important; display:flex!important; align-items:center!important; justify-content:center!important; color:#BFBFBF!important; cursor:pointer!important; font-size:14px!important; }
-.driver-popover-close-btn:hover { color:#595959!important; }
-.driver-popover-arrow { display:block!important; }
+.driver-popover { max-width: 340px !important; }
+.driver-popover-title { font-size: 14px !important; font-weight: 600 !important; color: #1A2233 !important; }
+.driver-popover-description { font-size: 13px !important; color: #595959 !important; line-height: 1.7 !important; }
+.driver-popover-next-btn { background: #1677FF !important; border-color: #1677FF !important; }
+.driver-popover-prev-btn { color: #595959 !important; border-color: #D9D9D9 !important; }
 </style>
 </head>
 <body>
@@ -866,6 +848,66 @@ renderList();
 <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
 <script>
 let driverObj;
+function startFormTour133() {
+  const { driver } = window.driver.js;
+  const fd = driver({
+    showProgress: true, progressText: '{{current}} / {{total}}',
+    prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
+    animate: true, smoothScroll: true,
+    steps: [
+      {
+        element: document.querySelector('#budget-hint'),
+        popover: {
+          title: '超预算会被拦截',
+          description: '提交时系统会自动检查：这份预算的全年总金额是否超出了年度预算管理里设定的支出上限。超出了就无法提交，必须把数字调小才能继续。',
+          side: 'bottom', align: 'start'
+        }
+      },
+      {
+        element: document.querySelector('.calc-section'),
+        popover: {
+          title: '推算辅助工具（点标题展开）',
+          description: '展开后：①显示该业务单元今年的预算上限和剩余空间；②提供分摊工具把全年预算按比例分摊到 12 个月，省去手动逐月填写。点"下一步"展开。',
+          side: 'bottom', align: 'start',
+          onNextClick: () => {
+            const h = document.querySelector('.calc-head');
+            if (h && !document.querySelector('#calc-panel-b.open')) h.click();
+            document.getElementById('f-entity').value = '红树林集团';
+            onEntityChange();
+            setTimeout(() => { updateBudgetConstraint(); bCalc(); fd.moveNext(); }, 600);
+          }
+        }
+      },
+      {
+        element: document.querySelector('#b-budget-bar'),
+        popover: {
+          title: '可用额度实时显示',
+          description: '蓝色信息条实时显示：这个业务单元今年还可以编多少预算。切换主体后自动更新。填数字前先看这里，就不会超限被退回。',
+          side: 'bottom', align: 'start'
+        }
+      },
+      {
+        element: document.querySelector('#edit-tbody'),
+        popover: {
+          title: '19 个科目分三组填写',
+          description: '蓝色是直接运营成本（气耗、工资、过路费等 8 项），紫色是管理费用（差旅、招待、办公等 8 项），橙色是财务费用（利息、手续费等 3 项）。颜色分组让填写更有条理，不容易漏项。',
+          side: 'top', align: 'start'
+        }
+      },
+      {
+        element: document.querySelector('#d-form .ant-modal-footer'),
+        popover: {
+          title: '年中调整：已过月份自动锁定',
+          description: '预算生效后若需调整，点操作列"调整"按钮。系统把已过去的月份设为只读，只能修改本月及后续月份，保证历史数据不被篡改。',
+          side: 'top', align: 'end',
+          onNextClick: () => { ca('d-form'); fd.moveNext(); }
+        }
+      }
+    ]
+  });
+  fd.drive();
+}
+
 function startTour() {
   const { driver } = window.driver.js;
   driverObj = driver({
@@ -877,7 +919,7 @@ function startTour() {
         element: '.ant-steps',
         popover: {
           title: '预算编制走几步',
-          description: '全年预算编制分四步：集团先定大方向 → 各团队按月填报细项 → 主管初审、财务终审 → 审批通过正式生效。步骤条实时显示当前进展到哪步。',
+          description: '四步流程：集团先定大方向 → 各团队按月填报细项 → 主管初审、财务终审 → 审批通过正式生效。步骤条实时显示当前进展。',
           side: 'bottom', align: 'start'
         }
       },
@@ -893,16 +935,16 @@ function startTour() {
         element: '.ant-search-bar',
         popover: {
           title: '筛选与口径切换',
-          description: '可按年度、主体、业务单元、状态组合筛选。右侧"含税 / 不含税"切换影响列表里"全年预算总额"的显示方式，切换视角看同一份数据，原始录入数字不变。',
+          description: '可按年度、主体、业务单元、状态组合筛选。右侧"含税 / 不含税"切换影响列表里"全年预算总额"的显示方式，切换视角看同一份数据。',
           side: 'bottom', align: 'start'
         }
       },
       {
-        element: '.ant-tabs-nav',
+        element: '.ant-table-wrapper',
         popover: {
-          title: '两种视图随时切换',
-          description: '"列表视图"按记录逐行显示，看状态和审批进度；"年度矩阵视图"把所有主体铺成大表，横轴是 12 个月，一眼看出哪个月哪个团队预算高低。点"下一步"切到矩阵视图。',
-          side: 'bottom', align: 'start',
+          title: '预算编制列表',
+          description: '"全年预算总额"来自 19 个科目 × 12 月的矩阵汇总。"审批进度"栏显示当前在 L1（主管初审）还是 L2（财务终审）。点"下一步"切换到矩阵视图。',
+          side: 'top', align: 'start',
           onNextClick: () => {
             const t = document.querySelector('.ant-tabs-tab:last-child');
             if (t) t.click();
@@ -911,74 +953,24 @@ function startTour() {
         }
       },
       {
-        element: '#pane-matrix .ant-card-body-sm',
+        element: '#matrix-wrap',
         popover: {
           title: '年度矩阵视图',
           description: '每行是一个业务单元，每列是一个月份，数字是当月预算合计。底行汇总所有团队当月总额。点击任意月份格子，可以看到那个月 19 个费用科目的详细分拆。',
-          side: 'bottom', align: 'start'
+          side: 'top', align: 'start'
         }
       },
       {
         element: 'button[onclick="openCreate()"]',
         popover: {
-          title: '填报月度预算',
-          description: '点"新增预算"进入填报表单——19 个费用科目 × 12 个月的矩阵，逐月填入各科目预算，系统自动汇总行合计和月合计。点"下一步"打开填报表单。',
-          side: 'bottom', align: 'start',
+          title: '填报月度预算 — 进入表单',
+          description: '进入 19 科目 × 12 月的填报表单，包含推算辅助工具和概算约束提示。点"下一步"打开表单并继续表单内导览。',
+          side: 'bottom', align: 'end',
           onNextClick: () => {
             const t = document.querySelector('.ant-tabs-tab:first-child');
             if (t) t.click();
-            setTimeout(() => { openCreate(); setTimeout(() => driverObj.moveNext(), 600); }, 200);
+            setTimeout(() => { openCreate(); driverObj.destroy(); setTimeout(startFormTour133, 850); }, 200);
           }
-        }
-      },
-      {
-        popover: {
-          title: '表单第一步：选主体和年度',
-          description: '先选公司主体，业务单元下拉会自动联动显示该主体下的选项。年度选好后，系统自动查出这个主体今年还剩多少预算空间。',
-          side: 'over', align: 'center'
-        }
-      },
-      {
-        popover: {
-          title: '超预算会被拦截',
-          description: '提交时系统会自动检查：这份预算的全年总金额，是否超出了年度预算管理里设定的支出上限。超出了就无法提交，必须把数字调小才能继续。',
-          side: 'over', align: 'center'
-        }
-      },
-      {
-        popover: {
-          title: '推算辅助工具（点标题展开）',
-          description: '折叠区展开后有两个功能：①显示该业务单元的预算上限和剩余空间；②提供自动分摊工具，把全年预算按比例分摊到 12 个月，省去手动逐月填写。点"下一步"展开。',
-          side: 'over', align: 'center',
-          onNextClick: () => {
-            const head = document.querySelector('.calc-head');
-            if (head && !document.querySelector('#calc-panel-b.open')) head.click();
-            document.getElementById('f-entity').value = '红树林集团';
-            onEntityChange();
-            setTimeout(() => { updateBudgetConstraint(); bCalc(); driverObj.moveNext(); }, 600);
-          }
-        }
-      },
-      {
-        popover: {
-          title: '可用额度实时显示',
-          description: '展开后蓝色信息条实时显示：这个业务单元今年还可以编多少预算。切换主体后自动更新。填数字前先看这里，就不会超限被退回。',
-          side: 'over', align: 'center'
-        }
-      },
-      {
-        popover: {
-          title: '19 个科目分三组填写',
-          description: '蓝色是直接运营成本（气耗、工资、过路费等 8 项），紫色是管理费用（差旅、招待、办公等 8 项），橙色是财务费用（利息、手续费等 3 项）。颜色分组让填写更有条理，不容易漏项。',
-          side: 'over', align: 'center'
-        }
-      },
-      {
-        popover: {
-          title: '年中调整：已过月份自动锁定',
-          description: '预算生效后若需调整，点操作列"调整"按钮。系统自动把已过去的月份设为只读，只能修改本月及后续月份，保证历史数据不被篡改。调整后重新走审批流程。',
-          side: 'over', align: 'center',
-          onNextClick: () => { ca('d-form'); driverObj.moveNext(); }
         }
       }
     ]

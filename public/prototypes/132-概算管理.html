@@ -52,29 +52,11 @@
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
 <style>
-/* 隔离 driver.js 气泡，防止页面全局 button 样式渗入 */
-.driver-popover { background:#fff!important; border-radius:10px!important; box-shadow:0 8px 32px rgba(0,0,0,.16)!important; padding:18px 20px 14px!important; max-width:320px!important; min-width:260px!important; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important; }
-.driver-popover * { box-sizing:border-box!important; }
-.driver-popover-title { display:block!important; font-size:14px!important; font-weight:600!important; color:#1A2233!important; margin:0 0 8px!important; line-height:1.5!important; padding:0!important; }
-.driver-popover-description { display:block!important; font-size:13px!important; color:#595959!important; line-height:1.75!important; margin:0 0 12px!important; padding:0!important; }
-.driver-popover-footer { display:flex!important; align-items:center!important; justify-content:space-between!important; margin:0!important; padding:0!important; }
-.driver-popover-progress-text { font-size:12px!important; color:#BFBFBF!important; line-height:1!important; }
-.driver-popover-navigation-btns { display:flex!important; gap:8px!important; align-items:center!important; }
-.driver-popover-prev-btn,
-.driver-popover-next-btn,
-.driver-popover-done-btn {
-  all:unset!important;
-  display:inline-flex!important; align-items:center!important; justify-content:center!important;
-  height:28px!important; padding:0 14px!important; font-size:12px!important; font-weight:500!important;
-  border-radius:5px!important; cursor:pointer!important; border:1px solid!important;
-  white-space:nowrap!important; line-height:1!important; box-sizing:border-box!important;
-}
-.driver-popover-prev-btn { background:#fff!important; border-color:#D9D9D9!important; color:#595959!important; }
-.driver-popover-next-btn,
-.driver-popover-done-btn { background:#1677FF!important; border-color:#1677FF!important; color:#fff!important; }
-.driver-popover-close-btn { all:unset!important; position:absolute!important; top:14px!important; right:14px!important; width:20px!important; height:20px!important; display:flex!important; align-items:center!important; justify-content:center!important; color:#BFBFBF!important; cursor:pointer!important; font-size:14px!important; }
-.driver-popover-close-btn:hover { color:#595959!important; }
-.driver-popover-arrow { display:block!important; }
+.driver-popover { max-width: 340px !important; }
+.driver-popover-title { font-size: 14px !important; font-weight: 600 !important; color: #1A2233 !important; }
+.driver-popover-description { font-size: 13px !important; color: #595959 !important; line-height: 1.7 !important; }
+.driver-popover-next-btn { background: #1677FF !important; border-color: #1677FF !important; }
+.driver-popover-prev-btn { color: #595959 !important; border-color: #D9D9D9 !important; }
 </style>
 </head>
 <body>
@@ -781,6 +763,65 @@ renderList();calc();
 <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
 <script>
 let driverObj;
+// 表单内专属导览（modal打开后动态创建，拿到真实DOM坐标）
+function startFormTour() {
+  const { driver } = window.driver.js;
+  const fd = driver({
+    showProgress: true, progressText: '{{current}} / {{total}}',
+    prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
+    animate: true, smoothScroll: true,
+    steps: [
+      {
+        element: document.querySelector('#d-form .ant-modal-body'),
+        popover: {
+          title: '表单分三个区域',
+          description: '①最上方选年度；②中间是推算辅助工具（点标题展开）；③下方是各板块的收/支/余录入表格。',
+          side: 'left', align: 'start'
+        }
+      },
+      {
+        element: document.querySelector('#d-form .calc-section'),
+        popover: {
+          title: '推算辅助工具（默认收起）',
+          description: '点击灰色标题栏展开。工具会自动取入去年的实际运营数据作为默认值，手动修改的参数会有"手工覆盖"标记，便于审计追溯。点"下一步"自动展开。',
+          side: 'bottom', align: 'start',
+          onNextClick: () => {
+            const h = document.querySelector('.calc-head');
+            if (h && !document.querySelector('#calc-panel.open')) h.click();
+            setTimeout(() => fd.moveNext(), 500);
+          }
+        }
+      },
+      {
+        element: document.querySelector('#calc-panel'),
+        popover: {
+          title: '两种方式推算收入',
+          description: '左边：传统算法（按每公里单价 × 总运量）；右边：新方法（按每台车每月平均收入）。两种方式同时显示，差距超过 10% 会有橙色警示。下方汇总表可一键把推算结果填进录入区。',
+          side: 'top', align: 'start'
+        }
+      },
+      {
+        element: document.querySelector('#d-form #entry-tbody'),
+        popover: {
+          title: '收 / 支 / 余直接录入',
+          description: '按公司/业务板块分行填写收入目标和支出上限，利润自动算出来。建设期板块没有收入，只填支出预算。最底行实时合计。',
+          side: 'top', align: 'start'
+        }
+      },
+      {
+        element: document.querySelector('#d-form .ant-modal-footer'),
+        popover: {
+          title: '保存即生效',
+          description: '点"确定"直接生效，不需要走审批流程。同一年度只允许存一条记录，重复录入会被拦截。',
+          side: 'top', align: 'end',
+          onNextClick: () => { ca('d-form'); fd.moveNext(); }
+        }
+      }
+    ]
+  });
+  fd.drive();
+}
+
 function startTour() {
   const { driver } = window.driver.js;
   driverObj = driver({
@@ -788,12 +829,11 @@ function startTour() {
     prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
     animate: true, smoothScroll: true,
     steps: [
-      // ── 页面层（可靠 highlight） ──
       {
         element: '.statistic-grid',
         popover: {
           title: '整年目标一眼看清',
-          description: '顶部四张卡片是全年预算的总账：计划收多少钱、计划花多少钱、预期利润（收减支），以及有几个业务板块已经超出预算上限。',
+          description: '顶部四张卡片：计划收多少钱、计划花多少钱、预期利润（收减支），以及有几个业务板块已经超出预算上限。',
           side: 'bottom', align: 'start'
         }
       },
@@ -801,23 +841,15 @@ function startTour() {
         element: '.ant-search-bar',
         popover: {
           title: '按条件筛选',
-          description: '通过年度和状态筛选，快速找到目标记录。状态分为：草稿（还没提交）、已生效（当前执行中）、关账（已锁定归档）。',
+          description: '通过年度和状态筛选，快速找到目标记录。状态分为：草稿（未提交）、已生效（执行中）、关账（已锁定归档）。',
           side: 'bottom', align: 'start'
         }
       },
       {
-        element: '.ant-card-head',
+        element: '.ant-table-wrapper',
         popover: {
           title: '年度预算总台账',
-          description: '"已分配支出"不是手填的，是下级各团队月度预算审批通过后，系统自动汇总过来的。可以点行首小三角展开，查看每个业务板块的收支明细。',
-          side: 'bottom', align: 'start'
-        }
-      },
-      {
-        element: '.ant-table',
-        popover: {
-          title: '展开看各板块明细',
-          description: '点击行首的 ▶ 展开后，可以看到各主体/业务单元的收入概算、支出概算、预期利润，以及已经批了多少预算（已分配）、还剩多少空间（待分配）。点"下一步"自动展开第一行。',
+          description: '"已分配支出"不是手填的，是下级各团队月度预算审批通过后，系统自动汇总过来的。点行首 ▶ 可展开各业务板块的收支明细。点"下一步"自动展开第一行。',
           side: 'top', align: 'start',
           onNextClick: () => {
             const btn = document.querySelector('#list-tbody tr button');
@@ -829,7 +861,7 @@ function startTour() {
       {
         element: '[id^="exp-"]',
         popover: {
-          title: '主体板块的收支余一览',
+          title: '各板块收支余明细',
           description: '"待分配支出" = 支出概算 − 已分配，代表这个板块还可以编多少预算空间，防止下级预算超出集团上限。',
           side: 'top', align: 'start'
         }
@@ -837,68 +869,14 @@ function startTour() {
       {
         element: 'button[onclick="openCreate()"]',
         popover: {
-          title: '新增年度预算',
-          description: '支持两种路径：直接手填收支目标，或展开推算工具根据历史数据自动推算后一键填入。点"下一步"打开新增表单。',
+          title: '新增年度预算 — 进入表单',
+          description: '支持两种路径：直接手填收支目标，或展开推算工具根据历史数据推算后一键填入。点"下一步"打开表单，并继续表单内的导览。',
           side: 'bottom', align: 'end',
           onNextClick: () => {
             openCreate();
-            setTimeout(() => driverObj.moveNext(), 800);
+            driverObj.destroy(); // 结束主导览
+            setTimeout(startFormTour, 850); // 800ms 后 modal 已完全渲染
           }
-        }
-      },
-      // ── 表单层（用 modal-body 整体高亮，tooltip 放在左侧）──
-      {
-        element: '#d-form .ant-modal-body',
-        popover: {
-          title: '新增预算表单（三个区域）',
-          description: '表单分三部分：①上方选年度；②中间是推算辅助工具（点标题栏展开）；③下方是各板块的收/支/余录入区。',
-          side: 'left', align: 'start'
-        }
-      },
-      {
-        element: '#d-form .calc-section',
-        popover: {
-          title: '推算辅助工具（默认收起）',
-          description: '点击这个灰色标题栏可以展开。工具会自动取入去年的实际运营数据作为默认值，手动修改的参数会有"手工覆盖"标记。点"下一步"自动展开。',
-          side: 'left', align: 'start',
-          onNextClick: () => {
-            const head = document.querySelector('.calc-head');
-            if (head && !document.querySelector('#calc-panel.open')) head.click();
-            setTimeout(() => driverObj.moveNext(), 500);
-          }
-        }
-      },
-      {
-        element: '#d-form #calc-panel .grid-2',
-        popover: {
-          title: '两种方式推算收入',
-          description: '左边是传统算法（按每公里单价 × 总运量），右边是新方法（按每台车每月平均收入）。两种方式同时显示互相对照，差距超过 10% 会有橙色警示。',
-          side: 'top', align: 'start'
-        }
-      },
-      {
-        element: '#d-form #diff-bar',
-        popover: {
-          title: '两种算法的差异提示',
-          description: '差距 ≤10% 显示绿色（数字可信）；超过 10% 变橙色，建议回头检查某个参数是否填错了。',
-          side: 'top', align: 'start'
-        }
-      },
-      {
-        element: '#d-form #entry-tbody',
-        popover: {
-          title: '收 / 支 / 余直接录入区',
-          description: '按公司/业务板块分行填写收入目标和支出上限，利润（余额）自动算出来。建设期板块没有收入，只填支出预算。推算工具的结果可点按钮一键填进来，最底行实时合计。',
-          side: 'top', align: 'start'
-        }
-      },
-      {
-        element: '#d-form .ant-modal-footer',
-        popover: {
-          title: '保存即生效',
-          description: '点"确定"直接生效，不需要走审批流程。同一年度只允许存一条记录，重复录入会被拦截。若已有月度预算引用了这份年度预算，删除操作也会被阻止。',
-          side: 'top', align: 'end',
-          onNextClick: () => { ca('d-form'); driverObj.moveNext(); }
         }
       }
     ]
