@@ -25,11 +25,29 @@
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
 <style>
-.driver-popover { max-width: 340px !important; }
-.driver-popover-title { font-size: 14px !important; font-weight: 600 !important; color: #1A2233 !important; }
-.driver-popover-description { font-size: 13px !important; color: #595959 !important; line-height: 1.7 !important; }
-.driver-popover-next-btn { background: #1677FF !important; border-color: #1677FF !important; }
-.driver-popover-prev-btn { color: #595959 !important; border-color: #D9D9D9 !important; }
+/* 隔离 driver.js 气泡，防止页面全局 button 样式渗入 */
+.driver-popover { background:#fff!important; border-radius:10px!important; box-shadow:0 8px 32px rgba(0,0,0,.16)!important; padding:18px 20px 14px!important; max-width:320px!important; min-width:260px!important; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important; }
+.driver-popover * { box-sizing:border-box!important; }
+.driver-popover-title { display:block!important; font-size:14px!important; font-weight:600!important; color:#1A2233!important; margin:0 0 8px!important; line-height:1.5!important; padding:0!important; }
+.driver-popover-description { display:block!important; font-size:13px!important; color:#595959!important; line-height:1.75!important; margin:0 0 12px!important; padding:0!important; }
+.driver-popover-footer { display:flex!important; align-items:center!important; justify-content:space-between!important; margin:0!important; padding:0!important; }
+.driver-popover-progress-text { font-size:12px!important; color:#BFBFBF!important; line-height:1!important; }
+.driver-popover-navigation-btns { display:flex!important; gap:8px!important; align-items:center!important; }
+.driver-popover-prev-btn,
+.driver-popover-next-btn,
+.driver-popover-done-btn {
+  all:unset!important;
+  display:inline-flex!important; align-items:center!important; justify-content:center!important;
+  height:28px!important; padding:0 14px!important; font-size:12px!important; font-weight:500!important;
+  border-radius:5px!important; cursor:pointer!important; border:1px solid!important;
+  white-space:nowrap!important; line-height:1!important; box-sizing:border-box!important;
+}
+.driver-popover-prev-btn { background:#fff!important; border-color:#D9D9D9!important; color:#595959!important; }
+.driver-popover-next-btn,
+.driver-popover-done-btn { background:#1677FF!important; border-color:#1677FF!important; color:#fff!important; }
+.driver-popover-close-btn { all:unset!important; position:absolute!important; top:14px!important; right:14px!important; width:20px!important; height:20px!important; display:flex!important; align-items:center!important; justify-content:center!important; color:#BFBFBF!important; cursor:pointer!important; font-size:14px!important; }
+.driver-popover-close-btn:hover { color:#595959!important; }
+.driver-popover-arrow { display:block!important; }
 </style>
 </head>
 <body>
@@ -840,7 +858,7 @@ function showMsg(text,type){
 }
 renderList();
 </script>
-<!-- ═══ TOUR（Driver.js 漫游式引导）═══ -->
+<!-- ═══ 产品导览 ═══ -->
 <button onclick="startTour()" id="tour-fab"
   style="position:fixed;bottom:24px;right:24px;z-index:8999;height:40px;padding:0 18px;background:#1677FF;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 4px 12px rgba(22,119,255,.4);display:flex;align-items:center;gap:6px">
   ◉ 产品导览
@@ -852,38 +870,38 @@ function startTour() {
   const { driver } = window.driver.js;
   driverObj = driver({
     showProgress: true, progressText: '{{current}} / {{total}}',
-    prevBtnText: '上一步', nextBtnText: '下一步', doneBtnText: '完成 ✓',
+    prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
     animate: true, smoothScroll: true,
     steps: [
       {
         element: '.ant-steps',
         popover: {
-          title: '① 预算编制流程步骤条',
-          description: '全面预算编制是四步流程：集团下达年度目标（对应 132 概算管理）→ 各业务单元编制 12 月细项 → L1 初审 / L2 终审 → 全面预算生效。当前阶段自动高亮，让用户一眼知道处在哪个节点。',
+          title: '预算编制走几步',
+          description: '全年预算的编制流程分四步：集团先定大方向目标 → 各业务团队按月填报细项 → 主管初审、财务终审 → 审批通过后正式生效。页面顶部的步骤条实时显示当前进展到哪一步。',
           side: 'bottom', align: 'start'
         }
       },
       {
         element: '.statistic-grid',
         popover: {
-          title: '② 编制进度看板',
-          description: '四个指标实时更新：已提交/应编制进度、审批中数量（细分待终审/待初审）、已驳回数量、超概算预警（全年合计超出 132 概算余额的单元）。',
+          title: '编制进度一眼掌握',
+          description: '四张卡片显示当前状态：多少个业务单元已提交（进度）、多少正在等待审批、多少被驳回需要修改，以及有没有超出年度预算上限的情况。帮助财务负责人快速掌握整体进度，知道还有哪些在卡着。',
           side: 'bottom'
         }
       },
       {
         element: '.tax-switch',
         popover: {
-          title: '③ 含税 / 不含税切换（0529 调研需求）',
-          description: '马伶俐 0529 调研明确：收入测算须区分含税与不含税，BI 报表用不含税，但与业主对账时用含税。这个切换影响列表中"全年预算总额"的显示口径，原始录入数据不变（统一不含税存储）。',
-          side: 'bottom', align: 'start'
+          title: '含税还是不含税',
+          description: '这个切换按钮影响列表里"全年预算总额"的显示方式。切到"含税"看含税价格，切到"不含税"看不含税价格。原始录入数据不变，只是换一个视角看同一份数据。',
+          side: 'bottom', align: 'end'
         }
       },
       {
         element: '.ant-tabs-nav',
         popover: {
-          title: '④ 列表视图 / 年度矩阵视图',
-          description: '列表视图：每行一条年度预算记录，看状态/审批进度/版本；矩阵视图：主体×业务单元×12 月全览，点击任意月份单元格可查看当月 19 个科目的分组明细（直接成本 8 项 + 管理费用 8 项 + 财务费用 3 项）。点"下一步"切换到矩阵视图。',
+          title: '两种视图随时切换',
+          description: '"列表视图"按记录一行一行显示，适合看状态和审批进度；"年度矩阵视图"把所有主体和业务单元铺成一张大表，横轴是 1 到 12 月，可以一眼看出哪个月哪个团队的预算高低。点"下一步"看矩阵视图。',
           side: 'bottom',
           onNextClick: () => {
             const matrixTab = document.querySelector('.ant-tabs-tab:last-child');
@@ -893,18 +911,18 @@ function startTour() {
         }
       },
       {
-        element: '#pane-matrix',
+        element: '#pane-matrix .ant-card-body-sm',
         popover: {
-          title: '⑤ 年度矩阵视图',
-          description: '按主体/业务单元分组，展示 1–12 月预算总额（各科目合计）。末行"月度合计"是所有主体当月预算之和。点击任意月份格子，弹出该单元当月的 19 科目分组明细（0529 调研要求：所有统计分析要有明细，支持下钻）。',
-          side: 'top'
+          title: '年度矩阵视图',
+          description: '这张大表一眼看完全年：每行是一个业务单元，每列是一个月份，数字是当月预算合计。底部一行是所有团队当月的汇总。点击任意一个月份格子，还可以看到那个月 19 个费用科目的详细分拆。',
+          side: 'bottom'
         }
       },
       {
         element: '.ant-btn-primary',
         popover: {
-          title: '⑥ 新增预算 — 打开编制弹窗',
-          description: '进入 19 科目×12 月矩阵编制弹窗。弹窗分三区：①主体/业务单元/年度元数据；②参数推算辅助（可折叠，拉取 132 概算余额作为编制约束）；③19 科目矩阵录入。点"下一步"打开弹窗。',
+          title: '填报月度预算',
+          description: '点"新增预算"进入填报界面。里面有一张 19 个费用科目 × 12 个月的表格，财务人员逐月填入每个科目的预算金额，系统自动汇总行合计和月合计。点"下一步"打开填报界面。',
           side: 'left',
           onNextClick: () => {
             const listTab = document.querySelector('.ant-tabs-tab:first-child');
@@ -916,16 +934,16 @@ function startTour() {
       {
         element: '#budget-hint',
         popover: {
-          title: '⑦ 概算约束校验提示',
-          description: '提交前系统会校验：本次全年合计 ≤ 该主体/业务单元在 132 概算管理中的支出概算余额。超额会直接阻断提交，必须调低数字才能继续。这是 132 → 133 的核心约束关系。',
+          title: '超预算会被拦截',
+          description: '提交前系统会自动检查：这份预算的全年总金额，是否超出了年度概算管理里设定的支出上限。超出了就无法提交，必须把数字调小。这样能保证实际预算不会脱离年度整体规划。',
           side: 'bottom'
         }
       },
       {
         element: '.calc-section',
         popover: {
-          title: '⑧ 参数推算辅助（折叠）→ 展开后显示概算约束',
-          description: '展开后顶部蓝色信息栏自动从 132 拉取：收入目标 / 支出上限 / 已分配 / 剩余可用。下方是双口径收入推算 + 差异率交叉验证。推算值可一键分摊到 12 个月的矩阵。点"下一步"自动展开。',
+          title: '推算辅助（展开后更实用）',
+          description: '这个折叠区展开后有两个功能：一是实时显示对应业务单元的年度预算上限（还剩多少空间可用）；二是提供推算工具，把预算按比例分摊到 12 个月，省去手动逐月填写的麻烦。点"下一步"展开体验。',
           side: 'bottom',
           onNextClick: () => {
             const head = document.querySelector('.calc-head');
@@ -939,24 +957,24 @@ function startTour() {
       {
         element: '#b-budget-bar',
         popover: {
-          title: '⑨ 概算约束信息（来自 132 实时拉取）',
-          description: '显示该主体/业务单元本年度的：收入目标、支出上限、已分配支出（来自其他已审批预算）、剩余可用支出。编制人在输入数字前就知道"上限在哪"，防止超额提交。主体/年度变化时自动刷新。',
+          title: '可用额度提示',
+          description: '蓝色信息条显示这个业务单元今年还可以编多少预算——"剩余可用"那个数字就是上限。选了不同的主体或业务单元，这里会自动更新。填预算前先看这里，就不会超限了。',
           side: 'bottom'
         }
       },
       {
-        element: '#edit-tbody',
+        element: '#edit-tbody tr.group-row:first-child',
         popover: {
-          title: '⑩ 19 科目矩阵 — 三组分色（0529 新增）',
-          description: '直接成本 8 项（蓝色分组头）/ 管理费用 8 项（紫色，6602）/ 财务费用 3 项（橙色，6603）。0529 调研新增后两组：集团本部无收入，管理费和财务费由各主体分摊，必须纳入全面预算。每行实时计算全年合计，底行自动汇总月度合计。',
+          title: '费用分三组填写',
+          description: '19 个费用科目分成三组：蓝色是直接运营成本（气耗、工资、过路费等 8 项）；紫色是管理费用（差旅、招待、办公等 8 项）；橙色是财务费用（利息、手续费等 3 项）。颜色分组让财务填写时更有条理，减少漏项。',
           side: 'top'
         }
       },
       {
         element: '#d-form .ant-modal-footer',
         popover: {
-          title: '⑪ 年中调整 — 已过月份锁定',
-          description: '预算生效后若需调整，点操作列"调整"按钮。调整弹窗中，系统自动锁定已过月份（只读灰色），仅允许修改本月及后续月份。新版本号自动升为 V2.0，原版本归档，审批流程重走一遍。',
+          title: '保存草稿还是直接提交',
+          description: '"保存草稿"先存下来，之后再提交；"提交审批"立即进入审批流程，主管初审通过后再到财务终审。审批通过后预算正式生效。年中如需调整，可点列表里的"调整"按钮——已经过去的月份会自动锁定，只允许改后续月份。',
           side: 'top',
           onNextClick: () => { ca('d-form'); driverObj.moveNext(); }
         }
