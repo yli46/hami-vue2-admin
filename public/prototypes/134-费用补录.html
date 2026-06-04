@@ -418,62 +418,45 @@ renderList();
 <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
 <script>
 let driverObj;
+
 function startFormTour134M() {
-  const { driver } = window.driver.js;
-  const fd = driver({
-    showProgress: true, progressText: '{{current}} / {{total}}',
-    prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
-    animate: true, smoothScroll: true,
-    steps: [
-      {
-        element: document.querySelector('#f-cat-sel'),
-        popover: {
-          title: '先选费用类型',
-          description: '管理费用（差旅、招待、办公等）或财务费用（利息、手续费等）。选完后，下方的"具体科目"下拉会自动更新，只显示这个类型下的 24 或 5 个科目。点"下一步"选管理费用看效果。',
-          side: 'bottom',
-          onNextClick: () => {
-            document.getElementById('f-cat-sel').value = '管理费用';
-            updateAcctOptions();
-            setTimeout(() => fd.moveNext(), 300);
-          }
-        }
-      },
-      {
-        element: document.querySelector('#f-acct'),
-        popover: {
-          title: '科目自动联动（24 项）',
-          description: '选了管理费用后，这里列出 24 个具体科目，每个都带 ERP 编码，直接映射到财务系统，不会填错。',
-          side: 'bottom'
-        }
-      },
-      {
-        element: document.querySelector('#f-month'),
-        popover: {
-          title: '归属月份是费用发生月',
-          description: '填的是费用"实际发生"的月份，不是今天录入的日期。比如 4 月出差、5 月才拿到发票，归属月份应填 4 月，这对财务月度结算很重要。',
-          side: 'bottom'
-        }
-      },
-      {
-        element: document.querySelector('#f-remark'),
-        popover: {
-          title: '补录原因（提交时必填）',
-          description: '保存草稿可以先不写，提交审核时必须写明原因，比如"差旅报销单推迟一个月到财务"。财务审核时主要依据这里判断是否通过。',
-          side: 'top'
-        }
-      },
-      {
-        element: document.querySelector('#d-form .ant-modal-footer'),
-        popover: {
-          title: '保存草稿 vs 提交审核',
-          description: '"保存草稿"先存着随时可改；"提交审核"立即发给财务复核，审核通过后纳入当月统计数据。',
-          side: 'top', align: 'end',
-          onNextClick: () => { ca('d-form'); fd.moveNext(); }
-        }
-      }
-    ]
-  });
-  fd.drive();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  setTimeout(() => {
+    const { driver } = window.driver.js;
+    const fd = driver({
+      showProgress: true, progressText: '{{current}} / {{total}}',
+      prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成 ✓',
+      animate: true, smoothScroll: true,
+      steps: [
+        { element: document.querySelector('#f-cat-sel'),
+          popover: { title: '先选费用类型',
+            description: '管理费用（差旅、招待、办公等）或财务费用（利息、手续费等）。选完后，下方具体科目下拉会自动更新，只显示这个类型下的科目。点"下一步"选管理费用看效果。',
+            side: 'bottom',
+            onNextClick: () => {
+              document.getElementById('f-cat-sel').value = '管理费用';
+              updateAcctOptions();
+              setTimeout(() => fd.moveNext(), 300);
+            } } },
+        { element: document.querySelector('#f-acct'),
+          popover: { title: '科目自动联动（24 项）',
+            description: '选了管理费用后，这里列出 24 个具体科目，每个都带 ERP 编码，直接映射到财务系统，不会填错。',
+            side: 'bottom' } },
+        { element: document.querySelector('#f-month'),
+          popover: { title: '归属月份是费用发生月',
+            description: '填的是费用"实际发生"的月份，不是今天录入的日期。比如 4 月出差、5 月才拿到发票，归属月份应填 4 月，对财务月度结算很重要。',
+            side: 'bottom' } },
+        { element: document.querySelector('#f-remark'),
+          popover: { title: '补录原因（提交时必填）',
+            description: '保存草稿可以先不写，提交审核时必须写明原因，比如"差旅报销单推迟一个月到财务"。财务审核时主要依据这里判断是否通过。',
+            side: 'top' } },
+        { element: document.querySelector('#d-form .ant-modal-footer'),
+          popover: { title: '两种保存方式',
+            description: '"保存草稿"先存着随时可改；"提交审核"立即发给财务复核，审核通过后纳入当月统计数据。导览到此完成，点"完成"后可继续填写。',
+            side: 'top', align: 'end' } }
+      ]
+    });
+    fd.drive();
+  }, 100);
 }
 
 function startTour() {
@@ -483,43 +466,26 @@ function startTour() {
     prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
     animate: true, smoothScroll: true,
     steps: [
-      {
-        element: '.ant-alert',
-        popover: {
-          title: '这个页面做什么',
-          description: '专门用来补录"漏网之鱼"——因单据晚到、银行数据未推送等原因未能自动入账的管理类和财务类费用。日常运营成本（加气、过路费、工资等）走的是另一套自动归集，不在这里录。',
-          side: 'bottom', align: 'start'
-        }
-      },
-      {
-        element: '.ant-search-bar',
-        popover: {
-          title: '多维度筛选',
+      { element: '.ant-alert',
+        popover: { title: '这个页面做什么',
+          description: '专门用来补录"漏网之鱼"——因单据晚到、银行数据未推送等原因未能自动入账的管理类和财务类费用。日常运营成本（加气、过路费、工资等）走另一套自动归集，不在这里录。',
+          side: 'bottom', align: 'start' } },
+      { element: '.ant-search-bar',
+        popover: { title: '多维度筛选',
           description: '可按费用类别（管理费用 / 财务费用）、月份、主体、审核状态组合筛选，快速找到需要核对的记录。',
-          side: 'bottom', align: 'start'
-        }
-      },
-      {
-        element: '.ant-table-wrapper',
-        popover: {
-          title: '补录清单',
+          side: 'bottom', align: 'start' } },
+      { element: '.ant-table-wrapper',
+        popover: { title: '补录清单',
           description: '紫色标签是管理费用，橙色是财务费用，直观区分。状态分：草稿 → 待审核 → 已通过 / 已驳回。科目编码和名称同时显示，便于财务核对。',
-          side: 'top', align: 'start'
-        }
-      },
-      {
-        element: 'button[onclick="openCreate()"]',
-        popover: {
-          title: '新增一条补录 — 进入表单',
+          side: 'top', align: 'start' } },
+      { element: 'button[onclick="openCreate()"]',
+        popover: { title: '新增一条补录 — 进入表单',
           description: '选费用类别后，具体科目下拉会自动联动（管理费用 24 个科目，财务费用 5 个科目）。金额统一填不含税。点"下一步"打开表单。',
           side: 'bottom', align: 'end',
           onNextClick: () => {
             openCreate();
-            driverObj.destroy();
-            setTimeout(startFormTour134M, 850);
-          }
-        }
-      }
+            setTimeout(() => { driverObj.destroy(); startFormTour134M(); }, 850);
+          } } }
     ]
   });
   driverObj.drive();
