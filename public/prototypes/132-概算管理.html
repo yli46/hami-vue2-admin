@@ -788,11 +788,12 @@ function startTour() {
     prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
     animate: true, smoothScroll: true,
     steps: [
+      // ── 页面层（可靠 highlight） ──
       {
         element: '.statistic-grid',
         popover: {
           title: '整年目标一眼看清',
-          description: '顶部四张卡片是全年预算的总账：计划收多少钱、计划花多少钱、预期利润（收减支），以及有几个业务板块已经超出预算上限。这是集团对整年运营目标的整体总览。',
+          description: '顶部四张卡片是全年预算的总账：计划收多少钱、计划花多少钱、预期利润（收减支），以及有几个业务板块已经超出预算上限。',
           side: 'bottom', align: 'start'
         }
       },
@@ -808,7 +809,7 @@ function startTour() {
         element: '.ant-card-head',
         popover: {
           title: '年度预算总台账',
-          description: '列表每行对应一年的预算记录。"已分配支出"不是手填的，是下级各团队月度预算审批通过后，系统自动汇总过来的。可以点行首小三角展开，查看每个业务板块的收支明细。',
+          description: '"已分配支出"不是手填的，是下级各团队月度预算审批通过后，系统自动汇总过来的。可以点行首小三角展开，查看每个业务板块的收支明细。',
           side: 'bottom', align: 'start'
         }
       },
@@ -816,12 +817,12 @@ function startTour() {
         element: '.ant-table',
         popover: {
           title: '展开看各板块明细',
-          description: '点击行首的 ▶ 后，展开行里按公司主体分行显示：计划收多少、预算支出、预期利润，以及已经批了多少预算（已分配）、还剩多少空间（待分配）。',
+          description: '点击行首的 ▶ 展开后，可以看到各主体/业务单元的收入概算、支出概算、预期利润，以及已经批了多少预算（已分配）、还剩多少空间（待分配）。点"下一步"自动展开第一行。',
           side: 'top', align: 'start',
           onNextClick: () => {
             const btn = document.querySelector('#list-tbody tr button');
             if (btn) btn.click();
-            setTimeout(() => driverObj.moveNext(), 400);
+            setTimeout(() => driverObj.moveNext(), 450);
           }
         }
       },
@@ -829,7 +830,7 @@ function startTour() {
         element: '[id^="exp-"]',
         popover: {
           title: '主体板块的收支余一览',
-          description: '"待分配支出" = 支出概算 − 已分配，代表这个板块还可以用多少预算。通过这个视图，财务可以清楚看到每个业务板块的资金使用情况，防止超支。',
+          description: '"待分配支出" = 支出概算 − 已分配，代表这个板块还可以编多少预算空间，防止下级预算超出集团上限。',
           side: 'top', align: 'start'
         }
       },
@@ -837,25 +838,29 @@ function startTour() {
         element: 'button[onclick="openCreate()"]',
         popover: {
           title: '新增年度预算',
-          description: '支持两种路径：直接手填收支目标，或者用推算工具根据车队规模和历史数据自动推算，确认后一键填入。点"下一步"打开新增表单。',
-          side: 'left',
+          description: '支持两种路径：直接手填收支目标，或展开推算工具根据历史数据自动推算后一键填入。点"下一步"打开新增表单。',
+          side: 'bottom', align: 'end',
           onNextClick: () => {
             openCreate();
-            setTimeout(() => driverObj.moveNext(), 600);
+            setTimeout(() => driverObj.moveNext(), 800);
           }
         }
       },
-      // 以下步骤在弹窗内，改用浮动提示（不绑定元素，避免fixed定位坐标偏移）
+      // ── 表单层（用 modal-body 整体高亮，tooltip 放在左侧）──
       {
+        element: '#d-form .ant-modal-body',
         popover: {
-          title: '表单结构：三个区域',
-          description: '打开的表单分三部分：①上方选年度；②中间是推算辅助工具（点标题栏展开）；③下方是各板块的收/支/余录入区。接下来我们逐一看。',
+          title: '新增预算表单（三个区域）',
+          description: '表单分三部分：①上方选年度；②中间是推算辅助工具（点标题栏展开）；③下方是各板块的收/支/余录入区。',
+          side: 'left', align: 'start'
         }
       },
       {
+        element: '#d-form .calc-section',
         popover: {
-          title: '推算辅助工具（展开前）',
-          description: '灰色标题栏"参数推算"，点击可展开。工具会自动取入去年的实际运营数据作为默认值。任何手动修改都有"手工覆盖"标记，便于审计追溯。点"下一步"展开看看。',
+          title: '推算辅助工具（默认收起）',
+          description: '点击这个灰色标题栏可以展开。工具会自动取入去年的实际运营数据作为默认值，手动修改的参数会有"手工覆盖"标记。点"下一步"自动展开。',
+          side: 'left', align: 'start',
           onNextClick: () => {
             const head = document.querySelector('.calc-head');
             if (head && !document.querySelector('#calc-panel.open')) head.click();
@@ -864,21 +869,35 @@ function startTour() {
         }
       },
       {
+        element: '#d-form #calc-panel .grid-2',
         popover: {
           title: '两种方式推算收入',
-          description: '左边是传统算法：按每公里收费单价 × 总运量来算；右边是新方法：按每台车每月平均收多少来算。两种方式同时显示互相对照，差距超过 10% 会有橙色警示提醒你检查参数。',
+          description: '左边是传统算法（按每公里单价 × 总运量），右边是新方法（按每台车每月平均收入）。两种方式同时显示互相对照，差距超过 10% 会有橙色警示。',
+          side: 'top', align: 'start'
         }
       },
       {
+        element: '#d-form #diff-bar',
+        popover: {
+          title: '两种算法的差异提示',
+          description: '差距 ≤10% 显示绿色（数字可信）；超过 10% 变橙色，建议回头检查某个参数是否填错了。',
+          side: 'top', align: 'start'
+        }
+      },
+      {
+        element: '#d-form #entry-tbody',
         popover: {
           title: '收 / 支 / 余直接录入区',
-          description: '下方的录入表格按公司/业务板块分行，分别填写收入目标和支出上限，利润（余额）自动算出来。建设期板块没有收入，只填支出预算。推算工具的结果可点按钮一键填进来。',
+          description: '按公司/业务板块分行填写收入目标和支出上限，利润（余额）自动算出来。建设期板块没有收入，只填支出预算。推算工具的结果可点按钮一键填进来，最底行实时合计。',
+          side: 'top', align: 'start'
         }
       },
       {
+        element: '#d-form .ant-modal-footer',
         popover: {
           title: '保存即生效',
           description: '点"确定"直接生效，不需要走审批流程。同一年度只允许存一条记录，重复录入会被拦截。若已有月度预算引用了这份年度预算，删除操作也会被阻止。',
+          side: 'top', align: 'end',
           onNextClick: () => { ca('d-form'); driverObj.moveNext(); }
         }
       }
