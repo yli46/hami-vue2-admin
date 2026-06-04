@@ -1,19 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import PrototypeFrame from '../components/PrototypeFrame.vue'
 
 Vue.use(VueRouter)
-
-// 通用 iframe 页面工厂
-function protoPage(src, title) {
-  return {
-    name: `proto-${title}`,
-    render(h) {
-      return h(PrototypeFrame, { props: { src } })
-    },
-    meta: { title }
-  }
-}
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -27,26 +15,57 @@ const routes = [
   {
     path: '/budget/overview',
     name: 'budget-overview',
-    component: protoPage('/freight/prototypes/132-概算管理.html', '概算管理'),
+    component: () => import('../views/BudgetOverview.vue'),
     meta: { title: '概算管理', module: '132' }
   },
   {
     path: '/budget/edit',
     name: 'budget-edit',
-    component: protoPage('/freight/prototypes/133-预算编制.html', '预算编制'),
+    component: () => import('../views/BudgetEdit.vue'),
     meta: { title: '预算编制', module: '133' }
   },
   {
     path: '/cost/manual',
     name: 'cost-manual',
-    component: protoPage('/freight/prototypes/134-费用补录.html', '费用补录'),
+    component: () => import('../views/CostManual.vue'),
     meta: { title: '费用手动补录', module: '134' }
   },
   {
     path: '/cost/reserve',
     name: 'cost-reserve',
-    component: protoPage('/freight/prototypes/134-备用金管理.html', '备用金管理'),
+    component: () => import('../views/CostReserve.vue'),
     meta: { title: '备用金管理', module: '134' }
+  },
+  // 统计分析（QuickBI）
+  {
+    path: '/stats/cost',
+    name: 'stats-cost',
+    component: () => import('../views/StatsCost.vue'),
+    meta: { title: '成本预实分析', module: '141' }
+  },
+  {
+    path: '/stats/revenue',
+    name: 'stats-revenue',
+    component: () => import('../views/StatsRevenue.vue'),
+    meta: { title: '收入预实分析', module: '141' }
+  },
+  {
+    path: '/stats/ops',
+    name: 'stats-ops',
+    component: () => import('../views/StatsOps.vue'),
+    meta: { title: '运营统计（业财贯穿）', module: '141' }
+  },
+  {
+    path: '/stats/fleet',
+    name: 'stats-fleet',
+    component: () => import('../views/StatsFleet.vue'),
+    meta: { title: '车辆运营统计', module: '140' }
+  },
+  {
+    path: '/stats/driver',
+    name: 'stats-driver',
+    component: () => import('../views/StatsDriver.vue'),
+    meta: { title: '司机绩效统计', module: '142' }
   }
 ]
 

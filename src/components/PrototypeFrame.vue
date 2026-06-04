@@ -1,12 +1,10 @@
 <template>
-  <div class="proto-frame-wrap">
-    <iframe
-      :src="src"
-      class="proto-frame"
-      frameborder="0"
-      allowfullscreen
-    />
-  </div>
+  <iframe
+    :src="src"
+    class="proto-frame"
+    frameborder="0"
+    allowfullscreen
+  />
 </template>
 
 <script>
@@ -19,15 +17,11 @@ export default {
 </script>
 
 <style scoped>
-.proto-frame-wrap {
-  width: 100%;
-  height: calc(100vh - 60px);
-  overflow: hidden;
-}
 .proto-frame {
-  width: 100%;
-  height: 100%;
-  border: none;
   display: block;
+  width: 100%;
+  /* 100vh - 50px header */
+  height: calc(100vh - 50px);
+  border: none;
 }
 </style>
