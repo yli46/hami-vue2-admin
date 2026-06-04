@@ -14,11 +14,6 @@
         text-color="#D4DEEC"
         active-text-color="#FFFFFF"
       >
-        <el-menu-item index="/home">
-          <i class="el-icon-s-home"></i>
-          <span>首页</span>
-        </el-menu-item>
-
         <el-submenu index="budget">
           <template slot="title">
             <i class="el-icon-money"></i>
@@ -28,10 +23,10 @@
           <el-menu-item index="/budget/edit">预算编制</el-menu-item>
           <el-submenu index="cost">
             <template slot="title">核算处理</template>
-            <el-menu-item index="/cost/cost-analysis">成本预实分析</el-menu-item>
-            <el-menu-item index="/cost/revenue-analysis">收入预实分析</el-menu-item>
             <el-menu-item index="/cost/manual">费用手动补录</el-menu-item>
             <el-menu-item index="/cost/reserve">备用金管理</el-menu-item>
+            <el-menu-item index="/cost/cost-analysis">成本预实分析</el-menu-item>
+            <el-menu-item index="/cost/revenue-analysis">收入预实分析</el-menu-item>
           </el-submenu>
         </el-submenu>
 
