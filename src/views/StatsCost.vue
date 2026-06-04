@@ -3,6 +3,7 @@
     name="成本预实分析"
     desc="汽运这一年的钱：花了多少 → 相对预算超没超 → 每吨公里贵不贵 → 吃掉多少收入 → 风险压在哪个科目"
     icon="el-icon-coin"
+    bi-url="https://bi.aliyuncs.com/token3rd/dashboard/view/pc.htm?pageId=68d91501-2a6e-4d41-8cbb-a6d272192b4f&accessTicket=99c61064-2eba-4fce-b1c3-5ecf4af48fd7&dd_orientation=auto"
     :metrics="[
       { label: '本年累计营业成本', value: '1.14亿', color: '#FA8C16' },
       { label: '吨公里成本', value: '0.168', color: '#389E0D' },

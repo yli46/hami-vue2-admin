@@ -3,6 +3,7 @@
     name="司机绩效统计"
     desc="队伍多大、收入多少、质量结构、哪项扣得最狠、谁该激励谁该帮扶。含安全奖/节气奖/稳定从业奖三项奖励维度"
     icon="el-icon-user"
+    bi-url="https://bi.aliyuncs.com/token3rd/dashboard/view/pc.htm?pageId=fc187b86-668a-4606-940d-274f3bf34cfb&accessTicket=da65ae59-9848-4dcf-a373-13b2b285ba1c&dd_orientation=auto"
     :metrics="[
       { label: '在册司机', value: '300人', color: '#1677FF' },
       { label: 'A级占比', value: '54%', color: '#389E0D' },

@@ -24,6 +24,19 @@ const routes = [
     component: () => import('../views/BudgetEdit.vue'),
     meta: { title: '预算编制', module: '133' }
   },
+  // 核算处理（全面预算子模块）
+  {
+    path: '/cost/cost-analysis',
+    name: 'cost-analysis',
+    component: () => import('../views/StatsCost.vue'),
+    meta: { title: '成本预实分析', module: '134' }
+  },
+  {
+    path: '/cost/revenue-analysis',
+    name: 'revenue-analysis',
+    component: () => import('../views/StatsRevenue.vue'),
+    meta: { title: '收入预实分析', module: '134' }
+  },
   {
     path: '/cost/manual',
     name: 'cost-manual',
@@ -36,19 +49,7 @@ const routes = [
     component: () => import('../views/CostReserve.vue'),
     meta: { title: '备用金管理', module: '134' }
   },
-  // 统计分析（QuickBI）
-  {
-    path: '/stats/cost',
-    name: 'stats-cost',
-    component: () => import('../views/StatsCost.vue'),
-    meta: { title: '成本预实分析', module: '141' }
-  },
-  {
-    path: '/stats/revenue',
-    name: 'stats-revenue',
-    component: () => import('../views/StatsRevenue.vue'),
-    meta: { title: '收入预实分析', module: '141' }
-  },
+  // 统计分析
   {
     path: '/stats/ops',
     name: 'stats-ops',
