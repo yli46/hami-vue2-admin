@@ -66,7 +66,8 @@
 <script>
 const IFRAME_ROUTES = [
   '/budget/overview', '/budget/edit',
-  '/cost/manual', '/cost/reserve'
+  '/cost/manual', '/cost/reserve',
+  '/stats/cost', '/stats/revenue', '/stats/ops', '/stats/fleet', '/stats/driver'
 ]
 
 export default {

@@ -1,19 +1,28 @@
 <template>
-  <div class="bi-placeholder">
-    <div class="bi-card">
-      <div class="bi-icon">
-        <i :class="icon"></i>
-      </div>
-      <div class="bi-name">{{ name }}</div>
-      <div class="bi-desc">{{ desc }}</div>
-      <div class="bi-metrics">
-        <div v-for="m in metrics" :key="m.label" class="bi-metric">
-          <div class="metric-value" :style="{ color: m.color }">{{ m.value }}</div>
-          <div class="metric-label">{{ m.label }}</div>
+  <div class="bi-root">
+    <!-- 有嵌入 URL → 直接 iframe -->
+    <iframe
+      v-if="biUrl"
+      :src="biUrl"
+      class="bi-frame"
+      frameborder="0"
+      allowfullscreen
+    />
+    <!-- 无 URL → 展示核心指标 + 跳转按钮 -->
+    <div v-else class="bi-placeholder">
+      <div class="bi-card">
+        <div class="bi-icon"><i :class="icon"></i></div>
+        <div class="bi-name">{{ name }}</div>
+        <div class="bi-desc">{{ desc }}</div>
+        <div class="bi-metrics">
+          <div v-for="m in metrics" :key="m.label" class="bi-metric">
+            <div class="metric-value" :style="{ color: m.color }">{{ m.value }}</div>
+            <div class="metric-label">{{ m.label }}</div>
+          </div>
         </div>
+        <el-button type="primary" @click="openBI">在 QuickBI 中查看</el-button>
+        <div class="bi-hint">数据已跑通 · 2026 年 1–5 月真实数据</div>
       </div>
-      <el-button type="primary" @click="openBI">在 QuickBI 中查看</el-button>
-      <div class="bi-hint">数据已跑通 · 2026 年 1–5 月真实数据</div>
     </div>
   </div>
 </template>
@@ -38,11 +47,14 @@ export default {
 </script>
 
 <style scoped>
+.bi-root { width: 100%; height: calc(100vh - 50px); }
+.bi-frame { display: block; width: 100%; height: 100%; border: none; }
+
 .bi-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 82px);
+  height: calc(100vh - 82px);
 }
 .bi-card {
   background: #fff;
