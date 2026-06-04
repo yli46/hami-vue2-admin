@@ -11,6 +11,20 @@
 .ms-item.active { background:var(--color-primary); color:#fff; }
 .acct-code { font-size:12px; color:var(--color-primary); font-family:Consolas,monospace; }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
+<style>
+.driver-popover{background:#fff!important;border-radius:10px!important;box-shadow:0 8px 32px rgba(0,0,0,.16)!important;padding:18px 20px 14px!important;max-width:320px!important;min-width:260px!important;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important}
+.driver-popover *{box-sizing:border-box!important}
+.driver-popover-title{display:block!important;font-size:14px!important;font-weight:600!important;color:#1A2233!important;margin:0 0 8px!important;line-height:1.5!important;padding:0!important}
+.driver-popover-description{display:block!important;font-size:13px!important;color:#595959!important;line-height:1.75!important;margin:0 0 12px!important;padding:0!important}
+.driver-popover-footer{display:flex!important;align-items:center!important;justify-content:space-between!important;margin:0!important;padding:0!important}
+.driver-popover-progress-text{font-size:12px!important;color:#BFBFBF!important;line-height:1!important}
+.driver-popover-navigation-btns{display:flex!important;gap:8px!important;align-items:center!important}
+.driver-popover-prev-btn,.driver-popover-next-btn,.driver-popover-done-btn{all:unset!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;height:28px!important;padding:0 14px!important;font-size:12px!important;font-weight:500!important;border-radius:5px!important;cursor:pointer!important;border:1px solid!important;white-space:nowrap!important;line-height:1!important;box-sizing:border-box!important}
+.driver-popover-prev-btn{background:#fff!important;border-color:#D9D9D9!important;color:#595959!important}
+.driver-popover-next-btn,.driver-popover-done-btn{background:#1677FF!important;border-color:#1677FF!important;color:#fff!important}
+.driver-popover-close-btn{all:unset!important;position:absolute!important;top:14px!important;right:14px!important;width:20px!important;height:20px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#BFBFBF!important;cursor:pointer!important;font-size:14px!important}
+</style>
 </head>
 <body>
 <div class="ant-page">
@@ -428,7 +442,7 @@ function startFormTour134M() {
       prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成 ✓',
       animate: true, smoothScroll: true,
       steps: [
-        { element: document.querySelector('#f-cat-sel'),
+        { element: '#f-cat-sel',
           popover: { title: '先选费用类型',
             description: '管理费用（差旅、招待、办公等）或财务费用（利息、手续费等）。选完后，下方具体科目下拉会自动更新，只显示这个类型下的科目。点"下一步"选管理费用看效果。',
             side: 'bottom',
@@ -437,19 +451,19 @@ function startFormTour134M() {
               updateAcctOptions();
               setTimeout(() => fd.moveNext(), 300);
             } } },
-        { element: document.querySelector('#f-acct'),
+        { element: '#f-acct',
           popover: { title: '科目自动联动（24 项）',
             description: '选了管理费用后，这里列出 24 个具体科目，每个都带 ERP 编码，直接映射到财务系统，不会填错。',
             side: 'bottom' } },
-        { element: document.querySelector('#f-month'),
+        { element: '#f-month',
           popover: { title: '归属月份是费用发生月',
             description: '填的是费用"实际发生"的月份，不是今天录入的日期。比如 4 月出差、5 月才拿到发票，归属月份应填 4 月，对财务月度结算很重要。',
             side: 'bottom' } },
-        { element: document.querySelector('#f-remark'),
+        { element: '#f-remark',
           popover: { title: '补录原因（提交时必填）',
             description: '保存草稿可以先不写，提交审核时必须写明原因，比如"差旅报销单推迟一个月到财务"。财务审核时主要依据这里判断是否通过。',
             side: 'top' } },
-        { element: document.querySelector('#d-form .ant-modal-footer'),
+        { element: '#d-form .ant-modal-footer',
           popover: { title: '两种保存方式',
             description: '"保存草稿"先存着随时可改；"提交审核"立即发给财务复核，审核通过后纳入当月统计数据。导览到此完成，点"完成"后可继续填写。',
             side: 'top', align: 'end' } }

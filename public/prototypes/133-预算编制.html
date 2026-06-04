@@ -859,13 +859,13 @@ function startFormTour133() {
       animate: true, smoothScroll: true,
       steps: [
         {
-          element: document.querySelector('#budget-hint'),
+          element: '#budget-hint',
           popover: { title: '超预算会被拦截',
             description: '提交时系统会自动检查：这份预算的全年总金额是否超出了年度预算管理里设定的支出上限。超出了就无法提交，必须把数字调小才能继续。',
             side: 'bottom', align: 'start' }
         },
         {
-          element: document.querySelector('.calc-section'),
+          element: '.calc-section',
           popover: { title: '推算辅助工具（点标题展开）',
             description: '展开后：①显示该业务单元今年的预算上限和剩余空间；②提供分摊工具把全年预算按比例分摊到 12 个月，省去手动逐月填写。点"下一步"展开。',
             side: 'bottom', align: 'start',
@@ -878,19 +878,19 @@ function startFormTour133() {
             } }
         },
         {
-          element: document.querySelector('#b-budget-bar'),
+          element: '#b-budget-bar',
           popover: { title: '可用额度实时显示',
             description: '蓝色信息条实时显示：这个业务单元今年还可以编多少预算。切换主体后自动更新。填数字前先看这里，就不会超限被退回。',
             side: 'bottom', align: 'start' }
         },
         {
-          element: document.querySelector('#edit-tbody'),
+          element: '#edit-tbody',
           popover: { title: '19 个科目分三组填写',
             description: '蓝色是直接运营成本（气耗、工资、过路费等 8 项），紫色是管理费用（差旅、招待、办公等 8 项），橙色是财务费用（利息、手续费等 3 项）。颜色分组，填写更有条理，不容易漏项。',
             side: 'top', align: 'start' }
         },
         {
-          element: document.querySelector('#d-form .ant-modal-footer'),
+          element: '#d-form .ant-modal-footer',
           popover: { title: '年中调整：已过月份自动锁定',
             description: '预算生效后若需调整，点操作列"调整"按钮。系统把已过去的月份设为只读，只能修改本月及后续月份，保证历史数据不被篡改。',
             side: 'top', align: 'end' }
