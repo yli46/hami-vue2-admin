@@ -796,10 +796,18 @@ function startFormTour132() {
           }
         },
         {
-          element: '#d-form .inc-cols-wrap',
+          element: '#d-form .income-col-km',
           popover: {
-            title: '两种方式推算收入',
-            description: '左边：传统算法（按每公里单价 × 总运量）；右边：新方法（按每台车每月平均收入）。两种方式同时显示对照，差距超过 10% 会有橙色警示。',
+            title: '双口径收入推算（左：吨公里 / 右：单车月）',
+            description: '左栏：传统算法，用每公里的收费单价 × 总运量来算。右栏：新方法，用每台车每月平均收入来算。两种方式同时显示，差距超过 10% 会有橙色警示提醒检查参数。',
+            side: 'top', align: 'start'
+          }
+        },
+        {
+          element: '#d-form .calc-panel > .section-header + .grid-2',
+          popover: {
+            title: '成本参数（支出择低原则）',
+            description: '下方两列是直接运营成本（气耗、工资、ETC、折旧等）+ 管理费用 + 财务费用估算。所有参数默认取系统历史均值，编制时可向低值调整，体现"支出择低"原则。',
             side: 'top', align: 'start'
           }
         },
