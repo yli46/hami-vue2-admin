@@ -410,5 +410,26 @@ function showMsg(text,type){
 }
 renderList();
 </script>
+<!-- ═══ TOUR ═══ -->
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;z-index:9000;pointer-events:none"><div id="tour-mask-t" style="position:absolute;background:rgba(0,0,0,.55);left:0;right:0;top:0"></div><div id="tour-mask-b" style="position:absolute;background:rgba(0,0,0,.55);left:0;right:0;bottom:0"></div><div id="tour-mask-l" style="position:absolute;background:rgba(0,0,0,.55)"></div><div id="tour-mask-r" style="position:absolute;background:rgba(0,0,0,.55)"></div><div id="tour-box" style="position:absolute;border:2px solid #1677FF;border-radius:8px;box-shadow:0 0 0 4px rgba(22,119,255,.25);transition:all .25s;pointer-events:none"></div></div>
+<div id="tour-tip" style="display:none;position:fixed;z-index:9001;background:#fff;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:18px 20px;width:300px;pointer-events:all"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px"><span id="tour-step-dot" style="width:24px;height:24px;background:#1677FF;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center"></span><span id="tour-title" style="font-size:14px;font-weight:600;color:#1A2233"></span></div><button onclick="endTour()" style="border:none;background:none;color:#8C8C8C;cursor:pointer;font-size:16px;padding:0">✕</button></div><p id="tour-desc" style="font-size:13px;color:#595959;line-height:1.7;margin-bottom:14px"></p><div style="display:flex;align-items:center;justify-content:space-between"><span id="tour-progress" style="font-size:12px;color:#BFBFBF"></span><div style="display:flex;gap:8px"><button id="tour-prev" onclick="tourStep(-1)" style="height:30px;padding:0 12px;border:1px solid #D9D9D9;background:#fff;border-radius:5px;font-size:12px;color:#595959;cursor:pointer">上一步</button><button id="tour-next" onclick="tourStep(1)" style="height:30px;padding:0 14px;border:none;background:#1677FF;border-radius:5px;font-size:12px;color:#fff;cursor:pointer;font-weight:500"></button></div></div></div>
+<button onclick="startTour()" id="tour-fab" style="position:fixed;bottom:24px;right:24px;z-index:8999;height:40px;padding:0 16px;background:#1677FF;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 4px 12px rgba(22,119,255,.4);display:flex;align-items:center;gap:6px"><span style="font-size:14px">◉</span> 导览</button>
+<script>
+const TOUR_STEPS=[
+  {sel:'.ant-alert', title:'功能定位说明',
+   desc:'本页仅补录期间费用（管理费用 6602 / 财务费用 6603），差旅费延迟、利息未自动推送等场景使用。直接运营成本（气耗/ETC/维修/工资）不在此录入。'},
+  {sel:'.ant-search-bar', title:'多维筛选',
+   desc:'按费用类别（管理/财务）、月份、主体、状态组合查询。月份选择器支持快速切换，方便按月核对当月补录情况。'},
+  {sel:'.ant-table', title:'补录明细',
+   desc:'管理费用用紫色标签，财务费用用橙色标签，直观区分。每行显示科目编码、金额（不含税）、审核状态，支持详情查看和审核操作。'},
+  {sel:'.ant-btn-primary', title:'新增补录',
+   desc:'选择费用类别后，科目下拉自动联动对应 6602 或 6603 的 29 个科目，金额统一不含税口径，附件凭证和补录原因提交前必填。'},
+];
+let tourIdx=0;
+function startTour(){tourIdx=0;document.getElementById('tour-overlay').style.display='block';document.getElementById('tour-fab').style.display='none';showTourStep();}
+function showTourStep(){const s=TOUR_STEPS[tourIdx];const el=document.querySelector(s.sel);if(!el){tourStep(1);return;}el.scrollIntoView({behavior:'smooth',block:'center'});requestAnimationFrame(()=>{const r=el.getBoundingClientRect();const pad=8;const x=r.left-pad,y=r.top-pad,w=r.width+pad*2,h=r.height+pad*2;document.getElementById('tour-mask-t').style.height=Math.max(0,y)+'px';document.getElementById('tour-mask-b').style.height=Math.max(0,window.innerHeight-y-h)+'px';document.getElementById('tour-mask-l').style.cssText+=`;top:${y}px;height:${h}px;width:${Math.max(0,x)}px`;document.getElementById('tour-mask-r').style.cssText+=`;top:${y}px;height:${h}px;left:${x+w}px;right:0`;const box=document.getElementById('tour-box');box.style.left=x+'px';box.style.top=y+'px';box.style.width=w+'px';box.style.height=h+'px';const tip=document.getElementById('tour-tip');tip.style.display='block';let tx=x+w+14,ty=y;if(tx+300>window.innerWidth)tx=x-314;if(tx<8)tx=8;if(ty+200>window.innerHeight)ty=window.innerHeight-210;if(ty<8)ty=8;tip.style.left=tx+'px';tip.style.top=ty+'px';document.getElementById('tour-step-dot').textContent=tourIdx+1;document.getElementById('tour-title').textContent=s.title;document.getElementById('tour-desc').textContent=s.desc;document.getElementById('tour-progress').textContent=`${tourIdx+1} / ${TOUR_STEPS.length}`;document.getElementById('tour-prev').style.display=tourIdx===0?'none':'';document.getElementById('tour-next').textContent=tourIdx===TOUR_STEPS.length-1?'完成 ✓':'下一步 →';});}
+function tourStep(dir){tourIdx+=dir;if(tourIdx>=TOUR_STEPS.length){endTour();return;}if(tourIdx<0)tourIdx=0;showTourStep();}
+function endTour(){document.getElementById('tour-overlay').style.display='none';document.getElementById('tour-tip').style.display='none';document.getElementById('tour-fab').style.display='flex';}
+</script>
 </body>
 </html>
