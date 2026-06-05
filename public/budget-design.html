@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全面预算 · 设计思路</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@300;500;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0E14;
+  --ink-2:#11151F;
+  --ink-3:#161B27;
+  --line:rgba(200,169,106,.18);
+  --line-soft:rgba(255,255,255,.07);
+  --gold:#C8A96A;
+  --gold-bright:#E3C88A;
+  --gold-deep:#9A7D44;
+  --ice:#7FA6C4;
+  --txt:#E8E6E1;
+  --txt-2:rgba(232,230,225,.62);
+  --txt-3:rgba(232,230,225,.38);
+  --serif:"Noto Serif SC",serif;
+  --display:"Cormorant Garamond",serif;
+  --sans:"Noto Sans SC",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--txt);
+  font-family:var(--sans);
+  font-weight:300;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* 颗粒质感 */
+body::before{
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* 滚动容器 */
+.deck{height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scroll-behavior:smooth}
+.deck::-webkit-scrollbar{width:0}
+.slide{
+  position:relative;min-height:100vh;scroll-snap-align:start;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:7vh 8vw;overflow:hidden;
+}
+/* 顶部品牌条 */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 8vw;
+  mix-blend-mode:difference;
+}
+.brand{display:flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--txt);font-weight:400}
+.brand .mark{width:22px;height:22px;border:1px solid var(--gold);position:relative;flex-shrink:0}
+.brand .mark::after{content:'';position:absolute;inset:5px;background:var(--gold)}
+.enter-link{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--txt);text-decoration:none;border-bottom:1px solid var(--gold);padding-bottom:3px;transition:opacity .3s}
+.enter-link:hover{opacity:.6}
+
+/* 右侧进度轨 */
+.rail{position:fixed;right:42px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:18px}
+.rail a{display:flex;align-items:center;gap:10px;text-decoration:none;justify-content:flex-end}
+.rail .rn{font-family:var(--display);font-size:13px;color:var(--txt-3);transition:color .35s;font-style:italic}
+.rail .rb{width:18px;height:1px;background:var(--txt-3);transition:all .35s}
+.rail a.on .rn{color:var(--gold-bright)}
+.rail a.on .rb{width:34px;background:var(--gold)}
+.rail a:hover .rn{color:var(--txt)}
+
+/* 大水印序号 */
+.wm{position:absolute;font-family:var(--display);font-weight:500;line-height:.8;
+  color:transparent;-webkit-text-stroke:1px rgba(200,169,106,.10);
+  font-size:46vh;right:-2vw;bottom:-8vh;pointer-events:none;z-index:0;user-select:none}
+
+/* 通用文字 */
+.eyebrow{display:inline-flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--gold);font-weight:400;margin-bottom:30px}
+.eyebrow::before{content:'';width:38px;height:1px;background:var(--gold)}
+.h-title{font-family:var(--serif);font-weight:700;line-height:1.12;letter-spacing:.01em}
+.lead{font-size:clamp(15px,1.35vw,19px);line-height:1.95;color:var(--txt-2);font-weight:300;max-width:48ch}
+.content{position:relative;z-index:2;width:100%}
+
+/* 进场动画 */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 1s cubic-bezier(.2,.7,.2,1),transform 1s cubic-bezier(.2,.7,.2,1)}
+.slide.in .reveal{opacity:1;transform:none}
+.slide.in .reveal:nth-child(2){transition-delay:.12s}
+.slide.in .reveal:nth-child(3){transition-delay:.22s}
+.slide.in .reveal:nth-child(4){transition-delay:.32s}
+.slide.in .reveal:nth-child(5){transition-delay:.42s}
+
+/* ===== 封面 ===== */
+#s0{justify-content:center;align-items:flex-start}
+#s0 .cover-sub{font-family:var(--display);font-style:italic;font-size:clamp(20px,2.4vw,34px);color:var(--gold);margin-bottom:24px;letter-spacing:.02em}
+#s0 .cover-title{font-family:var(--serif);font-weight:900;font-size:clamp(64px,13vw,200px);line-height:.92;letter-spacing:.02em;color:var(--txt);margin-bottom:8px}
+#s0 .cover-title .stroke{color:transparent;-webkit-text-stroke:1.5px var(--gold);display:block}
+#s0 .cover-meta{margin-top:48px;display:flex;gap:48px;flex-wrap:wrap}
+#s0 .cover-meta .m{border-left:1px solid var(--line);padding-left:18px}
+#s0 .cover-meta .mk{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--txt-3);margin-bottom:8px}
+#s0 .cover-meta .mv{font-family:var(--serif);font-size:15px;color:var(--txt-2);font-weight:300}
+#s0 .scroll-hint{position:absolute;bottom:5vh;left:8vw;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--txt-3);display:flex;align-items:center;gap:12px}
+#s0 .scroll-hint .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* 标题区块 */
+.sec-head{margin-bottom:54px}
+.sec-head .h-title{font-size:clamp(32px,4.6vw,62px);margin-top:6px}
+
+/* 痛点卡片 */
+.pain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);max-width:1080px}
+.pain{background:var(--ink);padding:38px 40px;transition:background .5s}
+.pain:hover{background:var(--ink-2)}
+.pain .pn{font-family:var(--display);font-style:italic;font-size:30px;color:var(--gold-deep);margin-bottom:18px}
+.pain h3{font-family:var(--serif);font-weight:500;font-size:21px;margin-bottom:14px;color:var(--txt)}
+.pain p{font-size:14px;line-height:1.9;color:var(--txt-2);font-weight:300}
+
+/* 角色列 */
+.role-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;max-width:1140px;border-top:1px solid var(--line)}
+.role{padding:34px 28px 34px 0;border-right:1px solid var(--line-soft);position:relative}
+.role:last-child{border-right:none;padding-right:0}
+.role .ri{font-family:var(--display);font-size:42px;color:var(--gold);font-style:italic;line-height:1;margin-bottom:20px}
+.role h3{font-family:var(--serif);font-size:19px;font-weight:500;margin-bottom:12px}
+.role p{font-size:13.5px;line-height:1.85;color:var(--txt-2)}
+
+/* 流程链 */
+.flow-block{margin-bottom:44px;max-width:1180px}
+.flow-label{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:20px;display:flex;align-items:center;gap:14px}
+.flow-label::after{content:'';flex:1;height:1px;background:var(--line)}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:10px 4px}
+.node{font-family:var(--serif);font-size:15px;color:var(--txt);padding:9px 16px;border:1px solid var(--line-soft);border-radius:2px;white-space:nowrap;transition:all .4s;background:var(--ink-2)}
+.node:hover{border-color:var(--gold);color:var(--gold-bright)}
+.node.key{border-color:var(--line);color:var(--gold-bright);background:linear-gradient(180deg,var(--ink-3),var(--ink-2))}
+.sep{color:var(--gold-deep);font-size:13px;opacity:.6}
+.flow-note{margin-top:18px;font-size:13.5px;color:var(--txt-3);font-style:italic;font-family:var(--serif)}
+
+/* 推导表 */
+.deriv{max-width:1160px;border-top:1px solid var(--line)}
+.deriv-row{display:grid;grid-template-columns:1.1fr auto 1.3fr auto 1.5fr;align-items:center;gap:0;padding:30px 0;border-bottom:1px solid var(--line-soft)}
+.deriv-row .col{padding:0 30px}
+.deriv-row .col:first-child{padding-left:0}
+.deriv-row .ck{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--txt-3);margin-bottom:10px}
+.deriv-row .cv{font-family:var(--serif);font-size:17px;line-height:1.5;color:var(--txt);font-weight:300}
+.deriv-row.is-goal .cv:last-child,.deriv-row .col.goal .cv{color:var(--gold-bright);font-weight:500}
+.chev{width:26px;height:26px;flex-shrink:0;opacity:.5}
+.chev svg{width:100%;height:100%;stroke:var(--gold);fill:none;stroke-width:1.2}
+
+/* 四层架构 */
+.arch{display:flex;flex-direction:column;gap:0;max-width:1080px}
+.layer{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:28px;padding:30px 36px;border:1px solid var(--line-soft);border-bottom:none;background:var(--ink-2);transition:all .5s;position:relative;overflow:hidden}
+.layer:last-child{border-bottom:1px solid var(--line-soft)}
+.layer::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);transform:scaleY(0);transform-origin:top;transition:transform .6s}
+.layer:hover{background:var(--ink-3)}
+.layer:hover::before{transform:scaleY(1)}
+.layer .ln{font-family:var(--display);font-size:34px;font-style:italic;color:var(--gold-deep)}
+.layer .lt{font-family:var(--serif);font-size:22px;font-weight:500}
+.layer .ld{font-size:14px;color:var(--txt-2);margin-top:6px}
+.layer .lr{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-3);text-align:right;white-space:nowrap}
+.arch-note{margin-top:26px;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--gold);max-width:60ch}
+
+/* 关键设计 2x2 */
+.key-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);max-width:1120px}
+.key{background:var(--ink);padding:40px 44px;position:relative;transition:background .5s}
+.key:hover{background:var(--ink-2)}
+.key .kk{display:flex;align-items:baseline;gap:16px;margin-bottom:18px}
+.key .kn{font-family:var(--display);font-style:italic;font-size:26px;color:var(--gold)}
+.key h3{font-family:var(--serif);font-size:20px;font-weight:500}
+.key p{font-size:14px;line-height:1.9;color:var(--txt-2)}
+
+/* 结构图 */
+.tree{max-width:1100px}
+.tree-group{margin-bottom:36px}
+.tree-group .tg-head{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--gold-bright);margin-bottom:20px;display:flex;align-items:center;gap:16px}
+.tree-group .tg-head::after{content:'';flex:1;height:1px;background:var(--line)}
+.tree-items{display:flex;flex-wrap:wrap;gap:12px;padding-left:2px}
+.ti{font-family:var(--serif);font-size:15px;padding:11px 20px;border:1px solid var(--line-soft);background:var(--ink-2);color:var(--txt);transition:all .4s;border-radius:2px}
+.ti:hover{border-color:var(--gold);color:var(--gold-bright);transform:translateY(-2px)}
+.ti.parent{border-color:var(--line);color:var(--gold-bright)}
+.ti-sub{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 0 24px;padding-left:20px;border-left:1px solid var(--line-soft)}
+.ti-sub .ti{font-size:13.5px;padding:8px 15px;background:transparent}
+
+/* 结语 */
+#s8{justify-content:center;align-items:center;text-align:center}
+#s8 .close-q{font-family:var(--serif);font-weight:300;font-size:clamp(28px,4vw,52px);line-height:1.5;color:var(--txt);max-width:20ch;margin-bottom:48px}
+#s8 .close-q em{font-style:normal;color:var(--gold-bright);font-weight:500}
+#s8 .cta{display:inline-flex;align-items:center;gap:16px;font-family:var(--sans);font-size:14px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);background:var(--gold);padding:18px 40px;text-decoration:none;font-weight:500;transition:all .4s;border:1px solid var(--gold)}
+#s8 .cta:hover{background:transparent;color:var(--gold-bright)}
+#s8 .cta svg{width:20px;height:12px;stroke:currentColor;fill:none;stroke-width:1.4;transition:transform .4s}
+#s8 .cta:hover svg{transform:translateX(6px)}
+#s8 .foot{position:absolute;bottom:5vh;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--txt-3)}
+
+@media(max-width:860px){
+  .rail{display:none}
+  .pain-grid,.key-grid{grid-template-columns:1fr}
+  .role-row{grid-template-columns:1fr 1fr}
+  .deriv-row{grid-template-columns:1fr;gap:14px;row-gap:0}
+  .deriv-row .chev{display:none}
+  .deriv-row .col{padding:8px 0}
+  .layer{grid-template-columns:48px 1fr;gap:18px}
+  .layer .lr{display:none}
+  .wm{font-size:32vh}
+  .slide{padding:11vh 7vw}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="mark"></span>哈密煤运廊道一体管控平台</div>
+  <a class="enter-link" href="/freight/budget/overview">进入系统 →</a>
+</div>
+
+<nav class="rail" id="rail"></nav>
+
+<div class="deck" id="deck">
+
+  <!-- 封面 -->
+  <section class="slide" id="s0" data-label="封面">
+    <div class="content">
+      <div class="cover-sub reveal">设计思路与产品推演</div>
+      <h1 class="cover-title reveal">全面预算<span class="stroke">Budgeting</span></h1>
+      <div class="cover-meta reveal">
+        <div class="m"><div class="mk">主线</div><div class="mv">从业务目标，到一套能用的产品</div></div>
+        <div class="m"><div class="mk">范围</div><div class="mv">概算 · 预算 · 核算 · 分析</div></div>
+        <div class="m"><div class="mk">数据</div><div class="mv">2026 年 1–5 月，真实运营</div></div>
+      </div>
+    </div>
+    <div class="scroll-hint"><span class="dot"></span>向下滚动 · 开始</div>
+  </section>
+
+  <!-- 01 问题 -->
+  <section class="slide" id="s1" data-label="真问题">
+    <div class="wm">01</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">起点</span>
+        <h2 class="h-title">先看清，运营里卡在哪</h2>
+      </div>
+      <div class="pain-grid reveal">
+        <div class="pain"><div class="pn">i.</div><h3>目标靠经验拍</h3><p>集团年初定目标，缺一套算得出来的依据。数字下到各业务单元，没人说得清松还是紧。</p></div>
+        <div class="pain"><div class="pn">ii.</div><h3>偏差发现太晚</h3><p>成本超没超，往往到年底结账才看清。中途没有提醒，发现时已经来不及调。</p></div>
+        <div class="pain"><div class="pn">iii.</div><h3>业务财务两张皮</h3><p>跑了多少车、赚了多少钱、钱有没有真回来，分散在不同表里，对不上。</p></div>
+        <div class="pain"><div class="pn">iv.</div><h3>费用口径不统一</h3><p>含税不含税、直接成本和管理费用混在一起，每次对账都要反复返工。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 用户 -->
+  <section class="slide" id="s2" data-label="谁在用">
+    <div class="wm">02</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">用户与目标</span>
+        <h2 class="h-title">谁在用，想达成什么</h2>
+      </div>
+      <div class="role-row reveal">
+        <div class="role"><div class="ri">01</div><h3>集团财务负责人</h3><p>定全年目标，盯整体执行。年底要讲清楚钱花在哪、赚了多少。</p></div>
+        <div class="role"><div class="ri">02</div><h3>业务单元编制人</h3><p>按月把预算填细，随时知道自己还剩多少额度可用。</p></div>
+        <div class="role"><div class="ri">03</div><h3>主管 / 财务审批</h3><p>两级把关，确认每份预算合理、不超出年度盘子。</p></div>
+        <div class="role"><div class="ri">04</div><h3>集团管理层</h3><p>一眼看到经营全貌：收入、支出、利润，以及现金回得来回不来。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 流程 -->
+  <section class="slide" id="s3" data-label="业务流程">
+    <div class="wm">03</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">业务怎么走</span>
+        <h2 class="h-title">预算贴着运营走</h2>
+      </div>
+      <div class="flow-block reveal">
+        <div class="flow-label">运输主链</div>
+        <div class="chain">
+          <span class="node">发运计划</span><span class="sep">·</span>
+          <span class="node">运输任务</span><span class="sep">·</span>
+          <span class="node">运单</span><span class="sep">·</span>
+          <span class="node">派单</span><span class="sep">·</span>
+          <span class="node">在途</span><span class="sep">·</span>
+          <span class="node">交付</span><span class="sep">·</span>
+          <span class="node">费用归集</span><span class="sep">·</span>
+          <span class="node">成本核算</span><span class="sep">·</span>
+          <span class="node">对账</span><span class="sep">·</span>
+          <span class="node">结算</span>
+        </div>
+      </div>
+      <div class="flow-block reveal">
+        <div class="flow-label">预算管控链</div>
+        <div class="chain">
+          <span class="node key">集团定目标 · 概算</span><span class="sep">→</span>
+          <span class="node key">各单元编预算</span><span class="sep">→</span>
+          <span class="node key">实际归集核算</span><span class="sep">→</span>
+          <span class="node key">预实对比分析</span>
+        </div>
+        <div class="flow-note">预算管控链贴着运输主链走 —— 每一笔实际支出，都能回到当初定下的那条预算。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 推导 -->
+  <section class="slide" id="s4" data-label="问题到目标">
+    <div class="wm">04</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">从问题推到设计</span>
+        <h2 class="h-title">看到的问题，定下的目标</h2>
+      </div>
+      <div class="deriv reveal">
+        <div class="deriv-row">
+          <div class="col"><div class="ck">看到的问题</div><div class="cv">目标靠拍脑袋</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col"><div class="ck">想清楚的事</div><div class="cv">需要一套看得见的算法</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col goal"><div class="ck">定下的设计目标</div><div class="cv">参数推算工具，两种口径交叉验证</div></div>
+        </div>
+        <div class="deriv-row">
+          <div class="col"><div class="ck">看到的问题</div><div class="cv">偏差发现太晚</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col"><div class="ck">想清楚的事</div><div class="cv">实际要随时能跟预算比</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col goal"><div class="ck">定下的设计目标</div><div class="cv">实时预实分析看板</div></div>
+        </div>
+        <div class="deriv-row">
+          <div class="col"><div class="ck">看到的问题</div><div class="cv">业务财务两张皮</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col"><div class="ck">想清楚的事</div><div class="cv">业务动作要连到财务结果</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col goal"><div class="ck">定下的设计目标</div><div class="cv">业财贯穿，三张报表打通</div></div>
+        </div>
+        <div class="deriv-row">
+          <div class="col"><div class="ck">看到的问题</div><div class="cv">费用口径乱</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col"><div class="ck">想清楚的事</div><div class="cv">费用要分清，税要分明</div></div>
+          <div class="chev"><svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7"/></svg></div>
+          <div class="col goal"><div class="ck">定下的设计目标</div><div class="cv">科目分组 + 含税不含税切换</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 落地 -->
+  <section class="slide" id="s5" data-label="设计落地">
+    <div class="wm">05</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">设计落地</span>
+        <h2 class="h-title">四层，一条线</h2>
+      </div>
+      <div class="arch reveal">
+        <div class="layer"><div class="ln">I</div><div><div class="lt">概算管理</div><div class="ld">集团定全年的收、支、余目标</div></div><div class="lr">目标下达</div></div>
+        <div class="layer"><div class="ln">II</div><div><div class="lt">预算编制</div><div class="ld">各单元按月，把目标填成细项</div></div><div class="lr">逐月编制</div></div>
+        <div class="layer"><div class="ln">III</div><div><div class="lt">核算处理</div><div class="ld">实际费用归集、补录、对账</div></div><div class="lr">实际归集</div></div>
+        <div class="layer"><div class="ln">IV</div><div><div class="lt">统计分析</div><div class="ld">预算和实际对比，给管理层看结论</div></div><div class="lr">预实分析</div></div>
+      </div>
+      <div class="arch-note reveal">上一层是下一层的约束，下一层的实际又回流给上一层验证。</div>
+    </div>
+  </section>
+
+  <!-- 06 关键设计 -->
+  <section class="slide" id="s6" data-label="关键设计">
+    <div class="wm">06</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">几个关键决定</span>
+        <h2 class="h-title">把难点做对</h2>
+      </div>
+      <div class="key-grid reveal">
+        <div class="key"><div class="kk"><span class="kn">01</span><h3>双口径推算</h3></div><p>吨公里法和单车月收入法并排算，差超过一成就提醒。避免单一算法跑偏，目标定得心里有底。</p></div>
+        <div class="key"><div class="kk"><span class="kn">02</span><h3>概算约束预算</h3></div><p>编预算时，实时看到还剩多少额度。超过年度盘子，提交直接被拦住。</p></div>
+        <div class="key"><div class="kk"><span class="kn">03</span><h3>含税不含税一键切</h3></div><p>对账看含税，分析看不含税。同一份数据，两种视角，不用再手算换算。</p></div>
+        <div class="key"><div class="kk"><span class="kn">04</span><h3>业财贯穿</h3></div><p>利润表、资产负债表、现金流量表放在一起，讲清一件事：赚的钱，有没有真回来。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 结构 -->
+  <section class="slide" id="s7" data-label="页面结构">
+    <div class="wm">07</div>
+    <div class="content">
+      <div class="sec-head reveal">
+        <span class="eyebrow">页面结构</span>
+        <h2 class="h-title">整套系统长这样</h2>
+      </div>
+      <div class="tree reveal">
+        <div class="tree-group">
+          <div class="tg-head">全面预算</div>
+          <div class="tree-items">
+            <span class="ti">概算管理</span>
+            <span class="ti">预算编制</span>
+            <span class="ti parent">核算处理</span>
+          </div>
+          <div class="ti-sub">
+            <span class="ti">费用手动补录</span>
+            <span class="ti">备用金管理</span>
+            <span class="ti">成本预实分析</span>
+            <span class="ti">收入预实分析</span>
+          </div>
+        </div>
+        <div class="tree-group">
+          <div class="tg-head">统计分析</div>
+          <div class="tree-items">
+            <span class="ti">运营统计（业财贯穿）</span>
+            <span class="ti">车辆运营统计</span>
+            <span class="ti">司机绩效统计</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 结语 -->
+  <section class="slide" id="s8" data-label="进入">
+    <div class="wm">08</div>
+    <div class="content">
+      <p class="close-q reveal">设计讲完了。<br>接下来，<em>逐个页面</em>看它怎么用。</p>
+      <a class="cta reveal" href="/freight/budget/overview">进入功能导览 <svg viewBox="0 0 20 12"><path d="M1 6h17M13 1l5 5-5 5"/></svg></a>
+    </div>
+    <div class="foot">哈密煤运廊道一体管控平台 · 全面预算</div>
+  </section>
+
+</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const deck=document.getElementById('deck');
+const rail=document.getElementById('rail');
+
+// 构建右侧进度轨
+slides.forEach((s,i)=>{
+  const a=document.createElement('a');
+  a.href='#'+s.id;
+  a.dataset.idx=i;
+  a.innerHTML='<span class="rn">'+String(i).padStart(2,'0')+'</span><span class="rb"></span>';
+  a.addEventListener('click',e=>{e.preventDefault();s.scrollIntoView({behavior:'smooth'});});
+  rail.appendChild(a);
+});
+const railLinks=[...rail.children];
+
+// 进场 + 当前段高亮
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      const idx=slides.indexOf(e.target);
+      railLinks.forEach((l,i)=>l.classList.toggle('on',i===idx));
+    }
+  });
+},{root:deck,threshold:.55});
+slides.forEach(s=>io.observe(s));
+
+// 键盘导航
+let cur=0;
+function goTo(i){i=Math.max(0,Math.min(slides.length-1,i));cur=i;slides[i].scrollIntoView({behavior:'smooth'});}
+deck.addEventListener('scroll',()=>{
+  const i=Math.round(deck.scrollTop/window.innerHeight);if(i!==cur)cur=i;
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();goTo(cur+1);}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();goTo(cur-1);}
+});
+</script>
+</body>
+</html>

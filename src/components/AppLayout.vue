@@ -14,6 +14,11 @@
         text-color="#D4DEEC"
         active-text-color="#FFFFFF"
       >
+        <el-menu-item index="design-intro" @click="openDesignIntro">
+          <i class="el-icon-reading"></i>
+          <span>设计思路总览</span>
+        </el-menu-item>
+
         <el-submenu index="budget">
           <template slot="title">
             <i class="el-icon-money"></i>
@@ -79,6 +84,11 @@ export default {
       return '首页'
     },
     isIframePage() { return IFRAME_ROUTES.includes(this.$route.path) }
+  },
+  methods: {
+    openDesignIntro() {
+      window.location.href = '/freight/budget-design.html'
+    }
   }
 }
 </script>
