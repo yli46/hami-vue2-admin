@@ -147,14 +147,10 @@
     <!-- 参数推算（折叠） -->
     <div class="calc-section">
       <div class="calc-head" onclick="toggleCalc()">
-        <span class="calc-toggle" id="cti">▶</span>
+        <span class="calc-toggle open" id="cti">▶</span>
         <span class="font-medium">参数推算</span>
-        <span class="ant-tag ant-tag-gray" style="font-size:11px">可展开 · 推算收、支、余建议值后可一键填入</span>
-        <div class="ant-space" style="margin-left:auto" onclick="event.stopPropagation()">
-          <span class="text-tertiary" style="font-size:12px">口径：不含税（增值税体现在统计分析 / 报表环节）</span>
-        </div>
       </div>
-      <div class="calc-panel" id="calc-panel">
+      <div class="calc-panel open" id="calc-panel">
 
         <!-- 收：双口径 -->
         <div class="section-header" style="margin-top:0">收入参数 <span class="principle-tag pt-high" style="margin-left:6px">收入择高</span></div>
@@ -259,7 +255,7 @@
         </div>
 
         <!-- 建设期支出 -->
-        <div class="section-header">建设期板块支出（手工填入）</div>
+        <div class="section-header">建设期板块支出</div>
         <div style="display:flex;gap:var(--space-5);flex-wrap:wrap;margin-bottom:var(--space-3)">
           <div class="ant-search-item"><label class="ant-search-label" style="width:auto">廊道（建设期）万元</label><input type="number" class="ant-input" style="width:120px" id="bl" value="10000" oninput="calc()"></div>
           <div class="ant-search-item"><label class="ant-search-label" style="width:auto">加氢站 万元</label><input type="number" class="ant-input" style="width:120px" id="bj" value="3200" oninput="calc()"></div>
@@ -646,7 +642,13 @@ function openCreate(){
   document.getElementById('f-year').value='2026';document.getElementById('f-source').value='手工录入';
   document.getElementById('f-remark').value='';document.getElementById('tool-hint').style.display='none';
   clearEntryForm();
+  openCalcPanel();
   document.getElementById('d-form').classList.add('open');
+}
+function openCalcPanel(){
+  document.getElementById('calc-panel').classList.add('open');
+  document.getElementById('cti').classList.add('open');
+  calc();
 }
 function openEdit(id){
   const b=budgets.find(x=>x.id===id);if(!b)return;
@@ -662,6 +664,7 @@ function openEdit(id){
     if(rev)rev.value=en.rev||'';if(cost)cost.value=en.cost||'';
     calcEntry(e.key);
   });
+  openCalcPanel();
   document.getElementById('d-form').classList.add('open');
 }
 function submitForm(){
