@@ -367,9 +367,9 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-weigh
       </div>
       <div class="matrix-row">
         <div class="mc-prob">口径乱</div>
-        <div>费用要分清，税要分明</div>
-        <div>科目按性质分组，税口径可切换</div>
-        <div class="mc-goal">科目分组 + 含税切换</div>
+        <div>费用要分清，税口径要稳定</div>
+        <div>科目按性质分组；编制统一不含税，含税切换交给报表层</div>
+        <div class="mc-goal">科目三组 + 报表层税切换</div>
       </div>
     </div>
   </div>
@@ -387,7 +387,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-weigh
       <div class="arch-side l"><span class="ar"></span><span>目标向下约束</span></div>
       <div class="layers">
         <div class="layer"><div class="ly-n">I</div><div><div class="ly-t">概算管理</div><div class="ly-d">集团定全年的收、支、余目标</div></div><div class="ly-out"><b>产出</b>年度收支余目标</div></div>
-        <div class="layer"><div class="ly-n">II</div><div><div class="ly-t">预算编制</div><div class="ly-d">各单元按月，把目标拆成 19 项费用细项</div></div><div class="ly-out"><b>产出</b>逐月预算明细</div></div>
+        <div class="layer"><div class="ly-n">II</div><div><div class="ly-t">预算编制</div><div class="ly-d">各单元按月，把目标拆成 23 项费用细项</div></div><div class="ly-out"><b>产出</b>逐月预算明细</div></div>
         <div class="layer"><div class="ly-n">III</div><div><div class="ly-t">核算处理</div><div class="ly-d">实际费用归集、补录、对账</div></div><div class="ly-out"><b>产出</b>实际发生数据</div></div>
         <div class="layer"><div class="ly-n">IV</div><div><div class="ly-t">统计分析</div><div class="ly-d">预算与实际对比，给管理层看结论</div></div><div class="ly-out"><b>产出</b>预实偏差与决策</div></div>
       </div>
@@ -414,7 +414,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-weigh
         <div class="kv"><svg viewBox="0 0 96 72"><path d="M14 58a34 34 0 0 1 68 0" fill="none" stroke="#C7C1B3" stroke-width="6"/><path d="M14 58a34 34 0 0 1 50 -29" fill="none" stroke="#10524B" stroke-width="6"/><circle cx="48" cy="58" r="3" fill="#1A1C1B"/><line x1="48" y1="58" x2="66" y2="34" stroke="#1A1C1B" stroke-width="1.6"/><text x="48" y="50" font-size="9" fill="#B0512C" font-family="monospace" text-anchor="middle">余额</text></svg></div>
       </div>
       <div class="key">
-        <div class="kt"><div class="kn">03 · 含税不含税一键切</div><h3>同一份数据，两种视角</h3><p>对账看含税，分析看不含税。一键切换，不必再手工换算，口径不再来回返工。</p></div>
+        <div class="kt"><div class="kn">03 · 税口径分层</div><h3>编制统一不含税，报表按需切含税</h3><p>概算和预算一律按不含税编制，口径干净；要看含税时在统计分析、报表层一键切换。对账和分析各取所需，不必手工换算。</p></div>
         <div class="kv"><svg viewBox="0 0 96 72"><rect x="14" y="28" width="68" height="22" rx="11" fill="#E3EBE7" stroke="#1C6B62"/><circle cx="27" cy="39" r="8" fill="#10524B"/><text x="50" y="42" font-size="8" fill="#10524B" font-family="monospace" text-anchor="middle">含税</text><text x="20" y="64" font-size="8" fill="#8A8C88" font-family="monospace" text-anchor="middle">含</text><text x="76" y="64" font-size="8" fill="#8A8C88" font-family="monospace" text-anchor="middle">不含</text></svg></div>
       </div>
       <div class="key">
