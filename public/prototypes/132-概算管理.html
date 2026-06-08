@@ -212,6 +212,7 @@
           <div>
             <div class="text-secondary" style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--purple-6)">管理费用估算（万元/年，集团整体）</div>
             <table class="pt">
+              <tr><td class="pl">集团管理费用</td><td class="pv"><input id="mgmt-grp" type="number" value="300" oninput="calc()"><br><span class="pref">总部分摊</span></td><td class="ps">手工填入</td></tr>
               <tr><td class="pl">工资及社保公积金（管理人员）</td><td class="pv"><input id="mgmt-sal" type="number" value="800" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
               <tr><td class="pl">差旅费</td><td class="pv"><input id="mgmt-trav" type="number" value="120" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
               <tr><td class="pl">业务招待费</td><td class="pv"><input id="mgmt-ent" type="number" value="80" oninput="calc()"><br><span class="pref">参考历史水平</span></td><td class="ps">手工填入</td></tr>
@@ -456,7 +457,7 @@ function calc(){
   const lCR=v('lg')+v('lw')+v('le')+v('ld')+v('lr')+v('li')+v('lf')+v('lp')+v('lz');
   const hCR=v('hg')+v('hw')+v('he')+v('hd')+v('hr2')+v('hn')+v('hf')+v('hp')+v('hz');
   // 管理+财务费用（全局，按比例分配到 hlj/xpy）
-  const mgmt=v('mgmt-sal')+v('mgmt-trav')+v('mgmt-ent')+v('mgmt-oth');
+  const mgmt=v('mgmt-grp')+v('mgmt-sal')+v('mgmt-trav')+v('mgmt-ent')+v('mgmt-oth');
   const fin=v('fin-int')+v('fin-oth');
   const periodExp=mgmt+fin; // 按 50/50 分配到 hlj/xpy（原型示意）
   // 收入
