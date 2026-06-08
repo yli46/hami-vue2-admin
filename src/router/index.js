@@ -43,12 +43,6 @@ const routes = [
     component: () => import('../views/CostManual.vue'),
     meta: { title: '费用手动补录', module: '134' }
   },
-  {
-    path: '/cost/reserve',
-    name: 'cost-reserve',
-    component: () => import('../views/CostReserve.vue'),
-    meta: { title: '备用金管理', module: '134' }
-  },
   // 统计分析
   {
     path: '/stats/ops',

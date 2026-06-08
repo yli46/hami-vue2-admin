@@ -29,7 +29,6 @@
           <el-submenu index="cost">
             <template slot="title">核算处理</template>
             <el-menu-item index="/cost/manual">费用手动补录</el-menu-item>
-            <el-menu-item index="/cost/reserve">备用金管理</el-menu-item>
             <el-menu-item index="/cost/cost-analysis">成本预实分析</el-menu-item>
             <el-menu-item index="/cost/revenue-analysis">收入预实分析</el-menu-item>
           </el-submenu>
@@ -68,7 +67,7 @@
 <script>
 const IFRAME_ROUTES = [
   '/budget/overview', '/budget/edit',
-  '/cost/cost-analysis', '/cost/revenue-analysis', '/cost/manual', '/cost/reserve',
+  '/cost/cost-analysis', '/cost/revenue-analysis', '/cost/manual',
   '/stats/ops', '/stats/fleet', '/stats/driver'
 ]
 

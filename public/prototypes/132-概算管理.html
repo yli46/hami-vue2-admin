@@ -50,14 +50,6 @@
 /* 月度节奏格 */
 .month-compact { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; }
 </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
-<style>
-.driver-popover { max-width: 340px !important; }
-.driver-popover-title { font-size: 14px !important; font-weight: 600 !important; color: #1A2233 !important; }
-.driver-popover-description { font-size: 13px !important; color: #595959 !important; line-height: 1.7 !important; }
-.driver-popover-next-btn { background: #1677FF !important; border-color: #1677FF !important; }
-.driver-popover-prev-btn { color: #595959 !important; border-color: #D9D9D9 !important; }
-</style>
 </head>
 <body>
 <div class="ant-page">
@@ -159,12 +151,7 @@
         <span class="font-medium">参数推算</span>
         <span class="ant-tag ant-tag-gray" style="font-size:11px">可展开 · 推算收、支、余建议值后可一键填入</span>
         <div class="ant-space" style="margin-left:auto" onclick="event.stopPropagation()">
-          <span class="text-secondary" style="font-size:var(--font-size-sm)">收入口径</span>
-          <div class="tax-switch">
-            <button class="tax-switch-btn active" id="tax-inc" onclick="setTax(true)">含税</button>
-            <button class="tax-switch-btn" id="tax-exc" onclick="setTax(false)">不含税</button>
-          </div>
-          <span class="text-tertiary" style="font-size:12px">增值税 9%</span>
+          <span class="text-tertiary" style="font-size:12px">口径：不含税（增值税体现在统计分析 / 报表环节）</span>
         </div>
       </div>
       <div class="calc-panel" id="calc-panel">
@@ -203,6 +190,8 @@
               <tr><td class="pl">折旧</td><td class="pv"><input id="ld" type="number" step="0.00001" value="0.01800" oninput="mP(this,'0.01800');calc()"><br><span class="pref">0.015~0.022</span></td><td class="ps" id="sld">系统历史均值</td></tr>
               <tr><td class="pl">车辆维修费</td><td class="pv"><input id="lr" type="number" step="0.00001" value="0.00500" oninput="mP(this,'0.00500');calc()"><br><span class="pref">0.004~0.008</span></td><td class="ps" id="slr">系统历史均值</td></tr>
               <tr><td class="pl">保险费（660219）</td><td class="pv"><input id="li" type="number" step="0.00001" value="0.00400" oninput="mP(this,'0.00400');calc()"><br><span class="pref">0.003~0.006</span></td><td class="ps" id="sli">系统历史均值</td></tr>
+              <tr><td class="pl">场地使用费</td><td class="pv"><input id="lf" type="number" step="0.00001" value="0.03800" oninput="mP(this,'0.03800');calc()"><br><span class="pref">26万/车/年 折算 ≈0.038</span></td><td class="ps" id="slf">单位标准折算</td></tr>
+              <tr><td class="pl">GPS月租费</td><td class="pv"><input id="lp" type="number" step="0.00001" value="0.00002" oninput="mP(this,'0.00002');calc()"><br><span class="pref">10元/车/月 折算</span></td><td class="ps" id="slp">单位标准折算</td></tr>
               <tr><td class="pl">杂费（660299）</td><td class="pv"><input id="lz" type="number" step="0.00001" value="0.00300" oninput="mP(this,'0.00300');calc()"><br><span class="pref">0.002~0.004</span></td><td class="ps" id="slz">系统历史均值</td></tr>
             </table>
           </div>
@@ -215,6 +204,8 @@
               <tr><td class="pl">折旧</td><td class="pv"><input id="hd" type="number" step="0.00001" value="0.02500" oninput="mP(this,'0.02500');calc()"><br><span class="pref">0.020~0.030</span></td><td class="ps" id="shd">系统历史均值</td></tr>
               <tr><td class="pl">车辆维修费</td><td class="pv"><input id="hr2" type="number" step="0.00001" value="0.00600" oninput="mP(this,'0.00600');calc()"><br><span class="pref">0.004~0.009</span></td><td class="ps" id="shr">系统历史均值</td></tr>
               <tr><td class="pl">保险费（660219）</td><td class="pv"><input id="hn" type="number" step="0.00001" value="0.00500" oninput="mP(this,'0.00500');calc()"><br><span class="pref">0.003~0.006</span></td><td class="ps" id="shn">系统历史均值</td></tr>
+              <tr><td class="pl">场地使用费</td><td class="pv"><input id="hf" type="number" step="0.00001" value="0.03800" oninput="mP(this,'0.03800');calc()"><br><span class="pref">26万/车/年 折算 ≈0.038</span></td><td class="ps" id="shf">单位标准折算</td></tr>
+              <tr><td class="pl">GPS月租费</td><td class="pv"><input id="hp" type="number" step="0.00001" value="0.00002" oninput="mP(this,'0.00002');calc()"><br><span class="pref">10元/车/月 折算</span></td><td class="ps" id="shp">单位标准折算</td></tr>
               <tr><td class="pl">杂费（660299）</td><td class="pv"><input id="hz" type="number" step="0.00001" value="0.00400" oninput="mP(this,'0.00400');calc()"><br><span class="pref">0.002~0.005</span></td><td class="ps" id="shz">系统历史均值</td></tr>
             </table>
           </div>
@@ -430,7 +421,7 @@ let budgets=[
 
 let editId=null,delId=null,lockId=null;
 let lngMonths=new Array(12).fill(0),h2Months=new Array(12).fill(0);
-let taxIncluded=true;
+let taxIncluded=false; // 概算统一按不含税口径，含税仅在统计分析/报表环节体现
 let calcRes={};
 const TAX=0.09;
 const f=(n,d=2)=>isNaN(+n)?'—':(+n).toLocaleString('zh',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -447,14 +438,8 @@ function buildMG(cId,arr,pfx){
 function upM(pfx,idx,val){if(pfx==='lng')lngMonths[idx]=+val||0;else h2Months[idx]=+val||0;calc();}
 buildMG('lng-mg',lngMonths,'lng');buildMG('h2-mg',h2Months,'h2');
 
-// 含税
-function setTax(inc){
-  taxIncluded=inc;
-  document.getElementById('tax-inc').classList.toggle('active',inc);
-  document.getElementById('tax-exc').classList.toggle('active',!inc);
-  calc();
-}
-function applyTx(n){return taxIncluded?n*(1+TAX):n;}
+// 概算统一不含税口径
+function applyTx(n){return n;}
 
 // 参数标记
 function mP(inp,orig){
@@ -472,8 +457,8 @@ function calcM(base,months,mRate){let s=0,r=base;for(let m=0;m<12;m++){r+=months
 
 function calc(){
   // 直接成本率
-  const lCR=v('lg')+v('lw')+v('le')+v('ld')+v('lr')+v('li')+v('lz');
-  const hCR=v('hg')+v('hw')+v('he')+v('hd')+v('hr2')+v('hn')+v('hz');
+  const lCR=v('lg')+v('lw')+v('le')+v('ld')+v('lr')+v('li')+v('lf')+v('lp')+v('lz');
+  const hCR=v('hg')+v('hw')+v('he')+v('hd')+v('hr2')+v('hn')+v('hf')+v('hp')+v('hz');
   // 管理+财务费用（全局，按比例分配到 hlj/xpy）
   const mgmt=v('mgmt-sal')+v('mgmt-trav')+v('mgmt-ent')+v('mgmt-oth');
   const fin=v('fin-int')+v('fin-oth');
@@ -754,154 +739,6 @@ function showMsg(text,type){
   el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
 renderList();calc();
-</script>
-<!-- ═══ 产品导览 ═══ -->
-<button onclick="startTour()" id="tour-fab"
-  style="position:fixed;bottom:24px;right:24px;z-index:8999;height:40px;padding:0 18px;background:#1677FF;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 4px 12px rgba(22,119,255,.4);display:flex;align-items:center;gap:6px">
-  ◉ 产品导览
-</button>
-<script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
-<script>
-let driverObj;
-
-function startFormTour132() {
-  // 先滚回顶部，避免 getBoundingClientRect + scrollY 的坐标偏移
-  window.scrollTo({ top: 0, behavior: 'instant' });
-  setTimeout(() => {
-    const { driver } = window.driver.js;
-    const fd = driver({
-      showProgress: true, progressText: '{{current}} / {{total}}',
-      prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
-      animate: true, smoothScroll: true,
-      steps: [
-        {
-          element: '#d-form .ant-modal-body',
-          popover: {
-            title: '表单分三个区域',
-            description: '①最上方选年度；②中间是推算辅助工具（点标题展开）；③下方是各板块的收/支/余录入表格。',
-            side: 'left', align: 'start'
-          }
-        },
-        {
-          element: '#d-form .calc-section',
-          popover: {
-            title: '推算辅助工具（默认收起）',
-            description: '点击灰色标题栏展开。工具会自动取入去年的实际运营数据作为默认值，手动修改的参数会有"手工覆盖"标记。点"下一步"自动展开。',
-            side: 'bottom', align: 'start',
-            onNextClick: () => {
-              const h = document.querySelector('.calc-head');
-              if (h && !document.querySelector('#calc-panel.open')) h.click();
-              setTimeout(() => fd.moveNext(), 500);
-            }
-          }
-        },
-        {
-          element: '#d-form .income-col-km',
-          popover: {
-            title: '双口径收入推算（左：吨公里 / 右：单车月）',
-            description: '左栏：传统算法，用每公里的收费单价 × 总运量来算。右栏：新方法，用每台车每月平均收入来算。两种方式同时显示，差距超过 10% 会有橙色警示提醒检查参数。',
-            side: 'top', align: 'start'
-          }
-        },
-        {
-          element: '#d-form .calc-panel > .section-header + .grid-2',
-          popover: {
-            title: '成本参数（支出择低原则）',
-            description: '下方两列是直接运营成本（气耗、工资、ETC、折旧等）+ 管理费用 + 财务费用估算。所有参数默认取系统历史均值，编制时可向低值调整，体现"支出择低"原则。',
-            side: 'top', align: 'start'
-          }
-        },
-        {
-          element: '#d-form #diff-bar',
-          popover: {
-            title: '两种算法的差异提示',
-            description: '差距 ≤10% 显示绿色（数字可信）；超过 10% 变橙色，建议回头检查某个参数是否填错了。下方汇总表可一键把推算结果填进录入区。点"下一步"查看录入表格。',
-            side: 'top', align: 'start',
-            onNextClick: () => {
-              // 折叠 calc 区，让录入表格出现在可视区域内
-              const p = document.getElementById('calc-panel');
-              const i = document.getElementById('cti');
-              if (p && p.classList.contains('open')) {
-                p.classList.remove('open');
-                if (i) i.classList.remove('open');
-              }
-              setTimeout(() => fd.moveNext(), 350);
-            }
-          }
-        },
-        {
-          element: '#d-form #entry-tbody',
-          popover: {
-            title: '收 / 支 / 余直接录入',
-            description: '按公司/业务板块分行填写收入目标和支出上限，利润自动算出来。建设期板块没有收入，只填支出预算。最底行实时合计。推算工具的结果可点"填入"按钮一键填进来。',
-            side: 'top', align: 'start'
-          }
-        },
-        {
-          element: '#d-form .ant-modal-footer',
-          popover: {
-            title: '保存即生效',
-            description: '点"确定"直接生效，不需要走审批流程。同一年度只允许存一条记录，重复录入会被拦截。',
-            side: 'top', align: 'end'
-          }
-        }
-      ]
-    });
-    fd.drive();
-  }, 100); // 确保 scrollTo 完成后再创建
-}
-
-function startTour() {
-  const { driver } = window.driver.js;
-  driverObj = driver({
-    showProgress: true, progressText: '{{current}} / {{total}}',
-    prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
-    animate: true, smoothScroll: true,
-    steps: [
-      {
-        element: '.statistic-grid',
-        popover: { title: '整年目标一眼看清',
-          description: '四张卡片：计划收多少钱、计划花多少钱、预期利润（收减支），以及有几个业务板块已经超出预算上限。',
-          side: 'bottom', align: 'start' }
-      },
-      {
-        element: '.ant-search-bar',
-        popover: { title: '按条件筛选',
-          description: '通过年度和状态筛选，快速找到目标记录。状态分为：草稿（未提交）、已生效（执行中）、关账（已锁定归档）。',
-          side: 'bottom', align: 'start' }
-      },
-      {
-        element: '.ant-table-wrapper',
-        popover: { title: '年度预算总台账',
-          description: '"已分配支出"不是手填的，是下级各团队月度预算审批通过后系统自动汇总过来的。点行首 ▶ 展开各业务板块的收支明细。点"下一步"自动展开第一行。',
-          side: 'top', align: 'start',
-          onNextClick: () => {
-            const btn = document.querySelector('#list-tbody tr button');
-            if (btn) btn.click();
-            setTimeout(() => driverObj.moveNext(), 450);
-          } }
-      },
-      {
-        element: '[id^="exp-"]',
-        popover: { title: '各板块收支余明细',
-          description: '"待分配支出" = 支出概算 − 已分配，代表这个板块还可以编多少预算空间，防止下级预算超出集团上限。',
-          side: 'top', align: 'start' }
-      },
-      {
-        element: 'button[onclick="openCreate()"]',
-        popover: { title: '新增年度预算 — 进入表单',
-          description: '支持两种路径：直接手填收支目标，或展开推算工具根据历史数据推算后一键填入。点"下一步"打开表单，并继续表单内的导览。',
-          side: 'bottom', align: 'end',
-          onNextClick: () => {
-            openCreate();
-            // 主 tour 结束，等 modal 动画完成后启动表单 tour
-            setTimeout(() => { driverObj.destroy(); startFormTour132(); }, 850);
-          } }
-      }
-    ]
-  });
-  driverObj.drive();
-}
 </script>
 </body>
 </html>
