@@ -247,7 +247,7 @@
 
     <!-- 12月矩阵 -->
     <div class="flex-between" style="margin-bottom:var(--space-2)">
-      <span class="text-secondary" style="font-size:var(--font-size-sm)">19 项费用科目 × 12 月（单位：万元）</span>
+      <span class="text-secondary" style="font-size:var(--font-size-sm)">22 项费用科目 × 12 月（单位：万元）</span>
     </div>
     <div class="ant-table-wrapper">
       <table class="ant-edit-matrix" id="edit-matrix">
@@ -294,7 +294,7 @@
       <textarea class="ant-input" id="adj-reason" rows="2" placeholder="请说明调整原因"></textarea>
     </div>
     <div class="flex-between" style="margin-bottom:var(--space-2)">
-      <span class="text-secondary" style="font-size:var(--font-size-sm)">调整后 19 项费用科目 × 12 月（单位：万元）</span>
+      <span class="text-secondary" style="font-size:var(--font-size-sm)">调整后 22 项费用科目 × 12 月（单位：万元）</span>
     </div>
     <div class="ant-table-wrapper">
       <table class="ant-edit-matrix" id="adj-matrix">
@@ -363,10 +363,12 @@
 // ── 费用科目分组 ──
 const SUBJECT_GROUPS=[
   {group:'直接成本',cls:'',subjects:[
-    {name:'LNG加气费',erp:'660214'},{name:'ETC路桥费',erp:'660214'},
-    {name:'司机趟结工资',erp:'660209'},{name:'司机杂费/奖惩',erp:'660299'},
-    {name:'车辆维修费',erp:'660299'},{name:'车辆折旧',erp:'660206'},
-    {name:'保险费',erp:'660219'},{name:'低值易耗品',erp:'660299'},
+    {name:'运费支出',erp:'660211'},{name:'LNG加气费',erp:'660214'},
+    {name:'ETC路桥费',erp:'660214'},{name:'司机趟结工资',erp:'660209'},
+    {name:'司机杂费/奖惩',erp:'660299'},{name:'车辆维修费',erp:'660299'},
+    {name:'车辆折旧',erp:'660206'},{name:'保险费',erp:'660219'},
+    {name:'场地使用费',erp:'660212'},{name:'GPS月租费',erp:'660215'},
+    {name:'低值易耗品',erp:'660299'},
   ]},
   {group:'管理费用（期间费用 · 6602）',cls:'mgmt',subjects:[
     {name:'差旅费',erp:'660207'},{name:'业务招待费',erp:'660205'},
@@ -751,7 +753,7 @@ function openDetail(id){
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-4)">
       ${MONTHS_L.map((lbl,mi)=>`<div style="background:var(--blue-1);border:1px solid var(--blue-2);border-radius:var(--radius-md);padding:6px 10px;text-align:center;min-width:60px"><div style="font-size:11px;color:var(--blue-7)">${lbl}</div><div style="font-size:13px;font-weight:600;color:var(--blue-7)">${f(displayTotal(colSums[mi]))}</div></div>`).join('')}
     </div>
-    <div class="section-header">19 项科目明细（不含税原始值）</div>
+    <div class="section-header">22 项科目明细（不含税原始值）</div>
     <div class="ant-table-wrapper"><table class="ant-edit-matrix" style="font-size:12px">
       <thead><tr><th style="text-align:left">科目</th><th>ERP</th>${MONTHS_L.map(l=>`<th>${l}</th>`).join('')}<th>合计</th></tr></thead>
       <tbody>${matRows}</tbody>
