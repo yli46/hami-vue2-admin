@@ -40,15 +40,15 @@
       </div>
       <div class="ant-search-item">
         <label class="ant-search-label">年度</label>
-        <select class="ant-input" style="width:90px"><option selected>2026</option><option>2025</option></select>
+        <select class="ant-input" style="width:90px" id="f-year-q"><option selected>2026</option><option>2025</option></select>
       </div>
       <div class="ant-search-item">
         <label class="ant-search-label">月份</label>
         <div class="month-strip">
-          <span class="ms-item" onclick="pickM(this)">全年</span>
+          <span class="ms-item active" onclick="pickM(this)">全年</span>
           <span class="ms-item" onclick="pickM(this)">1</span><span class="ms-item" onclick="pickM(this)">2</span>
           <span class="ms-item" onclick="pickM(this)">3</span><span class="ms-item" onclick="pickM(this)">4</span>
-          <span class="ms-item active" onclick="pickM(this)">5</span><span class="ms-item" onclick="pickM(this)">6</span>
+          <span class="ms-item" onclick="pickM(this)">5</span><span class="ms-item" onclick="pickM(this)">6</span>
           <span class="ms-item" onclick="pickM(this)">7</span><span class="ms-item" onclick="pickM(this)">8</span>
           <span class="ms-item" onclick="pickM(this)">9</span><span class="ms-item" onclick="pickM(this)">10</span>
           <span class="ms-item" onclick="pickM(this)">11</span><span class="ms-item" onclick="pickM(this)">12</span>
@@ -258,7 +258,13 @@ function updateAcctOptions(){
   });
 }
 
-function pickM(el){el.closest('.month-strip').querySelectorAll('.ms-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+let selMonth=''; // ''=全年；否则两位月份，如 '05'
+function pickM(el){
+  el.closest('.month-strip').querySelectorAll('.ms-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const t=el.textContent.trim();
+  selMonth = t==='全年' ? '' : String(t).padStart(2,'0');
+}
 
 const STATUS_MAP={'草稿':'ant-tag-gold','待审核':'ant-tag-blue','已通过':'ant-tag-green','已驳回':'ant-tag-red'};
 
@@ -274,7 +280,15 @@ function renderList(){
   const fCat=document.getElementById('f-cat').value;
   const fEnt=document.getElementById('f-entity').value;
   const fSt=document.getElementById('f-st').value;
-  const rows=data.filter(r=>(!fCat||r.cat===fCat.replace('（6602）','').replace('（6603）',''))&&(!fEnt||r.entity===fEnt)&&(!fSt||r.status===fSt));
+  const fYear=document.getElementById('f-year-q').value;
+  const rows=data.filter(r=>{
+    const [ry,rm]=(r.month||'').split('-');
+    return (!fCat||r.cat===fCat.replace('（6602）','').replace('（6603）',''))
+      &&(!fEnt||r.entity===fEnt)
+      &&(!fSt||r.status===fSt)
+      &&(!fYear||ry===fYear)
+      &&(!selMonth||rm===selMonth);
+  });
   const tbody=document.getElementById('list-tbody');
   tbody.innerHTML='';
   if(!rows.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>';return;}
@@ -301,7 +315,14 @@ function renderList(){
     </tr>`;
   });
 }
-function resetSearch(){['f-cat','f-entity','f-st'].forEach(id=>document.getElementById(id).value='');renderList();}
+function resetSearch(){
+  ['f-cat','f-entity','f-st'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-year-q').value='2026';
+  selMonth='';
+  const strip=document.querySelector('.month-strip');
+  if(strip){strip.querySelectorAll('.ms-item').forEach(t=>t.classList.remove('active'));strip.querySelector('.ms-item').classList.add('active');}
+  renderList();
+}
 
 function clearForm(){
   document.getElementById('f-cat-sel').value='';updateAcctOptions();

@@ -433,7 +433,8 @@ function cascPick(key,entity,unit){
   else{txt.textContent=entity+' / '+unit;txt.classList.remove('casc-ph');}
   document.getElementById('casc-'+key+'-panel').classList.remove('open');
   document.getElementById('casc-'+key).classList.remove('open');
-  if(key==='filter')renderList();else refreshTool();
+  // 列表筛选条件改变后不立即过滤，统一点“查询”才生效（与年度/状态查询条件一致）；表单内则即时刷新概算约束
+  if(key==='form')refreshTool();
 }
 function cascSet(key,entity,unit){cascState[key]={entity:entity||'',unit:unit||''};const txt=document.getElementById('casc-'+key+'-text');if(!entity){txt.textContent=key==='filter'?'全部':'请选择主体 / 业务单元';txt.classList.add('casc-ph');}else{txt.textContent=entity+' / '+unit;txt.classList.remove('casc-ph');}}
 document.addEventListener('click',e=>{if(!e.target.closest('.casc')){document.querySelectorAll('.casc-panel').forEach(x=>x.classList.remove('open'));document.querySelectorAll('.casc').forEach(x=>x.classList.remove('open'));}});
