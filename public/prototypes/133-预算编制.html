@@ -22,6 +22,21 @@
 .param-src-cell { font-size:11px; color:var(--text-color-tertiary); white-space:nowrap; }
 .param-src-cell.manual { color:var(--gold-7); }
 .pref { font-size:11px; color:var(--blue-7); background:var(--blue-1); padding:1px 5px; border-radius:var(--radius-xs); }
+/* 二级级联组件 */
+.casc { position:relative; display:inline-block; }
+.casc-inp { display:flex; align-items:center; justify-content:space-between; gap:8px; height:var(--control-height); padding:0 10px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:#fff; cursor:pointer; font-size:var(--font-size-sm); color:var(--text-color); }
+.casc-inp:hover { border-color:var(--color-primary); }
+.casc-ph { color:var(--text-color-tertiary); }
+.casc-arrow { color:var(--text-color-tertiary); font-size:10px; transition:transform var(--motion-duration-fast); }
+.casc.open .casc-arrow { transform:rotate(180deg); }
+.casc-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:60; display:none; background:#fff; border:1px solid var(--border-color-secondary); border-radius:var(--radius-md); box-shadow:0 6px 16px rgba(0,0,0,.12); }
+.casc-panel.open { display:flex; }
+.casc-col { min-width:128px; padding:4px 0; max-height:240px; overflow:auto; }
+.casc-col + .casc-col { border-left:1px solid var(--border-color-secondary); }
+.casc-opt { padding:7px 14px; font-size:var(--font-size-sm); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; white-space:nowrap; }
+.casc-opt:hover { background:var(--gray-2); }
+.casc-opt.active { background:var(--blue-1); color:var(--color-primary); font-weight:500; }
+.casc-opt .ar { font-size:10px; color:var(--text-color-tertiary); }
 </style>
 </head>
 <body>
@@ -62,7 +77,7 @@
 </div>
 
 <!-- KPI -->
-<div class="statistic-grid">
+<div class="statistic-grid" style="grid-template-columns:repeat(3,1fr)">
   <div class="ant-statistic ant-statistic-primary">
     <div class="ant-statistic-title">本年度编制进度</div>
     <div class="ant-statistic-content color-primary" id="k-prog">5<span class="ant-statistic-suffix">/ 8</span></div>
@@ -86,10 +101,16 @@
     <div class="ant-search-bar">
       <div class="ant-search-item"><label class="ant-search-label">年度</label>
         <select class="ant-input" style="width:100px" id="f-yr"><option>2026</option><option>2025</option></select></div>
-      <div class="ant-search-item"><label class="ant-search-label">主体</label>
-        <select class="ant-input" style="width:140px" id="f-ent" onchange="onFilterEntityChange()"><option value="">全部</option><option>红树林集团</option><option>新鹏运</option></select></div>
-      <div class="ant-search-item"><label class="ant-search-label">业务单元</label>
-        <select class="ant-input" style="width:150px" id="f-unit"><option value="">全部</option><option>车队</option></select></div>
+      <div class="ant-search-item"><label class="ant-search-label">主体/业务单元</label>
+        <div class="casc" id="casc-filter">
+          <div class="casc-inp" style="min-width:200px" onclick="event.stopPropagation();cascToggle('filter')">
+            <span id="casc-filter-text" class="casc-ph">全部</span><span class="casc-arrow">▾</span>
+          </div>
+          <div class="casc-panel" id="casc-filter-panel">
+            <div class="casc-col" id="casc-filter-l1"></div>
+            <div class="casc-col" id="casc-filter-l2"></div>
+          </div>
+        </div></div>
       <div class="ant-search-item"><label class="ant-search-label">状态</label>
         <select class="ant-input" style="width:120px" id="f-st"><option value="">全部</option><option>草稿</option><option>审批中</option><option>已生效</option><option>已驳回</option><option>已归档</option></select></div>
       <div class="ant-space ml-auto">
@@ -150,14 +171,16 @@
     <div class="grid-2" style="margin-bottom:var(--space-4)">
       <div style="display:flex;gap:var(--space-4)">
         <div class="ant-form-item" style="margin-bottom:0">
-          <div class="ant-form-item-label"><span class="required">主体</span></div>
-          <select class="ant-input" id="f-entity" style="width:160px" onchange="onEntityChange()">
-            <option value="">请选择</option><option>红树林集团</option><option>新鹏运</option>
-          </select>
-        </div>
-        <div class="ant-form-item" style="margin-bottom:0">
-          <div class="ant-form-item-label"><span class="required">业务单元</span></div>
-          <select class="ant-input" id="f-unit-sel" style="width:160px" onchange="refreshTool()"><option value="">请先选主体</option></select>
+          <div class="ant-form-item-label"><span class="required">主体 / 业务单元</span></div>
+          <div class="casc" id="casc-form">
+            <div class="casc-inp" style="min-width:220px" onclick="event.stopPropagation();cascToggle('form')">
+              <span id="casc-form-text" class="casc-ph">请选择主体 / 业务单元</span><span class="casc-arrow">▾</span>
+            </div>
+            <div class="casc-panel" id="casc-form-panel">
+              <div class="casc-col" id="casc-form-l1"></div>
+              <div class="casc-col" id="casc-form-l2"></div>
+            </div>
+          </div>
         </div>
         <div class="ant-form-item" style="margin-bottom:0">
           <div class="ant-form-item-label"><span class="required">年度</span></div>
@@ -380,6 +403,41 @@ const SUBJECT_GROUPS=[
 const SUBJECTS=SUBJECT_GROUPS.flatMap(g=>g.subjects);
 const UNITS={'红树林集团':['车队'],'新鹏运':['车队']};
 
+// ── 主体/业务单元 二级级联组件 ──
+const CASCADE=[{v:'红树林集团',c:['车队']},{v:'新鹏运',c:['车队']}];
+const cascState={filter:{entity:'',unit:''},form:{entity:'',unit:''}};
+function cascToggle(key){
+  const wrap=document.getElementById('casc-'+key);
+  const p=document.getElementById('casc-'+key+'-panel');
+  const willOpen=!p.classList.contains('open');
+  document.querySelectorAll('.casc-panel').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.casc').forEach(x=>x.classList.remove('open'));
+  if(willOpen){p.classList.add('open');wrap.classList.add('open');cascRender(key,cascState[key].entity||CASCADE[0].v);}
+}
+function cascRender(key,hoverEntity){
+  const allowAll=key==='filter';
+  const l1=document.getElementById('casc-'+key+'-l1');
+  const l2=document.getElementById('casc-'+key+'-l2');
+  let h1='';
+  if(allowAll)h1+=`<div class="casc-opt${cascState[key].entity===''?' active':''}" onclick="cascPick('${key}','','')">全部</div>`;
+  CASCADE.forEach(e=>{h1+=`<div class="casc-opt${hoverEntity===e.v?' active':''}" onclick="cascHover('${key}','${e.v}')">${e.v}<span class="ar">›</span></div>`;});
+  l1.innerHTML=h1;
+  const ent=CASCADE.find(e=>e.v===hoverEntity);
+  l2.innerHTML=ent?ent.c.map(u=>`<div class="casc-opt${(cascState[key].entity===hoverEntity&&cascState[key].unit===u)?' active':''}" onclick="cascPick('${key}','${hoverEntity}','${u}')">${u}</div>`).join(''):'';
+}
+function cascHover(key,entity){cascRender(key,entity);}
+function cascPick(key,entity,unit){
+  cascState[key]={entity,unit};
+  const txt=document.getElementById('casc-'+key+'-text');
+  if(!entity){txt.textContent=key==='filter'?'全部':'请选择主体 / 业务单元';txt.classList.add('casc-ph');}
+  else{txt.textContent=entity+' / '+unit;txt.classList.remove('casc-ph');}
+  document.getElementById('casc-'+key+'-panel').classList.remove('open');
+  document.getElementById('casc-'+key).classList.remove('open');
+  if(key==='filter')renderList();else refreshTool();
+}
+function cascSet(key,entity,unit){cascState[key]={entity:entity||'',unit:unit||''};const txt=document.getElementById('casc-'+key+'-text');if(!entity){txt.textContent=key==='filter'?'全部':'请选择主体 / 业务单元';txt.classList.add('casc-ph');}else{txt.textContent=entity+' / '+unit;txt.classList.remove('casc-ph');}}
+document.addEventListener('click',e=>{if(!e.target.closest('.casc')){document.querySelectorAll('.casc-panel').forEach(x=>x.classList.remove('open'));document.querySelectorAll('.casc').forEach(x=>x.classList.remove('open'));}});
+
 // 模拟从 132 概算管理拉取的数据（实际系统由 API 提供）
 const BUDGET_132={
   2026:{
@@ -427,8 +485,8 @@ function approvalDesc(r){
 // ── 列表 ──
 function renderList(){
   const yr=document.getElementById('f-yr').value;
-  const ent=document.getElementById('f-ent').value;
-  const unit=document.getElementById('f-unit').value;
+  const ent=cascState.filter.entity;
+  const unit=cascState.filter.unit;
   const st=document.getElementById('f-st').value;
   const rows=data.filter(r=>r.year===yr&&(!ent||r.entity===ent)&&(!unit||r.unit===unit)&&(!st||r.status===st));
   const tbody=document.getElementById('list-tbody');
@@ -456,15 +514,7 @@ function renderList(){
   });
   updateKpi();renderMatrix();
 }
-function resetSearch(){['f-ent','f-unit','f-st'].forEach(id=>document.getElementById(id).value='');onFilterEntityChange();renderList();}
-// 列表查询：主体 → 业务单元 二级级联
-function onFilterEntityChange(){
-  const ent=document.getElementById('f-ent').value;
-  const sel=document.getElementById('f-unit');
-  sel.innerHTML='<option value="">全部</option>';
-  const units=ent?(UNITS[ent]||[]):[...new Set(Object.values(UNITS).flat())];
-  units.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
-}
+function resetSearch(){document.getElementById('f-st').value='';cascSet('filter','','');renderList();}
 function updateKpi(){
   const yr=document.getElementById('f-yr').value;
   const yd=data.filter(r=>r.year===yr);
@@ -509,14 +559,6 @@ function switchTab(el,pane){
   if(pane==='matrix')renderMatrix();
 }
 
-// ── 主体联动 ──
-function onEntityChange(){
-  const ent=document.getElementById('f-entity').value;
-  const sel=document.getElementById('f-unit-sel');
-  sel.innerHTML='<option value="">请选择</option>';
-  if(ent&&UNITS[ent])UNITS[ent].forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
-  refreshTool();
-}
 function refreshTool(){
   if(document.getElementById('calc-panel-b').classList.contains('open')){updateBudgetConstraint();loadBaseline();}
 }
@@ -570,8 +612,8 @@ function toggleCalcB(){
 }
 
 function updateBudgetConstraint(){
-  const entity=document.getElementById('f-entity').value;
-  const unit=document.getElementById('f-unit-sel').value;
+  const entity=cascState.form.entity;
+  const unit=cascState.form.unit;
   const year=parseInt(document.getElementById('f-year').value);
   const key=get132Key(entity,unit);
   const bar=document.getElementById('b-budget-bar');
@@ -591,8 +633,8 @@ function updateBudgetConstraint(){
 // 基线总额：上年实际（演示）或概算下达额
 function baselineTotal(){
   const src=document.getElementById('b-base-src').value;
-  const entity=document.getElementById('f-entity').value;
-  const unit=document.getElementById('f-unit-sel').value;
+  const entity=cascState.form.entity;
+  const unit=cascState.form.unit;
   const year=parseInt(document.getElementById('f-year').value);
   const key=get132Key(entity,unit);
   if(src==='quota'){
@@ -652,8 +694,8 @@ function recalcBaseTotals(){
     baseT+=base;calcT+=base*(1+grow/100);
   });
   // 与概算支出上限对比
-  const entity=document.getElementById('f-entity').value;
-  const unit=document.getElementById('f-unit-sel').value;
+  const entity=cascState.form.entity;
+  const unit=cascState.form.unit;
   const year=parseInt(document.getElementById('f-year').value);
   const key=get132Key(entity,unit);
   const bc=key&&BUDGET_132[year]?.[key];
@@ -710,7 +752,7 @@ function applyBCalc(){
 function openCreate(){
   formMode='create';editId=null;
   document.getElementById('form-title').textContent='新增年度预算';
-  document.getElementById('f-entity').value='';document.getElementById('f-unit-sel').innerHTML='<option value="">请先选主体</option>';
+  cascSet('form','','');
   document.getElementById('f-year').value='2026';document.getElementById('f-ver').value='V1.0';
   document.getElementById('f-remark').value='';document.getElementById('form-adjust-block').style.display='none';
   document.getElementById('tool-hint').style.display='none';
@@ -729,8 +771,7 @@ function openEdit(id){
   const r=data.find(x=>x.id===id);if(!r)return;
   formMode='edit';editId=id;
   document.getElementById('form-title').textContent=`编辑预算 — ${r.entity} / ${r.unit} ${r.year}年 ${r.ver}`;
-  document.getElementById('f-entity').value=r.entity;onEntityChange();
-  document.getElementById('f-unit-sel').value=r.unit;
+  cascSet('form',r.entity,r.unit);
   document.getElementById('f-year').value=r.year;
   document.getElementById('f-ver').value=r.status==='已驳回'?bumpVer(r.ver):r.ver;
   document.getElementById('f-remark').value=r.remark||'';
@@ -743,8 +784,8 @@ function openEdit(id){
 function bumpVer(ver){const n=parseFloat(ver.replace('V',''));return'V'+(n+0.1).toFixed(1);}
 
 function submitForm(action){
-  const entity=document.getElementById('f-entity').value;
-  const unit=document.getElementById('f-unit-sel').value;
+  const entity=cascState.form.entity;
+  const unit=cascState.form.unit;
   const year=document.getElementById('f-year').value;
   if(!entity||!unit){showMsg('请选择主体和业务单元','error');return;}
   const months=getMatrixValues('fm');
@@ -910,7 +951,7 @@ function showMsg(text,type){
   document.getElementById('msg-text').textContent=text;
   el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
-onFilterEntityChange();renderList();
+cascSet('filter','','');renderList();
 </script>
 </body>
 </html>

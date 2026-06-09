@@ -558,7 +558,7 @@ function renderList(){
       <td><div class="ant-space ant-space-sm">
         <button class="ant-btn ant-btn-link" style="padding:0" onclick="openDetail(${b.id})">详情</button>
         ${b.status==='已生效'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0;color:var(--color-warning)" onclick="openVoid(${b.id})">作废</button>`:''}
-        ${b.status==='已生效'&&allocCost===0?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${b.id})">删除</button>`:''}
+        ${b.status==='已作废'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${b.id})">删除</button>`:''}
       </div></td>
     </tr>
     <tr id="exp-${b.id}" style="display:none"><td colspan="10" style="padding:0;background:var(--gray-2)">

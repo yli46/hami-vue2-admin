@@ -11,20 +11,6 @@
 .ms-item.active { background:var(--color-primary); color:#fff; }
 .acct-code { font-size:12px; color:var(--color-primary); font-family:Consolas,monospace; }
 </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
-<style>
-.driver-popover{background:#fff!important;border-radius:10px!important;box-shadow:0 8px 32px rgba(0,0,0,.16)!important;padding:18px 20px 14px!important;max-width:320px!important;min-width:260px!important;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important}
-.driver-popover *{box-sizing:border-box!important}
-.driver-popover-title{display:block!important;font-size:14px!important;font-weight:600!important;color:#1A2233!important;margin:0 0 8px!important;line-height:1.5!important;padding:0!important}
-.driver-popover-description{display:block!important;font-size:13px!important;color:#595959!important;line-height:1.75!important;margin:0 0 12px!important;padding:0!important}
-.driver-popover-footer{display:flex!important;align-items:center!important;justify-content:space-between!important;margin:0!important;padding:0!important}
-.driver-popover-progress-text{font-size:12px!important;color:#BFBFBF!important;line-height:1!important}
-.driver-popover-navigation-btns{display:flex!important;gap:8px!important;align-items:center!important}
-.driver-popover-prev-btn,.driver-popover-next-btn,.driver-popover-done-btn{all:unset!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;height:28px!important;padding:0 14px!important;font-size:12px!important;font-weight:500!important;border-radius:5px!important;cursor:pointer!important;border:1px solid!important;white-space:nowrap!important;line-height:1!important;box-sizing:border-box!important}
-.driver-popover-prev-btn{background:#fff!important;border-color:#D9D9D9!important;color:#595959!important}
-.driver-popover-next-btn,.driver-popover-done-btn{background:#1677FF!important;border-color:#1677FF!important;color:#fff!important}
-.driver-popover-close-btn{all:unset!important;position:absolute!important;top:14px!important;right:14px!important;width:20px!important;height:20px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#BFBFBF!important;cursor:pointer!important;font-size:14px!important}
-</style>
 </head>
 <body>
 <div class="ant-page">
@@ -71,7 +57,7 @@
       <div class="ant-search-item">
         <label class="ant-search-label">主体</label>
         <select class="ant-input" style="width:130px" id="f-entity">
-          <option value="">全部</option><option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option>
+          <option value="">全部</option><option>红树林集团</option><option>新鹏运</option>
         </select>
       </div>
       <div class="ant-search-item">
@@ -138,7 +124,7 @@
         <div class="ant-form-item-label"><span class="required">主体</span></div>
         <select class="ant-input" id="f-entity-sel">
           <option value="">请选择</option>
-          <option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option>
+          <option>红树林集团</option><option>新鹏运</option>
         </select>
       </div>
       <div class="ant-form-item">
@@ -279,7 +265,7 @@ const STATUS_MAP={'草稿':'ant-tag-gold','待审核':'ant-tag-blue','已通过'
 let data=[
   {id:1,no:'F2026-0502-001',month:'2026-05',cat:'管理费用',acct:'660207',entity:'红树林集团',person:'马伶俐',amount:8600,bizDate:'2026-04-28',voucher:'CW2026-0430-001',createdBy:'马伶俐',remark:'4 月差旅报销单 5 月初到财务，归属 4 月已关账，补录至 5 月',status:'已通过',attach:'差旅报销.pdf'},
   {id:2,no:'F2026-0510-002',month:'2026-05',cat:'财务费用',acct:'660302',entity:'新鹏运',person:'财务部',amount:12500,bizDate:'2026-05-08',voucher:'YH2026-0508',createdBy:'李会计',remark:'银行贷款利息，5 月未自动推送，手动补录',status:'待审核',attach:'银行利息对账单.pdf'},
-  {id:3,no:'F2026-0515-003',month:'2026-05',cat:'管理费用',acct:'660205',entity:'哈密普发新能源',person:'王文昊',amount:3200,bizDate:'2026-05-14',voucher:'',createdBy:'张会计',remark:'客户招待发票延迟，补录至 5 月',status:'草稿',attach:''},
+  {id:3,no:'F2026-0515-003',month:'2026-05',cat:'管理费用',acct:'660205',entity:'红树林集团',person:'王文昊',amount:3200,bizDate:'2026-05-14',voucher:'',createdBy:'张会计',remark:'客户招待发票延迟，补录至 5 月',status:'草稿',attach:''},
   {id:4,no:'F2026-0518-004',month:'2026-05',cat:'管理费用',acct:'660218',entity:'红树林集团',person:'行政部',amount:6800,bizDate:'2026-05-17',voucher:'HY2026-0517',createdBy:'马伶俐',remark:'5 月股东例会会议费',status:'已通过',attach:'会议费发票.jpg'},
 ];
 let editId=null,delId=null,approveTarget=null;
@@ -423,87 +409,6 @@ function showMsg(text,type){
   el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
 renderList();
-</script>
-<!-- ═══ 产品导览 ═══ -->
-<button onclick="startTour()" id="tour-fab"
-  style="position:fixed;bottom:24px;right:24px;z-index:8999;height:40px;padding:0 18px;background:#1677FF;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 4px 12px rgba(22,119,255,.4);display:flex;align-items:center;gap:6px">
-  ◉ 产品导览
-</button>
-<script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
-<script>
-let driverObj;
-
-function startFormTour134M() {
-  window.scrollTo({ top: 0, behavior: 'instant' });
-  setTimeout(() => {
-    const { driver } = window.driver.js;
-    const fd = driver({
-      showProgress: true, progressText: '{{current}} / {{total}}',
-      prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成 ✓',
-      animate: true, smoothScroll: true,
-      steps: [
-        { element: '#f-cat-sel',
-          popover: { title: '先选费用类型',
-            description: '管理费用（差旅、招待、办公等）或财务费用（利息、手续费等）。选完后，下方具体科目下拉会自动更新，只显示这个类型下的科目。点"下一步"选管理费用看效果。',
-            side: 'bottom',
-            onNextClick: () => {
-              document.getElementById('f-cat-sel').value = '管理费用';
-              updateAcctOptions();
-              setTimeout(() => fd.moveNext(), 300);
-            } } },
-        { element: '#f-acct',
-          popover: { title: '科目自动联动（24 项）',
-            description: '选了管理费用后，这里列出 24 个具体科目，每个都带 ERP 编码，直接映射到财务系统，不会填错。',
-            side: 'bottom' } },
-        { element: '#f-month',
-          popover: { title: '归属月份是费用发生月',
-            description: '填的是费用"实际发生"的月份，不是今天录入的日期。比如 4 月出差、5 月才拿到发票，归属月份应填 4 月，对财务月度结算很重要。',
-            side: 'bottom' } },
-        { element: '#f-remark',
-          popover: { title: '补录原因（提交时必填）',
-            description: '保存草稿可以先不写，提交审核时必须写明原因，比如"差旅报销单推迟一个月到财务"。财务审核时主要依据这里判断是否通过。',
-            side: 'top' } },
-        { element: '#d-form .ant-modal-footer',
-          popover: { title: '两种保存方式',
-            description: '"保存草稿"先存着随时可改；"提交审核"立即发给财务复核，审核通过后纳入当月统计数据。导览到此完成，点"完成"后可继续填写。',
-            side: 'top', align: 'end' } }
-      ]
-    });
-    fd.drive();
-  }, 100);
-}
-
-function startTour() {
-  const { driver } = window.driver.js;
-  driverObj = driver({
-    showProgress: true, progressText: '{{current}} / {{total}}',
-    prevBtnText: '← 上一步', nextBtnText: '下一步 →', doneBtnText: '完成',
-    animate: true, smoothScroll: true,
-    steps: [
-      { element: '.ant-alert',
-        popover: { title: '这个页面做什么',
-          description: '专门用来补录"漏网之鱼"——因单据晚到、银行数据未推送等原因未能自动入账的管理类和财务类费用。日常运营成本（加气、过路费、工资等）走另一套自动归集，不在这里录。',
-          side: 'bottom', align: 'start' } },
-      { element: '.ant-search-bar',
-        popover: { title: '多维度筛选',
-          description: '可按费用类别（管理费用 / 财务费用）、月份、主体、审核状态组合筛选，快速找到需要核对的记录。',
-          side: 'bottom', align: 'start' } },
-      { element: '.ant-table-wrapper',
-        popover: { title: '补录清单',
-          description: '紫色标签是管理费用，橙色是财务费用，直观区分。状态分：草稿 → 待审核 → 已通过 / 已驳回。科目编码和名称同时显示，便于财务核对。',
-          side: 'top', align: 'start' } },
-      { element: 'button[onclick="openCreate()"]',
-        popover: { title: '新增一条补录 — 进入表单',
-          description: '选费用类别后，具体科目下拉会自动联动（管理费用 24 个科目，财务费用 5 个科目）。金额统一填不含税。点"下一步"打开表单。',
-          side: 'bottom', align: 'end',
-          onNextClick: () => {
-            openCreate();
-            setTimeout(() => { driverObj.destroy(); startFormTour134M(); }, 850);
-          } } }
-    ]
-  });
-  driverObj.drive();
-}
 </script>
 </body>
 </html>
