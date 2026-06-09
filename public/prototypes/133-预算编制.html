@@ -78,11 +78,6 @@
     <div class="ant-statistic-content color-error" id="k-rej">1</div>
     <div class="ant-statistic-extra">需重新提交</div>
   </div>
-  <div class="ant-statistic ant-statistic-success">
-    <div class="ant-statistic-title">超概算预警</div>
-    <div class="ant-statistic-content color-success" id="k-over">0</div>
-    <div class="ant-statistic-extra">超出概算上限的单元</div>
-  </div>
 </div>
 
 <!-- 查询 -->
@@ -92,9 +87,9 @@
       <div class="ant-search-item"><label class="ant-search-label">年度</label>
         <select class="ant-input" style="width:100px" id="f-yr"><option>2026</option><option>2025</option></select></div>
       <div class="ant-search-item"><label class="ant-search-label">主体</label>
-        <select class="ant-input" style="width:140px" id="f-ent"><option value="">全部</option><option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option></select></div>
+        <select class="ant-input" style="width:140px" id="f-ent" onchange="onFilterEntityChange()"><option value="">全部</option><option>红树林集团</option><option>新鹏运</option></select></div>
       <div class="ant-search-item"><label class="ant-search-label">业务单元</label>
-        <select class="ant-input" style="width:150px" id="f-unit"><option value="">全部</option><option>车队</option><option>廊道（建设期）</option><option>加气站</option><option>制氢工厂</option></select></div>
+        <select class="ant-input" style="width:150px" id="f-unit"><option value="">全部</option><option>车队</option></select></div>
       <div class="ant-search-item"><label class="ant-search-label">状态</label>
         <select class="ant-input" style="width:120px" id="f-st"><option value="">全部</option><option>草稿</option><option>审批中</option><option>已生效</option><option>已驳回</option><option>已归档</option></select></div>
       <div class="ant-space ml-auto">
@@ -157,7 +152,7 @@
         <div class="ant-form-item" style="margin-bottom:0">
           <div class="ant-form-item-label"><span class="required">主体</span></div>
           <select class="ant-input" id="f-entity" style="width:160px" onchange="onEntityChange()">
-            <option value="">请选择</option><option>红树林集团</option><option>新鹏运</option><option>哈密普发新能源</option>
+            <option value="">请选择</option><option>红树林集团</option><option>新鹏运</option>
           </select>
         </div>
         <div class="ant-form-item" style="margin-bottom:0">
@@ -383,31 +378,22 @@ const SUBJECT_GROUPS=[
   ]},
 ];
 const SUBJECTS=SUBJECT_GROUPS.flatMap(g=>g.subjects);
-const UNITS={'红树林集团':['车队'],'新鹏运':['车队'],'哈密普发新能源':['廊道（建设期）','加气站','制氢工厂']};
+const UNITS={'红树林集团':['车队'],'新鹏运':['车队']};
 
 // 模拟从 132 概算管理拉取的数据（实际系统由 API 提供）
 const BUDGET_132={
   2026:{
     hlj:{rev:14000,cost:12000,alloc:9800},   // 红树林集团·车队
     xpy:{rev:9500, cost:8500, alloc:7200},   // 新鹏运·车队
-    lang:{rev:0,   cost:10000,alloc:0},       // 廊道（建设期）
-    jia:{rev:0,    cost:3200, alloc:0},       // 加氢站
-    zhi:{rev:0,    cost:1200, alloc:0},       // 制氢工厂
   },
   2025:{
     hlj:{rev:12000,cost:10000,alloc:10000},
     xpy:{rev:8000, cost:7500, alloc:7500},
-    lang:{rev:0,   cost:8000, alloc:0},
-    jia:{rev:0,    cost:2800, alloc:0},
-    zhi:{rev:0,    cost:800,  alloc:0},
   }
 };
 function get132Key(entity,unit){
   if(entity==='红树林集团') return 'hlj';
   if(entity==='新鹏运') return 'xpy';
-  if(unit.includes('廊道')) return 'lang';
-  if(unit.includes('加氢')) return 'jia';
-  if(unit.includes('制氢')) return 'zhi';
   return null;
 }
 const MONTHS_L=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -423,10 +409,7 @@ function makeMonths(base){return SUBJECTS.map((_,si)=>Array.from({length:12},(_,
 
 let data=[
   {id:1,entity:'红树林集团',unit:'车队',year:'2026',ver:'V1.1',status:'已生效',author:'马伶俐',updAt:'2026-01-20 09:00',remark:'',months:makeMonths(120),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-18 14:30',comment:'同意'},{role:'L2',user:'马伶俐',status:'通过',time:'2026-01-20 09:00',comment:'批准'}]},
-  {id:2,entity:'新鹏运',unit:'车队',year:'2026',ver:'V1.1',status:'已生效',author:'李会计',updAt:'2026-01-25 11:00',remark:'',months:makeMonths(80),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-23 14:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'通过',time:'2026-01-25 11:00',comment:'批准'}]},
-  {id:3,entity:'哈密普发新能源',unit:'廊道（建设期）',year:'2026',ver:'V1.0',status:'审批中',author:'张会计',updAt:'2026-02-01 16:40',remark:'',months:makeMonths(50),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-31 11:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'待审',time:null,comment:''}]},
-  {id:4,entity:'哈密普发新能源',unit:'加气站',year:'2026',ver:'V1.0',status:'已驳回',author:'张会计',updAt:'2026-02-10 09:30',remark:'',months:makeMonths(20),approvals:[{role:'L1',user:'朱建国',status:'驳回',time:'2026-02-08 10:00',comment:'管理费用科目有误，请核实后重新提交'}]},
-  {id:5,entity:'哈密普发新能源',unit:'制氢工厂',year:'2026',ver:'V1.0',status:'草稿',author:'张会计',updAt:'2026-02-12 09:00',remark:'',months:makeMonths(15),approvals:[]},
+  {id:2,entity:'新鹏运',unit:'车队',year:'2026',ver:'V1.0',status:'审批中',author:'李会计',updAt:'2026-01-25 11:00',remark:'',months:makeMonths(80),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-23 14:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'待审',time:null,comment:''}]},
 ];
 
 const annualTotal=months=>months.reduce((s,row)=>s+row.reduce((rs,v)=>rs+v,0),0);
@@ -473,14 +456,21 @@ function renderList(){
   });
   updateKpi();renderMatrix();
 }
-function resetSearch(){['f-ent','f-unit','f-st'].forEach(id=>document.getElementById(id).value='');renderList();}
+function resetSearch(){['f-ent','f-unit','f-st'].forEach(id=>document.getElementById(id).value='');onFilterEntityChange();renderList();}
+// 列表查询：主体 → 业务单元 二级级联
+function onFilterEntityChange(){
+  const ent=document.getElementById('f-ent').value;
+  const sel=document.getElementById('f-unit');
+  sel.innerHTML='<option value="">全部</option>';
+  const units=ent?(UNITS[ent]||[]):[...new Set(Object.values(UNITS).flat())];
+  units.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
+}
 function updateKpi(){
   const yr=document.getElementById('f-yr').value;
   const yd=data.filter(r=>r.year===yr);
   document.getElementById('k-prog').innerHTML=yd.filter(r=>r.status!=='草稿'&&r.status!=='已驳回').length+`<span class="ant-statistic-suffix">/ ${yd.length}</span>`;
   document.getElementById('k-rev').textContent=yd.filter(r=>r.status==='审批中').length;
   document.getElementById('k-rej').textContent=yd.filter(r=>r.status==='已驳回').length;
-  document.getElementById('k-over').textContent=0;
 }
 
 // ── 矩阵视图 ──
@@ -920,7 +910,7 @@ function showMsg(text,type){
   document.getElementById('msg-text').textContent=text;
   el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
-renderList();
+onFilterEntityChange();renderList();
 </script>
 </body>
 </html>

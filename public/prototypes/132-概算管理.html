@@ -88,7 +88,7 @@
         </select></div>
       <div class="ant-search-item"><label class="ant-search-label">状态</label>
         <select class="ant-input" style="width:120px" id="f-st">
-          <option value="">全部</option><option>已生效</option><option>关账</option>
+          <option value="">全部</option><option>已生效</option><option>已作废</option>
         </select></div>
       <div class="ant-space ml-auto">
         <button class="ant-btn ant-btn-primary" onclick="renderList()">查询</button>
@@ -111,12 +111,12 @@
     <table class="ant-table">
       <thead><tr>
         <th style="width:36px"></th>
-        <th>年度</th><th>状态</th>
+        <th>年度</th>
         <th class="col-num">收入概算（万元）</th>
         <th class="col-num">支出概算（万元）</th>
         <th class="col-num">余额概算（万元）</th>
         <th class="col-num">已分配支出（万元）</th>
-        <th>来源</th><th>录入时间</th><th>录入人</th><th>操作</th>
+        <th>录入时间</th><th>录入人</th><th>状态</th><th>操作</th>
       </tr></thead>
       <tbody id="list-tbody"></tbody>
     </table>
@@ -137,10 +137,6 @@
       <div class="ant-form-item" style="margin-bottom:0">
         <div class="ant-form-item-label"><span class="required">年度</span></div>
         <select class="ant-input" id="f-year" style="width:160px"><option>2027</option><option selected>2026</option><option>2025</option></select>
-      </div>
-      <div class="ant-form-item" style="margin-bottom:0">
-        <div class="ant-form-item-label">来源标识</div>
-        <input class="ant-input" id="f-source" value="手工录入" readonly style="width:160px">
       </div>
     </div>
 
@@ -255,14 +251,6 @@
           </div>
         </div>
 
-        <!-- 建设期支出 -->
-        <div class="section-header">建设期板块支出</div>
-        <div style="display:flex;gap:var(--space-5);flex-wrap:wrap;margin-bottom:var(--space-3)">
-          <div class="ant-search-item"><label class="ant-search-label" style="width:auto">廊道（建设期）万元</label><input type="number" class="ant-input" style="width:120px" id="bl" value="10000" oninput="calc()"></div>
-          <div class="ant-search-item"><label class="ant-search-label" style="width:auto">加氢站 万元</label><input type="number" class="ant-input" style="width:120px" id="bj" value="3200" oninput="calc()"></div>
-          <div class="ant-search-item"><label class="ant-search-label" style="width:auto">制氢工厂 万元</label><input type="number" class="ant-input" style="width:120px" id="bz" value="1200" oninput="calc()"></div>
-        </div>
-
         <!-- 差异率 -->
         <div class="diff-bar ok" id="diff-bar" style="margin-bottom:var(--space-3)">计算中…</div>
 
@@ -291,7 +279,7 @@
 
     <!-- 概算金额录入：收/支/余 -->
     <div class="section-header">概算金额录入（收 / 支 / 余，万元）</div>
-    <div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-3)">余额 = 收入 − 支出，自动计算。建设期板块无收入，仅填支出概算。</div>
+    <div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-3)">余额 = 收入 − 支出，自动计算。</div>
 
     <!-- 表格形式录入，更清晰 -->
     <div class="ant-table-wrapper">
@@ -314,24 +302,6 @@
             <td class="col-num"><input type="number" class="rce-inp" id="r-xpy-rev" placeholder="0.00" oninput="calcEntry('xpy')"></td>
             <td class="col-num"><input type="number" class="rce-inp" id="r-xpy-cost" placeholder="0.00" oninput="calcEntry('xpy')"></td>
             <td class="col-num rce-inp calc-val" id="r-xpy-sur">—</td>
-          </tr>
-          <tr>
-            <td rowspan="3">哈密普发新能源</td><td>廊道（建设期）</td>
-            <td class="col-num" style="background:var(--gray-3);color:var(--text-color-tertiary);text-align:center">建设期无收入</td>
-            <td class="col-num"><input type="number" class="rce-inp" id="r-lang-cost" placeholder="0.00" oninput="calcEntry('lang')"></td>
-            <td class="col-num rce-inp calc-val" id="r-lang-sur">—</td>
-          </tr>
-          <tr>
-            <td>加氢站</td>
-            <td class="col-num" style="background:var(--gray-3);color:var(--text-color-tertiary);text-align:center">建设期无收入</td>
-            <td class="col-num"><input type="number" class="rce-inp" id="r-jia-cost" placeholder="0.00" oninput="calcEntry('jia')"></td>
-            <td class="col-num rce-inp calc-val" id="r-jia-sur">—</td>
-          </tr>
-          <tr>
-            <td>制氢工厂</td>
-            <td class="col-num" style="background:var(--gray-3);color:var(--text-color-tertiary);text-align:center">建设期无收入</td>
-            <td class="col-num"><input type="number" class="rce-inp" id="r-zhi-cost" placeholder="0.00" oninput="calcEntry('zhi')"></td>
-            <td class="col-num rce-inp calc-val" id="r-zhi-sur">—</td>
           </tr>
           <tr style="background:var(--blue-1);font-weight:600">
             <td colspan="2" style="color:var(--blue-7);padding:8px 16px">合计</td>
@@ -379,14 +349,20 @@
   </div>
 </div></div>
 
-<!-- 关账 -->
-<div class="ant-modal-mask" id="d-lock">
+<!-- 作废 -->
+<div class="ant-modal-mask" id="d-void">
 <div class="ant-modal ant-modal-sm">
-  <div class="ant-modal-header"><div class="ant-modal-title">关账确认</div><button class="ant-modal-close" onclick="ca('d-lock')">✕</button></div>
-  <div class="ant-modal-body"><div class="ant-alert ant-alert-warning">关账后该年度概算将锁定，无法再编辑或删除。</div></div>
+  <div class="ant-modal-header"><div class="ant-modal-title">作废确认</div><button class="ant-modal-close" onclick="ca('d-void')">✕</button></div>
+  <div class="ant-modal-body">
+    <div class="ant-alert ant-alert-warning" style="margin-bottom:var(--space-4)">作废后该年度概算不再作为预算编制依据。若因集团下调目标等原因作废，请重新编制下一年度概算，再据此重编预算。</div>
+    <div class="ant-form-item" style="margin-bottom:0">
+      <div class="ant-form-item-label"><span class="required">作废原因</span></div>
+      <textarea class="ant-input" id="void-reason" rows="2" placeholder="必填，如：集团下调年度目标，原概算作废后重编"></textarea>
+    </div>
+  </div>
   <div class="ant-modal-footer">
-    <button class="ant-btn" onclick="ca('d-lock')">取消</button>
-    <button class="ant-btn ant-btn-primary" onclick="confirmLock()">确认关账</button>
+    <button class="ant-btn" onclick="ca('d-void')">取消</button>
+    <button class="ant-btn ant-btn-danger" onclick="confirmVoid()">确认作废</button>
   </div>
 </div></div>
 
@@ -399,24 +375,21 @@
 const EKEYS=[
   {key:'hlj',entity:'红树林集团',unit:'车队',hasRev:true},
   {key:'xpy',entity:'新鹏运',unit:'车队',hasRev:true},
-  {key:'lang',entity:'哈密普发新能源',unit:'廊道（建设期）',hasRev:false},
-  {key:'jia',entity:'哈密普发新能源',unit:'加氢站',hasRev:false},
-  {key:'zhi',entity:'哈密普发新能源',unit:'制氢工厂',hasRev:false},
 ];
 
 let budgets=[
-  {id:1,year:2026,status:'已生效',source:'工具推算导入',
-   entries:{hlj:{rev:14000,cost:12000},xpy:{rev:9500,cost:8500},lang:{rev:0,cost:10000},jia:{rev:0,cost:3200},zhi:{rev:0,cost:1200}},
-   allocated:{hlj:9800,xpy:7200,lang:0,jia:0,zhi:0},
+  {id:1,year:2026,status:'已生效',
+   entries:{hlj:{rev:14000,cost:12000},xpy:{rev:9500,cost:8500}},
+   allocated:{hlj:9800,xpy:7200},
    remark:'',createdAt:'2026-01-15 09:30',createdBy:'马伶俐',
    history:[{time:'2026-01-15 09:30',user:'马伶俐',action:'新增',desc:'参数推算导入'}]},
-  {id:2,year:2025,status:'关账',source:'手工录入',
-   entries:{hlj:{rev:12000,cost:10000},xpy:{rev:8000,cost:7500},lang:{rev:0,cost:8000},jia:{rev:0,cost:2800},zhi:{rev:0,cost:800}},
-   allocated:{hlj:10000,xpy:7500,lang:0,jia:0,zhi:0},
-   remark:'2025年度已关账',createdAt:'2025-01-20 14:00',createdBy:'马伶俐',history:[]},
+  {id:2,year:2025,status:'已生效',
+   entries:{hlj:{rev:12000,cost:10000},xpy:{rev:8000,cost:7500}},
+   allocated:{hlj:10000,xpy:7500},
+   remark:'',createdAt:'2025-01-20 14:00',createdBy:'马伶俐',history:[]},
 ];
 
-let editId=null,delId=null,lockId=null;
+let editId=null,delId=null,voidId=null;
 let lngMonths=new Array(12).fill(0),h2Months=new Array(12).fill(0);
 let taxIncluded=false; // 概算统一按不含税口径，含税仅在统计分析/报表环节体现
 let calcRes={};
@@ -472,9 +445,6 @@ function calc(){
   calcRes={
     hlj:{iK:lIK*.8+hIK*.3,iM:lIM*.8+hIM*.3,dc:lC*.8+hC*.3,pe:periodExp*.5},
     xpy:{iK:lIK*.2+hIK*.7,iM:lIM*.2+hIM*.7,dc:lC*.2+hC*.7,pe:periodExp*.5},
-    lang:{iK:0,iM:0,dc:v('bl'),pe:0},
-    jia:{iK:0,iM:0,dc:v('bj'),pe:0},
-    zhi:{iK:0,iM:0,dc:v('bz'),pe:0},
   };
   const tK=lIK+hIK,tM=lIM+hIM;
   const dr=tK>0?Math.abs(tM-tK)/tK*100:0;
@@ -536,7 +506,6 @@ function applyCalc(){
     if(costEl){costEl.value=(r.dc+r.pe).toFixed(2);costEl.classList.add('filled');}
     calcEntry(e.key);
   });
-  document.getElementById('f-source').value='工具推算导入';
   showMsg('推算值已填入，请核对后确认','success');
 }
 
@@ -572,29 +541,27 @@ function renderList(){
   document.getElementById('k-over').innerHTML=kOver+'<span class="ant-statistic-suffix">个</span>';
   document.getElementById('k-year-lbl').textContent=yr+' 年度';
   const tbody=document.getElementById('list-tbody');tbody.innerHTML='';
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>';return;}
   rows.forEach(b=>{
     const t=totalRevCostSur(b);
     const allocCost=EKEYS.reduce((s,e)=>s+(b.allocated[e.key]||0),0);
-    const stTag={已生效:`<span class="ant-tag ant-tag-green">已生效</span>`,关账:`<span class="ant-tag ant-tag-black">已关账</span>`,草稿:`<span class="ant-tag ant-tag-gold">草稿</span>`}[b.status]||`<span class="ant-tag">${b.status}</span>`;
+    const stTag={已生效:`<span class="ant-tag ant-tag-green">已生效</span>`,已作废:`<span class="ant-tag ant-tag-gray">已作废</span>`}[b.status]||`<span class="ant-tag">${b.status}</span>`;
     tbody.innerHTML+=`<tr>
       <td style="text-align:center"><button class="ant-btn ant-btn-text" style="font-size:11px" onclick="toggleRow(${b.id},this)">▶</button></td>
       <td><strong>${b.year}</strong></td>
-      <td>${stTag}</td>
       <td class="col-num text-primary"><strong>${f(t.rev)}</strong></td>
       <td class="col-num" style="color:var(--color-warning)"><strong>${f(t.cost)}</strong></td>
       <td class="col-num" style="color:${t.sur>=0?'var(--color-success)':'var(--color-error)'}"><strong>${f(t.sur)}</strong></td>
       <td class="col-num">${f(allocCost)}</td>
-      <td><span class="ant-tag ant-tag-${b.source==='工具推算导入'?'blue':'gray'}">${b.source}</span></td>
       <td class="text-secondary">${b.createdAt}</td><td>${b.createdBy}</td>
+      <td>${stTag}</td>
       <td><div class="ant-space ant-space-sm">
         <button class="ant-btn ant-btn-link" style="padding:0" onclick="openDetail(${b.id})">详情</button>
-        ${b.status!=='关账'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0" onclick="openEdit(${b.id})">编辑</button>`:''}
-        ${b.status==='已生效'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0;color:var(--gray-7)" onclick="openLock(${b.id})">关账</button>`:''}
-        ${b.status!=='关账'&&allocCost===0?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${b.id})">删除</button>`:''}
+        ${b.status==='已生效'?`<span style="color:var(--gray-4)">|</span><button class="ant-btn ant-btn-link" style="padding:0;color:var(--color-warning)" onclick="openVoid(${b.id})">作废</button>`:''}
+        ${b.status==='已生效'&&allocCost===0?`<span style="color:var(--gray-4)">|</span><button class="ant-btn-link-danger" onclick="openDel(${b.id})">删除</button>`:''}
       </div></td>
     </tr>
-    <tr id="exp-${b.id}" style="display:none"><td colspan="11" style="padding:0;background:var(--gray-2)">
+    <tr id="exp-${b.id}" style="display:none"><td colspan="10" style="padding:0;background:var(--gray-2)">
       <div style="padding:var(--space-3) var(--space-6)">
         <table class="sub-table">
           <thead><tr><th>主体</th><th>业务单元</th>
@@ -640,7 +607,7 @@ function clearEntryForm(){
 function openCreate(){
   editId=null;
   document.getElementById('form-title').textContent='新增年度概算';
-  document.getElementById('f-year').value='2026';document.getElementById('f-source').value='手工录入';
+  document.getElementById('f-year').value='2026';
   document.getElementById('f-remark').value='';document.getElementById('tool-hint').style.display='none';
   clearEntryForm();
   openCalcPanel();
@@ -651,23 +618,6 @@ function openCalcPanel(){
   document.getElementById('cti').classList.add('open');
   calc();
 }
-function openEdit(id){
-  const b=budgets.find(x=>x.id===id);if(!b)return;
-  editId=id;
-  document.getElementById('form-title').textContent=`编辑年度概算 — ${b.year}年`;
-  document.getElementById('f-year').value=b.year;document.getElementById('f-source').value=b.source;
-  document.getElementById('f-remark').value=b.remark||'';document.getElementById('tool-hint').style.display='none';
-  clearEntryForm();
-  EKEYS.forEach(e=>{
-    const en=b.entries[e.key];
-    if(!en)return;
-    const rev=document.getElementById(`r-${e.key}-rev`);const cost=document.getElementById(`r-${e.key}-cost`);
-    if(rev)rev.value=en.rev||'';if(cost)cost.value=en.cost||'';
-    calcEntry(e.key);
-  });
-  openCalcPanel();
-  document.getElementById('d-form').classList.add('open');
-}
 function submitForm(){
   const year=+document.getElementById('f-year').value;
   const entries={};
@@ -676,26 +626,20 @@ function submitForm(){
   });
   const hasCost=EKEYS.some(e=>entries[e.key].cost>0);
   if(!hasCost){showMsg('请至少填写一个支出概算','error');return;}
-  if(!editId&&budgets.find(b=>b.year===year)){showMsg('该年度已存在概算记录，不可重复录入','error');return;}
+  if(budgets.find(b=>b.year===year&&b.status==='已生效')){showMsg('该年度已存在生效的概算记录，不可重复录入','error');return;}
   const allocated={};EKEYS.forEach(e=>{allocated[e.key]=0;});
-  if(!editId){
-    budgets.unshift({id:Date.now(),year,status:'已生效',source:document.getElementById('f-source').value,entries,allocated,remark:document.getElementById('f-remark').value,createdAt:new Date().toLocaleString('zh'),createdBy:'马伶俐',history:[{time:new Date().toLocaleString('zh'),user:'马伶俐',action:'新增'}]});
-  }else{
-    const b=budgets.find(x=>x.id===editId);
-    if(b){Object.assign(b,{entries,source:document.getElementById('f-source').value,remark:document.getElementById('f-remark').value});b.history.push({time:new Date().toLocaleString('zh'),user:'马伶俐',action:'编辑'});}
-  }
-  ca('d-form');renderList();showMsg(editId?'已保存修改':'概算录入成功','success');
+  budgets.unshift({id:Date.now(),year,status:'已生效',entries,allocated,remark:document.getElementById('f-remark').value,createdAt:new Date().toLocaleString('zh'),createdBy:'马伶俐',history:[{time:new Date().toLocaleString('zh'),user:'马伶俐',action:'新增'}]});
+  ca('d-form');renderList();showMsg('概算录入成功','success');
 }
 
 function openDetail(id){
   const b=budgets.find(x=>x.id===id);if(!b)return;
   const t=totalRevCostSur(b);
-  const stTag={已生效:`<span class="ant-tag ant-tag-green">已生效</span>`,关账:`<span class="ant-tag ant-tag-black">已关账</span>`}[b.status]||`<span class="ant-tag">${b.status}</span>`;
+  const stTag={已生效:`<span class="ant-tag ant-tag-green">已生效</span>`,已作废:`<span class="ant-tag ant-tag-gray">已作废</span>`}[b.status]||`<span class="ant-tag">${b.status}</span>`;
   document.getElementById('detail-body').innerHTML=`
     <div class="ant-descriptions" style="margin-bottom:var(--space-4)">
       <div><span class="ant-descriptions-item-label">年度</span><strong>${b.year}</strong></div>
       <div><span class="ant-descriptions-item-label">状态</span>${stTag}</div>
-      <div><span class="ant-descriptions-item-label">来源</span><span class="ant-tag ant-tag-${b.source==='工具推算导入'?'blue':'gray'}">${b.source}</span></div>
       <div><span class="ant-descriptions-item-label">收入概算合计</span><strong class="text-primary">${f(t.rev)} 万元</strong></div>
       <div><span class="ant-descriptions-item-label">支出概算合计</span><strong style="color:var(--color-warning)">${f(t.cost)} 万元</strong></div>
       <div><span class="ant-descriptions-item-label">余额概算</span><strong style="color:${t.sur>=0?'var(--color-success)':'var(--color-error)'}">${f(t.sur)} 万元</strong></div>
@@ -731,8 +675,8 @@ function openDetail(id){
 
 function openDel(id){delId=id;document.getElementById('del-reason').value='';document.getElementById('d-del').classList.add('open');}
 function confirmDel(){if(!document.getElementById('del-reason').value.trim()){showMsg('请填写删除原因','error');return;}budgets=budgets.filter(x=>x.id!==delId);ca('d-del');renderList();showMsg('已删除','success');}
-function openLock(id){lockId=id;document.getElementById('d-lock').classList.add('open');}
-function confirmLock(){const b=budgets.find(x=>x.id===lockId);if(b){b.status='关账';b.history.push({time:new Date().toLocaleString('zh'),user:'马伶俐',action:'关账'});}ca('d-lock');renderList();showMsg('已关账','success');}
+function openVoid(id){voidId=id;document.getElementById('void-reason').value='';document.getElementById('d-void').classList.add('open');}
+function confirmVoid(){const r=document.getElementById('void-reason').value.trim();if(!r){showMsg('请填写作废原因','error');return;}const b=budgets.find(x=>x.id===voidId);if(b){b.status='已作废';b.history.push({time:new Date().toLocaleString('zh'),user:'马伶俐',action:'作废：'+r.slice(0,30)});}ca('d-void');renderList();showMsg('已作废','success');}
 
 function ca(id){document.getElementById(id)?.classList.remove('open');}
 function showMsg(text,type){
