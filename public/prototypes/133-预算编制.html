@@ -96,7 +96,7 @@
 </div>
 
 <!-- 查询 -->
-<div class="ant-card" style="padding:0;overflow:hidden">
+<div class="ant-card" style="padding:0;overflow:visible">
   <div class="ant-card-body-sm">
     <div class="ant-search-bar">
       <div class="ant-search-item"><label class="ant-search-label">年度</label>
@@ -419,11 +419,11 @@ function cascRender(key,hoverEntity){
   const l1=document.getElementById('casc-'+key+'-l1');
   const l2=document.getElementById('casc-'+key+'-l2');
   let h1='';
-  if(allowAll)h1+=`<div class="casc-opt${cascState[key].entity===''?' active':''}" onclick="cascPick('${key}','','')">全部</div>`;
-  CASCADE.forEach(e=>{h1+=`<div class="casc-opt${hoverEntity===e.v?' active':''}" onclick="cascHover('${key}','${e.v}')">${e.v}<span class="ar">›</span></div>`;});
+  if(allowAll)h1+=`<div class="casc-opt${cascState[key].entity===''?' active':''}" onclick="event.stopPropagation();cascPick('${key}','','')">全部</div>`;
+  CASCADE.forEach(e=>{h1+=`<div class="casc-opt${hoverEntity===e.v?' active':''}" onclick="event.stopPropagation();cascHover('${key}','${e.v}')">${e.v}<span class="ar">›</span></div>`;});
   l1.innerHTML=h1;
   const ent=CASCADE.find(e=>e.v===hoverEntity);
-  l2.innerHTML=ent?ent.c.map(u=>`<div class="casc-opt${(cascState[key].entity===hoverEntity&&cascState[key].unit===u)?' active':''}" onclick="cascPick('${key}','${hoverEntity}','${u}')">${u}</div>`).join(''):'';
+  l2.innerHTML=ent?ent.c.map(u=>`<div class="casc-opt${(cascState[key].entity===hoverEntity&&cascState[key].unit===u)?' active':''}" onclick="event.stopPropagation();cascPick('${key}','${hoverEntity}','${u}')">${u}</div>`).join(''):'';
 }
 function cascHover(key,entity){cascRender(key,entity);}
 function cascPick(key,entity,unit){
@@ -788,6 +788,9 @@ function submitForm(action){
   const unit=cascState.form.unit;
   const year=document.getElementById('f-year').value;
   if(!entity||!unit){showMsg('请选择主体和业务单元','error');return;}
+  // 同一 主体-业务单元-年度 唯一性校验（已归档的历史版本不计入）
+  const dup=data.find(x=>x.entity===entity&&x.unit===unit&&x.year===year&&x.status!=='已归档'&&(formMode!=='edit'||x.id!==editId));
+  if(dup){showMsg(`${entity} / ${unit} ${year}年 已存在预算记录，不可重复创建`,'error');return;}
   const months=getMatrixValues('fm');
   const total=annualTotal(months);
   if(action==='submit'&&total>99999){showMsg('全年预算合计超出概算上限，请调整','error');return;}
