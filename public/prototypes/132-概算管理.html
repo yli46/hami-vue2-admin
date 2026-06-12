@@ -251,6 +251,19 @@
           </div>
         </div>
 
+        <!-- 主体车辆占比：决定车队收支在红树林/新鹏运之间的拆分 -->
+        <div class="section-header">主体车辆占比</div>
+        <div class="ant-alert ant-alert-info" style="margin-bottom:var(--space-3)">车队的收入与成本按车辆登记主体在红树林集团、新鹏运之间拆分。新鹏运占比自动 = 100% − 红树林占比。</div>
+        <div class="grid-2" style="gap:var(--space-3);margin-bottom:var(--space-3)">
+          <table class="pt">
+            <tr><td class="pl">LNG 重卡 · 红树林集团占比（%）</td><td class="pv"><input id="lng-hlj" type="number" min="0" max="100" value="80" oninput="calc()"><br><span class="pref">红树林登记 LNG 车辆比例</span></td><td class="ps">车辆登记台账</td></tr>
+            <tr><td class="pl">氢能重卡 · 红树林集团占比（%）</td><td class="pv"><input id="h2-hlj" type="number" min="0" max="100" value="30" oninput="calc()"><br><span class="pref">红树林登记氢车比例</span></td><td class="ps">车辆登记台账</td></tr>
+          </table>
+          <div class="text-tertiary" style="font-size:12px;align-self:center;line-height:1.9">
+            新鹏运占比（自动）：<br>LNG 重卡 <strong id="lng-xpy-lbl">20</strong>% · 氢能重卡 <strong id="h2-xpy-lbl">70</strong>%
+          </div>
+        </div>
+
         <!-- 差异率 -->
         <div class="diff-bar ok" id="diff-bar" style="margin-bottom:var(--space-3)">计算中…</div>
 
@@ -441,10 +454,14 @@ function calc(){
   // 直接成本
   const lC=calcVeh(v('lb'),lngMonths,v('la'),v('lk'),v('ll'),lCR);
   const hC=calcVeh(v('hb'),h2Months,v('ha'),v('hk'),v('hl'),hCR);
-  // 按 hlj/xpy 拆分（LNG 80%/20%，H2 30%/70%）
+  // 按主体车辆占比拆分（红树林 / 新鹏运）；新鹏运 = 1 − 红树林
+  const lngHlj=Math.min(Math.max(v('lng-hlj'),0),100)/100, h2Hlj=Math.min(Math.max(v('h2-hlj'),0),100)/100;
+  const lngXpy=1-lngHlj, h2Xpy=1-h2Hlj;
+  const lx=document.getElementById('lng-xpy-lbl');if(lx)lx.textContent=(100-Math.min(Math.max(v('lng-hlj'),0),100)).toFixed(0);
+  const hx=document.getElementById('h2-xpy-lbl');if(hx)hx.textContent=(100-Math.min(Math.max(v('h2-hlj'),0),100)).toFixed(0);
   calcRes={
-    hlj:{iK:lIK*.8+hIK*.3,iM:lIM*.8+hIM*.3,dc:lC*.8+hC*.3,pe:periodExp*.5},
-    xpy:{iK:lIK*.2+hIK*.7,iM:lIM*.2+hIM*.7,dc:lC*.2+hC*.7,pe:periodExp*.5},
+    hlj:{iK:lIK*lngHlj+hIK*h2Hlj,iM:lIM*lngHlj+hIM*h2Hlj,dc:lC*lngHlj+hC*h2Hlj,pe:periodExp*.5},
+    xpy:{iK:lIK*lngXpy+hIK*h2Xpy,iM:lIM*lngXpy+hIM*h2Xpy,dc:lC*lngXpy+hC*h2Xpy,pe:periodExp*.5},
   };
   const tK=lIK+hIK,tM=lIM+hIM;
   const dr=tK>0?Math.abs(tM-tK)/tK*100:0;

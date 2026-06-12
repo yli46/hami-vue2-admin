@@ -101,16 +101,6 @@
     <div class="ant-search-bar">
       <div class="ant-search-item"><label class="ant-search-label">年度</label>
         <select class="ant-input" style="width:100px" id="f-yr"><option>2026</option><option>2025</option></select></div>
-      <div class="ant-search-item"><label class="ant-search-label">主体/业务单元</label>
-        <div class="casc" id="casc-filter">
-          <div class="casc-inp" style="min-width:200px" onclick="event.stopPropagation();cascToggle('filter')">
-            <span id="casc-filter-text" class="casc-ph">全部</span><span class="casc-arrow">▾</span>
-          </div>
-          <div class="casc-panel" id="casc-filter-panel">
-            <div class="casc-col" id="casc-filter-l1"></div>
-            <div class="casc-col" id="casc-filter-l2"></div>
-          </div>
-        </div></div>
       <div class="ant-search-item"><label class="ant-search-label">状态</label>
         <select class="ant-input" style="width:120px" id="f-st"><option value="">全部</option><option>草稿</option><option>审批中</option><option>已生效</option><option>已驳回</option><option>已归档</option></select></div>
       <div class="ant-space ml-auto">
@@ -486,10 +476,8 @@ function approvalDesc(r){
 // ── 列表 ──
 function renderList(){
   const yr=document.getElementById('f-yr').value;
-  const ent=cascState.filter.entity;
-  const unit=cascState.filter.unit;
   const st=document.getElementById('f-st').value;
-  const rows=data.filter(r=>r.year===yr&&(!ent||r.entity===ent)&&(!unit||r.unit===unit)&&(!st||r.status===st));
+  const rows=data.filter(r=>r.year===yr&&(!st||r.status===st));
   const tbody=document.getElementById('list-tbody');
   tbody.innerHTML='';
   if(!rows.length){tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-color-tertiary)">暂无数据</td></tr>`;updateKpi();return;}
@@ -515,7 +503,7 @@ function renderList(){
   });
   updateKpi();renderMatrix();
 }
-function resetSearch(){document.getElementById('f-st').value='';cascSet('filter','','');renderList();}
+function resetSearch(){document.getElementById('f-st').value='';document.getElementById('f-yr').value='2026';renderList();}
 function updateKpi(){
   const yr=document.getElementById('f-yr').value;
   const yd=data.filter(r=>r.year===yr);
@@ -955,7 +943,7 @@ function showMsg(text,type){
   document.getElementById('msg-text').textContent=text;
   el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
-cascSet('filter','','');renderList();
+renderList();
 </script>
 </body>
 </html>
