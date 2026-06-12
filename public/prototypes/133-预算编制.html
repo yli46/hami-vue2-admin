@@ -62,13 +62,6 @@
     <div class="ant-steps-item wait">
       <div class="ant-steps-item-icon">3</div>
       <div class="ant-steps-item-content">
-        <div class="ant-steps-item-title">L1 初审 / L2 终审</div>
-        <div class="ant-steps-item-description">待开始</div>
-      </div>
-    </div>
-    <div class="ant-steps-item wait">
-      <div class="ant-steps-item-icon">4</div>
-      <div class="ant-steps-item-content">
         <div class="ant-steps-item-title">全面预算生效</div>
         <div class="ant-steps-item-description">待开始</div>
       </div>
@@ -86,7 +79,7 @@
   <div class="ant-statistic ant-statistic-warning">
     <div class="ant-statistic-title">审批中</div>
     <div class="ant-statistic-content color-warning" id="k-rev">2</div>
-    <div class="ant-statistic-extra">待终审 1 · 待初审 1</div>
+    <div class="ant-statistic-extra">集团财务经理 / 负责人两级审批</div>
   </div>
   <div class="ant-statistic ant-statistic-error">
     <div class="ant-statistic-title">已驳回</div>
@@ -456,9 +449,12 @@ const SUBJECT_WEIGHTS=[30,12,6,10,2,4,8,3,6,0.2,1.5, 5,1,0.8,1,4,2,1,0.5,1, 3,0.
 
 function makeMonths(base){return SUBJECTS.map((_,si)=>Array.from({length:12},(_,mi)=>fmt2(base*(0.8+Math.random()*.4)*(si<8?1.0:si<16?.15:.05))));}
 
+// 审批角色：L1=集团财务经理，L2=集团财务负责人（样例姓名，业主提供后替换）
+const ROLE_TITLE={L1:'集团财务经理',L2:'集团财务负责人'};
+const APPROVER={L1:'周敏',L2:'马伶俐'};
 let data=[
-  {id:1,entity:'红树林集团',unit:'车队',year:'2026',ver:'V1.1',status:'已生效',author:'马伶俐',updAt:'2026-01-20 09:00',remark:'',months:makeMonths(120),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-18 14:30',comment:'同意'},{role:'L2',user:'马伶俐',status:'通过',time:'2026-01-20 09:00',comment:'批准'}]},
-  {id:2,entity:'新鹏运',unit:'车队',year:'2026',ver:'V1.0',status:'审批中',author:'李会计',updAt:'2026-01-25 11:00',remark:'',months:makeMonths(80),approvals:[{role:'L1',user:'朱建国',status:'通过',time:'2026-01-23 14:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'待审',time:null,comment:''}]},
+  {id:1,entity:'红树林集团',unit:'车队',year:'2026',ver:'V1.1',status:'已生效',author:'李雪',updAt:'2026-01-20 09:00',remark:'',months:makeMonths(120),approvals:[{role:'L1',user:'周敏',status:'通过',time:'2026-01-18 14:30',comment:'同意'},{role:'L2',user:'马伶俐',status:'通过',time:'2026-01-20 09:00',comment:'批准'}]},
+  {id:2,entity:'新鹏运',unit:'车队',year:'2026',ver:'V1.0',status:'审批中',author:'李雪',updAt:'2026-01-25 11:00',remark:'',months:makeMonths(80),approvals:[{role:'L1',user:'周敏',status:'通过',time:'2026-01-23 14:00',comment:'同意'},{role:'L2',user:'马伶俐',status:'待审',time:null,comment:''}]},
 ];
 
 const annualTotal=months=>months.reduce((s,row)=>s+row.reduce((rs,v)=>rs+v,0),0);
@@ -468,8 +464,8 @@ function statusTag(s){const m={草稿:'ant-tag-gold',审批中:'ant-tag-blue',�
 function approvalDesc(r){
   if(!r.approvals?.length)return'未提交';
   if(r.status==='已生效')return'两级审批已通过';
-  if(r.status==='已驳回'){const l=r.approvals[r.approvals.length-1];return`${l.role} 驳回：${(l.comment||'').slice(0,15)}…`;}
-  if(r.status==='审批中'){const p=r.approvals.find(a=>a.status==='待审');return p?`等待 ${p.role} ${p.user} 审批`:'审批中';}
+  if(r.status==='已驳回'){const l=r.approvals[r.approvals.length-1];return`${ROLE_TITLE[l.role]||l.role} 驳回：${(l.comment||'').slice(0,15)}…`;}
+  if(r.status==='审批中'){const p=r.approvals.find(a=>a.status==='待审');return p?`等待 ${ROLE_TITLE[p.role]||p.role}（${p.user}）审批`:'审批中';}
   return'草稿';
 }
 
@@ -785,10 +781,10 @@ function submitForm(action){
   if(action==='submit'&&total>99999){showMsg('全年预算合计超出概算上限，请调整','error');return;}
   const newStatus=action==='submit'?'审批中':'草稿';
   if(formMode==='create'){
-    data.unshift({id:Date.now(),entity,unit,year,ver:'V1.0',status:newStatus,author:'马伶俐',updAt:new Date().toLocaleString('zh'),remark:document.getElementById('f-remark').value,months,approvals:action==='submit'?[{role:'L1',user:'朱建国',status:'待审',time:null,comment:''}]:[]});
+    data.unshift({id:Date.now(),entity,unit,year,ver:'V1.0',status:newStatus,author:'李雪',updAt:new Date().toLocaleString('zh'),remark:document.getElementById('f-remark').value,months,approvals:action==='submit'?[{role:'L1',user:APPROVER.L1,status:'待审',time:null,comment:''}]:[]});
   }else if(formMode==='edit'){
     const r=data.find(x=>x.id===editId);
-    if(r)Object.assign(r,{months,status:newStatus,updAt:new Date().toLocaleString('zh'),approvals:action==='submit'?[{role:'L1',user:'朱建国',status:'待审',time:null,comment:''}]:r.approvals});
+    if(r)Object.assign(r,{months,status:newStatus,updAt:new Date().toLocaleString('zh'),approvals:action==='submit'?[{role:'L1',user:APPROVER.L1,status:'待审',time:null,comment:''}]:r.approvals});
   }
   ca('d-form');renderList();showMsg(action==='submit'?'已提交审批':'草稿已保存','success');
 }
@@ -818,7 +814,7 @@ function submitAdj(action){
   const r=data.find(x=>x.id===adjId);
   if(r){
     const archived={...r,status:'已归档'};
-    data.splice(data.indexOf(r),1,{id:Date.now(),entity:r.entity,unit:r.unit,year:r.year,ver:'V2.0',status:action==='submit'?'审批中':'草稿',author:'马伶俐',updAt:new Date().toLocaleString('zh'),remark:'调整：'+reason.slice(0,30),months,approvals:action==='submit'?[{role:'L1',user:'朱建国',status:'待审',time:null,comment:''}]:[]},archived);
+    data.splice(data.indexOf(r),1,{id:Date.now(),entity:r.entity,unit:r.unit,year:r.year,ver:'V2.0',status:action==='submit'?'审批中':'草稿',author:'李雪',updAt:new Date().toLocaleString('zh'),remark:'调整：'+reason.slice(0,30),months,approvals:action==='submit'?[{role:'L1',user:APPROVER.L1,status:'待审',time:null,comment:''}]:[]},archived);
   }
   ca('d-adjust');renderList();showMsg(action==='submit'?'调整版本已提交审批':'调整草稿已保存','success');
 }
@@ -830,7 +826,7 @@ function openDetail(id){
   const colSums=MONTHS_L.map((_,mi)=>r.months.reduce((s,row)=>s+row[mi],0));
   const timeline=r.approvals.map(a=>{
     const cls=a.status==='通过'?'success':a.status==='驳回'?'error':'pending';
-    return`<li class="ant-timeline-item ${cls}"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content"><strong>${a.role} ${a.user}</strong> <span class="ant-tag ${a.status==='通过'?'ant-tag-green':a.status==='驳回'?'ant-tag-red':'ant-tag-gold'}">${a.status}</span>${a.time?`<span class="text-tertiary" style="margin-left:6px;font-size:12px">${a.time}</span>`:''}${a.comment?`<span class="text-secondary" style="margin-left:6px">${a.comment}</span>`:''}</div></li>`;
+    return`<li class="ant-timeline-item ${cls}"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content"><strong>${ROLE_TITLE[a.role]||a.role}（${a.user}）</strong> <span class="ant-tag ${a.status==='通过'?'ant-tag-green':a.status==='驳回'?'ant-tag-red':'ant-tag-gold'}">${a.status}</span>${a.time?`<span class="text-tertiary" style="margin-left:6px;font-size:12px">${a.time}</span>`:''}${a.comment?`<span class="text-secondary" style="margin-left:6px">${a.comment}</span>`:''}</div></li>`;
   }).join('');
   // 按分组构建明细表
   let si=0,matRows='';
@@ -882,14 +878,14 @@ function openApproval(id){
       <div><span class="ant-descriptions-item-label">主体/业务单元</span>${r.entity} / ${r.unit}</div>
       <div><span class="ant-descriptions-item-label">全年预算合计</span><strong class="text-primary">${f(displayTotal(annualTotal(r.months)))} 万元</strong></div>
       <div><span class="ant-descriptions-item-label">编制人</span>${r.author}</div>
-      <div><span class="ant-descriptions-item-label">当前节点</span>${pending?pending.role+' '+pending.user:'未知'}</div>
+      <div><span class="ant-descriptions-item-label">当前节点</span>${pending?(ROLE_TITLE[pending.role]||pending.role)+'（'+pending.user+'）':'未知'}</div>
     </div>
     <div class="section-header" style="margin-top:0">各月预算总额</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-4)">
       ${MONTHS_L.map((lbl,mi)=>`<div style="background:var(--blue-1);border:1px solid var(--blue-2);border-radius:var(--radius-md);padding:5px 8px;text-align:center;min-width:55px"><div style="font-size:11px;color:var(--blue-7)">${lbl}</div><div style="font-size:13px;font-weight:600;color:var(--blue-7)">${f(displayTotal(colSums[mi]))}</div></div>`).join('')}
     </div>
     <div class="section-header">审批时间线</div>
-    <ul class="ant-timeline" style="margin-bottom:var(--space-4)">${r.approvals.map(a=>{const cls=a.status==='通过'?'success':a.status==='驳回'?'error':'pending';return`<li class="ant-timeline-item ${cls}"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content"><strong>${a.role} ${a.user}</strong> <span class="ant-tag ${a.status==='通过'?'ant-tag-green':a.status==='驳回'?'ant-tag-red':'ant-tag-gold'}">${a.status}</span> <span class="text-tertiary" style="font-size:12px">${a.time?a.time:'待审批'} ${a.comment||''}</span></div></li>`;}).join('')}</ul>
+    <ul class="ant-timeline" style="margin-bottom:var(--space-4)">${r.approvals.map(a=>{const cls=a.status==='通过'?'success':a.status==='驳回'?'error':'pending';return`<li class="ant-timeline-item ${cls}"><div class="ant-timeline-item-tail"></div><div class="ant-timeline-item-head"></div><div class="ant-timeline-item-content"><strong>${ROLE_TITLE[a.role]||a.role}（${a.user}）</strong> <span class="ant-tag ${a.status==='通过'?'ant-tag-green':a.status==='驳回'?'ant-tag-red':'ant-tag-gold'}">${a.status}</span> <span class="text-tertiary" style="font-size:12px">${a.time?a.time:'待审批'} ${a.comment||''}</span></div></li>`;}).join('')}</ul>
     <div class="ant-form-item"><div class="ant-form-item-label"><span class="required">审批意见</span></div>
     <textarea class="ant-input" id="appr-comment" rows="2" placeholder="必填"></textarea></div>
   `;
@@ -903,8 +899,8 @@ function doApproval(action){
   pending.status=action==='pass'?'通过':'驳回';pending.time=new Date().toLocaleString('zh');pending.comment=comment;
   if(action==='reject'){r.status='已驳回';}
   else{
-    if(pending.role==='L1'){r.approvals.push({role:'L2',user:'马伶俐',status:'待审',time:null,comment:''});r.status='审批中';showMsg('L1 已通过，进入 L2 终审','success');}
-    else{r.status='已生效';showMsg('L2 终审通过，预算已生效','success');}
+    if(pending.role==='L1'){r.approvals.push({role:'L2',user:APPROVER.L2,status:'待审',time:null,comment:''});r.status='审批中';showMsg('集团财务经理已通过，转集团财务负责人审批','success');}
+    else{r.status='已生效';showMsg('集团财务负责人审批通过，预算已生效','success');}
   }
   r.updAt=new Date().toLocaleString('zh');ca('d-approval');renderList();
 }
